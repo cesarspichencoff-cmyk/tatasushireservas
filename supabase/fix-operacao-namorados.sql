@@ -10,9 +10,9 @@
 --   2. Turnos 19:00, 21:00 e 22:00 no tipo turno_tipo
 --   3. RLS liberado para o login único da equipe (authenticated)
 --   4. Realtime habilitado em reservations e tables
---   5. Layout operacional: mesas 1 a 24 sequenciais, todas ativas
---      (numerações antigas 41-45/51-55/60/62/64/65/66/V1/V2 ficam
---      inativas — nada é apagado)
+--   5. Layout do mapa de chão: salão com 24 mesas sequenciais +
+--      varanda ativa (60/62/64/65/66); banquetas de apoio
+--      (41-45, 51-55) inativas — nada é apagado
 --   6. As 26 reservas oficiais da planilha (13×19h, 12×21h, 1×22h)
 --   7. Fechar conta no caixa libera a mesa automaticamente
 --
@@ -417,15 +417,15 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------
--- 7. MESAS — layout operacional: 24 mesas sequenciais (1 a 24),
---    todas ativas e para 2 pessoas. As numerações antigas (balcão,
---    barra fria, varanda) ficam INATIVAS — nada é apagado.
+-- 7. MESAS — layout do mapa de chão oficial: salão com 24 mesas
+--    sequenciais (1 a 24) + varanda ativa (60/62/64/65/66);
+--    banquetas de apoio (41-45, 51-55) inativas; V1/V2 inativas.
 --    (mesmo conteúdo de supabase/mesas-1-a-24.sql)
 -- ---------------------------------------------------------------
 insert into public.tables (numero, area, capacidade, ativa, pos_x, pos_y)
 select n::text, 'salao'::public.area_tipo, 2, true,
-       ((n - 1) % 6) * 16 + 10,
-       ((n - 1) / 6) * 22 + 12
+       case (n - 1) / 8 when 0 then 77 when 1 then 48.5 else 19 end,
+       53.4 - ((n - 1) % 8) * 4.85
 from generate_series(1, 24) as n
 on conflict (numero) do update set
   area = excluded.area,
@@ -434,10 +434,36 @@ on conflict (numero) do update set
   pos_x = excluded.pos_x,
   pos_y = excluded.pos_y;
 
-update public.tables
-   set ativa = false
- where numero in ('41','42','43','44','45','51','52','53','54','55',
-                  '60','62','64','65','66','V1','V2');
+insert into public.tables (numero, area, capacidade, ativa, pos_x, pos_y, observacao) values
+  ('60', 'varanda', 2, true, 77, 79.5, 'Área externa — sofá'),
+  ('62', 'varanda', 2, true, 77, 86.5, 'Área externa — sofá'),
+  ('64', 'varanda', 2, true, 77, 93.5, 'Área externa — sofá'),
+  ('66', 'varanda', 2, true, 23, 82.5, 'Área externa'),
+  ('65', 'varanda', 2, true, 21, 92,   'Área externa')
+on conflict (numero) do update set
+  area = excluded.area,
+  capacidade = 2,
+  ativa = true,
+  pos_x = excluded.pos_x,
+  pos_y = excluded.pos_y;
+
+insert into public.tables (numero, area, capacidade, ativa, pos_x, pos_y, observacao) values
+  ('41', 'salao', 2, false, 31,   11.7, 'Balcão do bar — apoio'),
+  ('42', 'salao', 2, false, 40.5, 11.7, 'Balcão do bar — apoio'),
+  ('43', 'salao', 2, false, 50,   11.7, 'Balcão do bar — apoio'),
+  ('44', 'salao', 2, false, 59.5, 11.7, 'Balcão do bar — apoio'),
+  ('45', 'salao', 2, false, 68.5, 11.7, 'Balcão do bar — apoio'),
+  ('51', 'salao', 2, false, 28, 59, 'Barra fria — apoio'),
+  ('52', 'salao', 2, false, 28, 62, 'Barra fria — apoio'),
+  ('53', 'salao', 2, false, 28, 65, 'Barra fria — apoio'),
+  ('54', 'salao', 2, false, 28, 68, 'Barra fria — apoio'),
+  ('55', 'salao', 2, false, 28, 71, 'Barra fria — apoio')
+on conflict (numero) do update set
+  ativa = false,
+  pos_x = excluded.pos_x,
+  pos_y = excluded.pos_y;
+
+update public.tables set ativa = false where numero in ('V1', 'V2');
 
 -- ---------------------------------------------------------------
 -- 8. RESERVAS OFICIAIS DA PLANILHA (substitui tudo — sem duplicar)
@@ -500,11 +526,12 @@ join public.tables t on t.numero = v.mesa;
 
 -- ---------------------------------------------------------------
 -- 9. CONFERÊNCIA — o resultado desta query aparece na tela.
---    Esperado: 24 mesas ativas (1 a 24) e 13 / 12 / 1 reservas.
+--    Esperado: 29 mesas ativas (24 salão + 5 varanda) e
+--    13 / 12 / 1 reservas.
 -- ---------------------------------------------------------------
 select 'mesas cadastradas'              as item, count(*)::text as valor from public.tables
 union all
-select 'mesas ativas (deve ser 24)',           count(*)::text from public.tables where ativa
+select 'mesas ativas (deve ser 29)',           count(*)::text from public.tables where ativa
 union all
 select 'reservas 19h',                         count(*)::text from public.reservations where turno = '19:00'
 union all

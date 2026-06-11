@@ -16,9 +16,9 @@ export const AREA_LABEL: Record<Area, string> = {
 // Capacidade por turno, em RESERVAS de casal (2 pessoas cada)
 export const CAPACIDADE_RESERVAS: Record<Area, number> = {
   salao: 24,
-  varanda: 7,
+  varanda: 5, // mesas 60, 62, 64, 65, 66
 };
-export const CAPACIDADE_TOTAL_RESERVAS = 31; // 62 pessoas
+export const CAPACIDADE_TOTAL_RESERVAS = 29; // 58 pessoas
 
 export const STATUS_ATIVOS: ReservaStatus[] = [
   'pre_reserva',

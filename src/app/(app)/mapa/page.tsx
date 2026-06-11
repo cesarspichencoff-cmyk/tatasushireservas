@@ -34,7 +34,7 @@ import {
   type MesaEstado,
 } from '@/lib/constants';
 import { useDados } from '@/lib/data-context';
-import { MESAS_OPERACIONAIS } from '@/lib/mapa-layout';
+import { MESAS_OPERACIONAIS, ORDEM_MAPA, POSICAO_MESA, type PosMesa } from '@/lib/mapa-layout';
 import {
   comoRecebe,
   estadoMesa,
@@ -102,18 +102,24 @@ export default function MapaPage() {
   );
 
   const porNumero = useMemo(() => new Map(mesas.map((m) => [m.numero, m])), [mesas]);
+  // Mesas operacionais (salão 1-24 + varanda) que faltam ou estão inativas
+  // no banco — sinal de que o SQL de layout ainda não rodou.
   const mesasFaltando = useMemo(
-    () => MESAS_OPERACIONAIS.filter((n) => !porNumero.has(n)),
+    () =>
+      MESAS_OPERACIONAIS.filter((n) => {
+        const m = porNumero.get(n);
+        return !m || !m.ativa;
+      }),
     [porNumero],
   );
 
-  // Mesas antigas (fora do layout 1-24) que ainda têm casal ativo nelas —
-  // aparecem numa seção à parte até serem esvaziadas.
+  // Mesas que não constam no mapa de chão (ex.: V1/V2) mas ainda têm casal
+  // ativo nelas — aparecem numa seção à parte até serem esvaziadas.
   const mesasAntigasOcupadas = useMemo(
     () =>
       mesas.filter(
         (m) =>
-          !MESAS_OPERACIONAIS.includes(m.numero) &&
+          !(m.numero in POSICAO_MESA) &&
           reservas.some((r) => r.table_id === m.id && STATUS_ATIVOS.includes(r.status)),
       ),
     [mesas, reservas],
@@ -148,8 +154,28 @@ export default function MapaPage() {
         (a, b) =>
           TURNOS.indexOf(a.turno) - TURNOS.indexOf(b.turno) || a.nome.localeCompare(b.nome, 'pt-BR'),
       );
+    // Ordem dentro de cada horário: sem mesa primeiro, depois na mesa,
+    // chegou, sentado, finalizado e por último no-show/cancelado.
+    const peso = (r: Reserva) => {
+      if (STATUS_ATIVOS.includes(r.status)) {
+        if (!r.table_id) return 0;
+        if (r.status === 'sentado') return 3;
+        if (r.status === 'chegou') return 2;
+        return 1;
+      }
+      return r.status === 'finalizada' ? 4 : 5;
+    };
+    const porTurno = Object.fromEntries(
+      TURNOS.map((t) => [
+        t,
+        doTurno
+          .filter((r) => r.turno === t)
+          .sort((a, b) => peso(a) - peso(b) || a.nome.localeCompare(b.nome, 'pt-BR')),
+      ]),
+    ) as Record<Turno, Reserva[]>;
     return {
       doTurno,
+      porTurno,
       aguardando: doTurno.filter((r) => STATUS_ATIVOS.includes(r.status) && !r.table_id),
       naMesa: doTurno.filter(
         (r) => r.table_id && STATUS_ATIVOS.includes(r.status) && r.status !== 'chegou' && r.status !== 'sentado',
@@ -342,32 +368,78 @@ export default function MapaPage() {
         </div>
 
         <div className="grid gap-4 lg:grid-cols-[1fr_minmax(0,380px)]">
-          {/* ---------- MAPA: 24 MESAS SEQUENCIAIS ---------- */}
+          {/* ---------- MAPA DE CHÃO (salão 1-24 + varanda) ---------- */}
           <div className="space-y-3">
             {mesasFaltando.length > 0 && (
               <p className="rounded-xl bg-amber-100 px-4 py-3 text-sm font-semibold text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
-                As mesas {mesasFaltando.join(', ')} ainda não existem no banco — execute{' '}
-                <b>supabase/mesas-1-a-24.sql</b> no SQL Editor do Supabase (uma vez só).
+                As mesas {mesasFaltando.join(', ')} ainda não existem (ou estão inativas) no banco —
+                execute a versão atual de <b>supabase/mesas-1-a-24.sql</b> no SQL Editor do Supabase.
               </p>
             )}
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 xl:grid-cols-6">
-              {MESAS_OPERACIONAIS.map((numero) => {
-                const mesa = porNumero.get(numero) ?? null;
-                const info = mesa ? (estadoDe.get(mesa.id) ?? BLOQUEADA) : BLOQUEADA;
-                return (
-                  <MesaCard
-                    key={numero}
-                    numero={numero}
-                    mesa={mesa}
-                    info={info}
-                    recebimento={mesa && arrastando ? comoRecebe(mesa, reservas, arrastando) : 'bloqueado'}
-                    arrastandoAlgo={!!arrastando}
-                    aoClicar={() => {
-                      if (mesa) cliqueProtegido(() => setMesaSelecionada(mesa));
-                    }}
-                  />
-                );
-              })}
+            <div className="mx-auto w-full max-w-[480px] lg:mx-0">
+              <div className="relative aspect-[43/100] w-full select-none overflow-hidden rounded-lg border-4 border-gray-900 shadow-xl dark:border-gray-500">
+                {/* piso do salão (madeira) */}
+                <div className="absolute inset-x-0 top-0 h-[74.5%] bg-[#c29d6d] dark:bg-[#75603f]" />
+                {/* piso da varanda */}
+                <div className="absolute inset-x-0 bottom-0 top-[74.5%] bg-[#d9d5d0] dark:bg-stone-500" />
+                {/* divisória salão/varanda */}
+                <div className="absolute inset-x-0 top-[74.2%] h-[0.4%] bg-gray-900/80 dark:bg-gray-900" />
+
+                {/* porta/serviço (topo direita) */}
+                <div className="absolute right-[16%] top-0 h-[2.4%] w-[10%] bg-gray-300/90" />
+                {/* bar em L (topo) com tampo de mármore */}
+                <div className="absolute left-[19%] top-[2.6%] h-[7.6%] w-[7%] bg-[#5a1b1b]" />
+                <div className="absolute left-[25%] top-[6.6%] h-[3.6%] w-[56%] bg-[#5a1b1b]">
+                  <div className="absolute inset-x-[1%] top-[12%] h-[55%] rounded-[2px] bg-gray-100" />
+                </div>
+
+                {/* sofás (azul-escuro como na planta) */}
+                <div className="absolute left-[0.5%] top-[16%] h-[14%] w-[7%] rounded-md bg-[#3c4458]" />
+                <div className="absolute left-[0.5%] top-[30.5%] h-[14.5%] w-[7%] rounded-md bg-[#3c4458]" />
+                <div className="absolute right-[0.5%] top-[16%] h-[14.5%] w-[7%] rounded-md bg-[#3c4458]" />
+                <div className="absolute right-[0.5%] top-[31%] h-[15%] w-[7%] rounded-md bg-[#3c4458]" />
+                <div className="absolute right-[0.5%] top-[47%] h-[26.5%] w-[7%] rounded-md bg-[#3c4458]" />
+                <div className="absolute right-[0.5%] top-[76%] h-[21%] w-[7%] rounded-md bg-[#3c4458]" />
+
+                {/* barra fria do sushi */}
+                <div className="absolute left-[4%] top-[57%] h-[15.5%] w-[20%] rounded-sm border-2 border-gray-500 bg-gray-100 dark:bg-gray-300">
+                  <span className="flex h-full items-center justify-center text-[9px] font-black tracking-[0.2em] text-gray-500 [writing-mode:vertical-lr]">
+                    SUSHI
+                  </span>
+                </div>
+
+                {/* varanda: planta e banco claro */}
+                <span className="absolute left-[4%] top-[75.5%] text-xl">🪴</span>
+                <div className="absolute bottom-0 left-0 top-[84%] w-[5%] bg-sky-100 dark:bg-sky-200/60" />
+
+                {/* rótulos das áreas */}
+                <span className="absolute left-[2%] top-[0.6%] rounded bg-black/55 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-white">
+                  SALÃO
+                </span>
+                <span className="absolute left-[28%] top-[75.3%] rounded bg-black/55 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-white">
+                  ÁREA EXTERNA
+                </span>
+
+                {/* mesas — posições do mapa de chão oficial */}
+                {ORDEM_MAPA.map((numero) => {
+                  const mesa = porNumero.get(numero) ?? null;
+                  const info = mesa ? (estadoDe.get(mesa.id) ?? BLOQUEADA) : BLOQUEADA;
+                  return (
+                    <MesaChip
+                      key={numero}
+                      numero={numero}
+                      pos={POSICAO_MESA[numero]}
+                      mesa={mesa}
+                      info={info}
+                      recebimento={mesa && arrastando ? comoRecebe(mesa, reservas, arrastando) : 'bloqueado'}
+                      arrastandoAlgo={!!arrastando}
+                      aoClicar={() => {
+                        if (mesa) cliqueProtegido(() => setMesaSelecionada(mesa));
+                      }}
+                    />
+                  );
+                })}
+              </div>
             </div>
 
             {mesasAntigasOcupadas.length > 0 && (
@@ -418,12 +490,28 @@ export default function MapaPage() {
             <div className="max-h-[80vh] space-y-4 overflow-y-auto pb-24 pr-1 lg:pb-2">
               {filtroLista === 'todos' ? (
                 <>
-                  <GrupoCasais titulo="⏳ Aguardando mesa" cor="text-amber-600 dark:text-amber-400" reservas={lista.aguardando} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
-                  <GrupoCasais titulo="📍 Na mesa (reservado)" cor="text-blue-600 dark:text-blue-400" reservas={lista.naMesa} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
-                  <GrupoCasais titulo="🟠 Chegaram" cor="text-orange-600 dark:text-orange-400" reservas={lista.chegaram} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
-                  <GrupoCasais titulo="🔴 Sentados" cor="text-red-600 dark:text-red-400" reservas={lista.sentados} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
-                  <GrupoCasais titulo="✓ Finalizados" cor="text-gray-500" reservas={lista.finalizados} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
-                  <GrupoCasais titulo="👻 No-show / cancelados" cor="text-gray-400" reservas={lista.encerrados} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
+                  {turno === 'agora' ? (
+                    // Visão geral: casais organizados por horário
+                    TURNOS.map((t) => (
+                      <GrupoCasais
+                        key={t}
+                        titulo={`🕐 Turno ${TURNO_LABEL[t]}`}
+                        cor="text-brand-600 dark:text-brand-400"
+                        reservas={lista.porTurno[t]}
+                        aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))}
+                      />
+                    ))
+                  ) : (
+                    // Dentro de um horário: agrupado por situação
+                    <>
+                      <GrupoCasais titulo="⏳ Aguardando mesa" cor="text-amber-600 dark:text-amber-400" reservas={lista.aguardando} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
+                      <GrupoCasais titulo="📍 Na mesa (reservado)" cor="text-blue-600 dark:text-blue-400" reservas={lista.naMesa} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
+                      <GrupoCasais titulo="🟠 Chegaram" cor="text-orange-600 dark:text-orange-400" reservas={lista.chegaram} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
+                      <GrupoCasais titulo="🔴 Sentados" cor="text-red-600 dark:text-red-400" reservas={lista.sentados} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
+                      <GrupoCasais titulo="✓ Finalizados" cor="text-gray-500" reservas={lista.finalizados} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
+                      <GrupoCasais titulo="👻 No-show / cancelados" cor="text-gray-400" reservas={lista.encerrados} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
+                    </>
+                  )}
                   {lista.doTurno.length === 0 && (
                     <div className="space-y-3 py-8 text-center">
                       <p className="text-sm text-gray-400">Nenhum casal neste turno.</p>
@@ -602,7 +690,114 @@ export default function MapaPage() {
   );
 }
 
-/* ---------- Card de mesa na grade (arrastável + alvo de soltura) ---------- */
+/* ---------- Chip de mesa no mapa de chão (arrastável + alvo de soltura) ---------- */
+function MesaChip({
+  numero,
+  pos,
+  mesa,
+  info,
+  recebimento,
+  arrastandoAlgo,
+  aoClicar,
+}: {
+  numero: string;
+  pos: PosMesa;
+  mesa: Mesa | null;
+  info: EstadoDaMesa;
+  recebimento: Recebimento;
+  arrastandoAlgo: boolean;
+  aoClicar: () => void;
+}) {
+  const reservaArrastavel = info.reserva && STATUS_ATIVOS.includes(info.reserva.status) ? info.reserva : null;
+  const droppable = useDroppable({
+    id: `mesa-${numero}`,
+    data: { mesa },
+    disabled: !mesa || !mesa.ativa || !!pos.pequena,
+  });
+  const draggable = useDraggable({
+    id: `mesa-res-${numero}`,
+    data: { reserva: reservaArrastavel },
+    disabled: !reservaArrastavel,
+  });
+
+  // Banquetas de apoio (bar/barra fria): pretas, sem arrastar nem soltar.
+  if (pos.pequena) {
+    return (
+      <button
+        onClick={aoClicar}
+        className={`absolute flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-[5px] text-[9px] font-black shadow ${MESA_COR.bloqueada}`}
+        style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
+        title={`Mesa ${numero} — apoio (bloqueada)`}
+      >
+        {numero}
+      </button>
+    );
+  }
+
+  if (!mesa) {
+    return (
+      <div
+        className="absolute flex h-12 w-20 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-lg border-2 border-dashed border-white/80 text-center text-white sm:w-24"
+        style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
+        title={`Mesa ${numero} — não cadastrada no banco`}
+      >
+        <span className="text-[11px] font-black leading-none">{numero}</span>
+        <span className="text-[8px] font-semibold leading-tight">falta no banco</span>
+      </div>
+    );
+  }
+
+  const destaque = arrastandoAlgo
+    ? recebimento === 'livre'
+      ? droppable.isOver
+        ? 'ring-4 ring-white scale-110 z-20'
+        : 'ring-2 ring-brand-300/90 animate-pulse z-10'
+      : recebimento === 'troca'
+        ? droppable.isOver
+          ? 'ring-4 ring-amber-300 scale-110 z-20'
+          : 'ring-2 ring-amber-400/90 z-10'
+        : 'opacity-40'
+    : '';
+
+  return (
+    <button
+      ref={(el) => {
+        droppable.setNodeRef(el);
+        draggable.setNodeRef(el);
+      }}
+      {...draggable.listeners}
+      {...draggable.attributes}
+      onClick={aoClicar}
+      className={`absolute flex h-12 w-20 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-lg px-1 shadow-md transition sm:w-24 ${MESA_COR[info.estado]} ${destaque} ${draggable.isDragging ? 'opacity-30' : ''}`}
+      style={{ left: `${pos.x}%`, top: `${pos.y}%`, touchAction: 'manipulation' }}
+      title={`Mesa ${numero} — ${MESA_ESTADO_LABEL[info.estado]}`}
+    >
+      <span className="text-[11px] font-black leading-none">{numero}</span>
+      {info.reserva ? (
+        <>
+          <span className="w-full truncate text-center text-[8px] font-bold leading-tight">
+            {info.reserva.origem === 'passante' && '🚶 '}
+            {info.reserva.nome}
+          </span>
+          <span className="text-[8px] font-semibold leading-none opacity-90">
+            {TURNO_LABEL[info.reserva.turno]} · {MESA_ESTADO_LABEL[info.estado]}
+          </span>
+        </>
+      ) : (
+        <span className="text-[8px] font-semibold leading-none opacity-90">
+          {MESA_ESTADO_LABEL[info.estado]}
+        </span>
+      )}
+      {arrastandoAlgo && recebimento === 'troca' && (
+        <span className="absolute -right-1 -top-1 rounded bg-amber-400 px-1 text-[8px] font-black text-amber-950">
+          troca
+        </span>
+      )}
+    </button>
+  );
+}
+
+/* ---------- Card de mesa fora do layout (grade auxiliar) ---------- */
 function MesaCard({
   numero,
   mesa,
