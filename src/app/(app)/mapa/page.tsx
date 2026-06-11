@@ -358,12 +358,12 @@ export default function MapaPage() {
         </div>
 
         {/* Seletor de turno — cada horário tem o SEU mapa, nunca misturados */}
-        <div className="flex w-full rounded-2xl bg-white p-1.5 shadow-suave ring-1 ring-carvao-200/70 dark:bg-carvao-850 dark:ring-carvao-700">
+        <div className="flex w-full max-w-md rounded-xl bg-white p-1 shadow-suave ring-1 ring-carvao-200/70 dark:bg-carvao-850 dark:ring-carvao-700">
           {TURNOS.map((t) => (
             <button
               key={t}
               onClick={() => setTurno(t)}
-              className={`min-h-12 flex-1 rounded-xl text-base font-bold tracking-tight transition-all duration-150 ${
+              className={`min-h-9 flex-1 rounded-lg text-sm font-bold tracking-tight transition-all duration-150 ${
                 turno === t
                   ? 'bg-carvao-900 text-areia-50 shadow-media dark:bg-areia-100 dark:text-carvao-900'
                   : 'text-carvao-400 hover:text-carvao-700 dark:text-carvao-300 dark:hover:text-areia-100'
@@ -371,7 +371,7 @@ export default function MapaPage() {
             >
               {TURNO_LABEL[t]}
               <span
-                className={`ml-2 text-[11px] font-semibold uppercase tracking-[0.14em] ${
+                className={`ml-1.5 text-[9px] font-semibold uppercase tracking-[0.14em] ${
                   turno === t ? 'text-brand-400 dark:text-brand-600' : 'text-carvao-300 dark:text-carvao-500'
                 }`}
               >
@@ -390,15 +390,15 @@ export default function MapaPage() {
           {LEGENDA.map((e) => (
             <span
               key={e}
-              className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-carvao-500 ring-1 ring-carvao-200/70 dark:bg-carvao-850 dark:text-carvao-200 dark:ring-carvao-700"
+              className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-carvao-500 ring-1 ring-carvao-200/70 dark:bg-carvao-850 dark:text-carvao-200 dark:ring-carvao-700"
             >
-              <span className={`inline-block h-2.5 w-2.5 rounded-full ${MESA_COR[e].split(' ')[0]}`} />
+              <span className={`inline-block h-2 w-2 rounded-full ${MESA_COR[e].split(' ')[0]}`} />
               {MESA_ESTADO_LABEL[e]}
             </span>
           ))}
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[1fr_minmax(0,380px)]">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,500px)_minmax(300px,400px)] lg:justify-center">
           {/* ---------- MAPA DE CHÃO (salão 1-24 + varanda) ---------- */}
           <div className="space-y-3">
             {mesasFaltando.length > 0 && (
@@ -407,7 +407,7 @@ export default function MapaPage() {
                 execute a versão atual de <b>supabase/mesas-1-a-24.sql</b> no SQL Editor do Supabase.
               </p>
             )}
-            <div className="mx-auto w-full max-w-[500px] rounded-[28px] bg-white p-2.5 shadow-media ring-1 ring-carvao-200/60 dark:bg-carvao-850 dark:ring-carvao-700 lg:mx-0">
+            <div className="mx-auto w-full max-w-[500px] rounded-3xl bg-white p-2 shadow-media ring-1 ring-carvao-200/60 dark:bg-carvao-850 dark:ring-carvao-700 lg:mx-0">
               <div className="relative aspect-[43/100] w-full select-none overflow-hidden rounded-3xl ring-1 ring-carvao-900/10">
                 {/* piso do salão (madeira) */}
                 <div className="absolute inset-x-0 top-0 h-[74.5%] bg-[#c0a075] dark:bg-[#6b5941]" />
@@ -500,7 +500,7 @@ export default function MapaPage() {
           {/* ---------- LISTA DE CASAIS ---------- */}
           <div className="space-y-3 rounded-[28px] bg-white/70 p-3 shadow-suave ring-1 ring-carvao-200/60 backdrop-blur-sm dark:bg-carvao-850/70 dark:ring-carvao-700">
             <div className="flex items-baseline justify-between px-1 pt-1">
-              <h2 className="font-display text-lg font-semibold tracking-tight">
+              <h2 className="font-display text-base font-semibold tracking-tight">
                 Casais · {TURNO_LABEL[turno]}
               </h2>
               <span className="text-xs font-semibold text-carvao-400 dark:text-carvao-300">
@@ -518,7 +518,7 @@ export default function MapaPage() {
                 <button
                   key={f}
                   onClick={() => setFiltroLista(f)}
-                  className={`min-h-10 rounded-full px-4 text-[13px] font-semibold transition ${
+                  className={`min-h-7 rounded-full px-3 text-xs font-semibold transition ${
                     filtroLista === f
                       ? 'bg-carvao-900 text-areia-50 shadow-suave dark:bg-areia-100 dark:text-carvao-900'
                       : 'bg-white text-carvao-500 ring-1 ring-carvao-200 hover:text-carvao-800 dark:bg-carvao-800 dark:text-carvao-300 dark:ring-carvao-600'

@@ -26,7 +26,7 @@ export function NavBar() {
     <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-carvao-950/95 text-areia-50 shadow-media backdrop-blur print:hidden">
       {/* fio dourado sutil de acabamento */}
       <div className="h-px w-full bg-gradient-to-r from-transparent via-ouro-500/50 to-transparent" />
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-3 sm:gap-3 sm:px-4">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-3 sm:gap-3 sm:px-4">
         {/* Marca */}
         <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
           <span
@@ -53,7 +53,7 @@ export function NavBar() {
               <Link
                 key={l.href}
                 href={l.href}
-                className={`flex min-h-11 items-center gap-2 whitespace-nowrap rounded-full px-3.5 text-sm font-semibold transition sm:px-5 ${
+                className={`flex min-h-9 items-center gap-1.5 whitespace-nowrap rounded-full px-3 text-[13px] font-semibold transition sm:px-4 ${
                   ativo
                     ? 'bg-white/10 text-white ring-1 ring-white/15'
                     : 'text-carvao-300 hover:bg-white/5 hover:text-areia-100'
@@ -84,7 +84,7 @@ export function NavBar() {
           )}
           <button
             onClick={sair}
-            className="min-h-11 whitespace-nowrap rounded-full px-2 text-sm font-semibold text-carvao-300 transition hover:text-white sm:px-3"
+            className="min-h-9 whitespace-nowrap rounded-full px-2 text-[13px] font-semibold text-carvao-300 transition hover:text-white sm:px-3"
           >
             Sair
           </button>

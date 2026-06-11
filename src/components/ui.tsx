@@ -47,7 +47,7 @@ export function Cartao({ children, className = '' }: { children: ReactNode; clas
 function Pilula({ classe, children }: { classe: string; children: ReactNode }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ${classe}`}
+      className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-bold ${classe}`}
     >
       <i className="h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-60" aria-hidden />
       {children}
