@@ -29,10 +29,18 @@ import {
   type MesaEstado,
 } from '@/lib/constants';
 import { useDados } from '@/lib/data-context';
-import { estadoMesa, mesaPodeReceber, LIBERADA_MS, type TurnoMapa } from '@/lib/mesa-estado';
+import { ORDEM_MAPA, POSICAO_MESA, type PosMesa } from '@/lib/mapa-layout';
+import {
+  estadoMesa,
+  mesaPodeReceber,
+  LIBERADA_MS,
+  type EstadoDaMesa,
+  type TurnoMapa,
+} from '@/lib/mesa-estado';
 import type { Mesa, Reserva, Turno } from '@/lib/types';
 
 const LEGENDA: MesaEstado[] = ['livre', 'reservada', 'chegou', 'ocupada', 'limpeza', 'bloqueada'];
+const BLOQUEADA: EstadoDaMesa = { estado: 'bloqueada', reserva: null };
 
 export default function MapaPage() {
   const { mesas, reservas, carregando, recarregar } = useDados();
@@ -43,6 +51,7 @@ export default function MapaPage() {
   const [arrastando, setArrastando] = useState<Reserva | null>(null);
   const [aviso, setAviso] = useState<{ tipo: 'ok' | 'erro'; texto: string } | null>(null);
   const [novoCasal, setNovoCasal] = useState(false);
+  const [novaReservaMesa, setNovaReservaMesa] = useState<Mesa | null>(null);
   const [novoPassante, setNovoPassante] = useState(false);
   const [tique, setTique] = useState(0);
 
@@ -63,9 +72,11 @@ export default function MapaPage() {
     useSensor(TouchSensor, { activationConstraint: { delay: 220, tolerance: 8 } }),
   );
 
+  const porNumero = useMemo(() => new Map(mesas.map((m) => [m.numero, m])), [mesas]);
+
   // "tique" força recálculo periódico: mesa cinza ("liberada") volta a livre sozinha.
   const estadoDe = useMemo(() => {
-    const mapa = new Map<string, ReturnType<typeof estadoMesa>>();
+    const mapa = new Map<string, EstadoDaMesa>();
     mesas.forEach((m) => mapa.set(m.id, estadoMesa(m, reservas, turno)));
     return mapa;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -120,7 +131,7 @@ export default function MapaPage() {
     setArrastando(null);
     marcarArraste();
     const arrastada = event.active.data.current?.reserva as Reserva | undefined;
-    const mesa = event.over?.data.current?.mesa as Mesa | undefined;
+    const mesa = event.over?.data.current?.mesa as Mesa | null | undefined;
     if (!arrastada || !mesa) return;
     // usa a versão mais recente da reserva (a do drag pode estar defasada)
     const reserva = reservas.find((r) => r.id === arrastada.id) ?? arrastada;
@@ -150,7 +161,7 @@ export default function MapaPage() {
 
   if (carregando) return <p className="py-10 text-center text-gray-500">Carregando...</p>;
 
-  const infoSelecionada = mesaSelecionada ? estadoDe.get(mesaSelecionada.id) : null;
+  const infoSelecionada = mesaSelecionada ? (estadoDe.get(mesaSelecionada.id) ?? BLOQUEADA) : null;
   const aguardandoParaMesa = mesaSelecionada
     ? reservas.filter(
         (r) =>
@@ -166,11 +177,9 @@ export default function MapaPage() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-2xl font-black">Mapa de mesas</h1>
           <div className="flex gap-2">
-            <Botao className="text-sm" onClick={() => setNovoCasal(true)}>
-              + Casal
-            </Botao>
-            <Botao variante="secundario" className="text-sm" onClick={() => setNovoPassante(true)}>
-              + Passante
+            <Botao onClick={() => setNovoCasal(true)}>➕ Nova reserva</Botao>
+            <Botao variante="secundario" onClick={() => setNovoPassante(true)}>
+              🚶 Passante
             </Botao>
           </div>
         </div>
@@ -201,52 +210,71 @@ export default function MapaPage() {
           ))}
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-          {/* ---------- PLANTA DO RESTAURANTE ---------- */}
-          <div className="mx-auto w-full max-w-[600px]">
-            <div className="relative aspect-[10/16] w-full select-none overflow-hidden rounded-2xl border-4 border-gray-800 shadow-lg dark:border-gray-600">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,460px)_1fr]">
+          {/* ---------- MAPA DE CHÃO (planta oficial do restaurante) ---------- */}
+          <div className="mx-auto w-full max-w-[460px]">
+            <div className="relative aspect-[37/100] w-full select-none overflow-hidden rounded-lg border-4 border-gray-900 shadow-xl dark:border-gray-500">
               {/* piso do salão (madeira) */}
-              <div className="absolute inset-x-0 top-0 h-[65%] bg-[#cfa86b] dark:bg-[#6b5337]" />
+              <div className="absolute inset-x-0 top-0 h-[71%] bg-[#c29d6d] dark:bg-[#75603f]" />
               {/* piso da varanda */}
-              <div className="absolute inset-x-0 bottom-0 h-[35%] bg-stone-300 dark:bg-stone-600" />
-              {/* divisória salão/varanda */}
-              <div className="absolute inset-x-0 top-[65%] border-t-4 border-gray-800/70 dark:border-gray-300/40" />
-              <span className="absolute left-2 top-[65.5%] rounded bg-black/50 px-2 py-0.5 text-[10px] font-bold tracking-wide text-white">
-                ÁREA EXTERNA
-              </span>
-              <span className="absolute left-2 top-1 rounded bg-black/50 px-2 py-0.5 text-[10px] font-bold tracking-wide text-white">
-                SALÃO PRINCIPAL
-              </span>
+              <div className="absolute inset-x-0 bottom-0 top-[71%] bg-[#d9d5d0] dark:bg-stone-500" />
+              {/* divisória salão/varanda (vidro) */}
+              <div className="absolute inset-x-0 top-[70.7%] h-[0.5%] bg-gray-900/80 dark:bg-gray-900" />
 
-              {/* balcão do bar (topo) */}
-              <div className="absolute left-[30%] top-[1.2%] h-[2.6%] w-[46%] rounded-md bg-red-950/90">
-                <span className="flex h-full items-center justify-center text-[9px] font-black tracking-widest text-red-200">
-                  BAR
-                </span>
+              {/* bloco da cozinha/porta (topo direita) */}
+              <div className="absolute right-0 top-0 h-[2.8%] w-[15%] bg-gray-400/80" />
+              {/* bar em L (topo) */}
+              <div className="absolute left-[16%] top-[2.2%] h-[8%] w-[7%] bg-[#5a1b1b]" />
+              <div className="absolute left-[22%] top-[6.8%] h-[3.4%] w-[59%] bg-[#5a1b1b]">
+                <div className="absolute inset-x-[1%] top-[12%] h-[55%] rounded-[2px] bg-gray-100" />
               </div>
-              {/* barra fria / sushi */}
-              <div className="absolute left-[20%] top-[36%] h-[25%] w-[7%] rounded-lg border border-gray-400 bg-gray-200 dark:bg-gray-400">
-                <span className="flex h-full items-center justify-center text-[9px] font-black tracking-widest text-gray-600 [writing-mode:vertical-lr]">
+
+              {/* sofás (azul-escuro como na planta) */}
+              <div className="absolute left-[1%] top-[14%] h-[26%] w-[7.5%] rounded-md bg-[#3c4458]" />
+              <div className="absolute right-[0.5%] top-[13.5%] h-[12.5%] w-[7.5%] rounded-md bg-[#3c4458]" />
+              <div className="absolute right-[0.5%] top-[27%] h-[13%] w-[7.5%] rounded-md bg-[#3c4458]" />
+              <div className="absolute right-[0.5%] top-[41%] h-[28.5%] w-[7.5%] rounded-md bg-[#3c4458]" />
+              <div className="absolute right-[0.5%] top-[72.5%] h-[23%] w-[7.5%] rounded-md bg-[#3c4458]" />
+
+              {/* barra fria do sushi */}
+              <div className="absolute left-[8%] top-[43%] h-[22.5%] w-[15%] rounded-sm border-2 border-gray-500 bg-gray-100 dark:bg-gray-300">
+                <span className="flex h-full items-center justify-center text-[9px] font-black tracking-[0.2em] text-gray-500 [writing-mode:vertical-lr]">
                   SUSHI
                 </span>
               </div>
-              {/* sofás (faixas) */}
-              <div className="absolute left-[85%] top-[9%] h-[24%] w-[2.5%] rounded bg-slate-700/80" />
-              <div className="absolute left-[85%] top-[34.5%] h-[30%] w-[2.5%] rounded bg-slate-700/80" />
-              <div className="absolute left-[10%] top-[11%] h-[19%] w-[2.5%] rounded bg-slate-700/80" />
-              <div className="absolute left-[73%] top-[69%] h-[26%] w-[2.5%] rounded bg-slate-700/80" />
+              <div className="absolute left-[9%] top-[66%] h-[2.8%] w-[13%] rounded-sm bg-gray-300 dark:bg-gray-400" />
 
-              {/* mesas */}
-              {mesas.map((m) => (
-                <MesaChip
-                  key={m.id}
-                  mesa={m}
-                  info={estadoDe.get(m.id)!}
-                  podeReceber={arrastando ? mesaPodeReceber(m, reservas, arrastando) : false}
-                  arrastandoAlgo={!!arrastando}
-                  aoClicar={() => cliqueProtegido(() => setMesaSelecionada(m))}
-                />
-              ))}
+              {/* varanda: planta e banco claro */}
+              <span className="absolute left-[5%] top-[71.8%] text-xl">🪴</span>
+              <div className="absolute bottom-0 left-0 top-[83%] w-[5.5%] bg-sky-100 dark:bg-sky-200/60" />
+
+              {/* rótulos das áreas */}
+              <span className="absolute left-[2%] top-[0.6%] rounded bg-black/55 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-white">
+                SALÃO
+              </span>
+              <span className="absolute left-[24%] top-[71.8%] rounded bg-black/55 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-white">
+                ÁREA EXTERNA
+              </span>
+
+              {/* mesas — posições fixas da planta oficial */}
+              {ORDEM_MAPA.map((numero) => {
+                const mesa = porNumero.get(numero) ?? null;
+                const info = mesa ? (estadoDe.get(mesa.id) ?? BLOQUEADA) : BLOQUEADA;
+                return (
+                  <MesaChip
+                    key={numero}
+                    numero={numero}
+                    pos={POSICAO_MESA[numero]}
+                    mesa={mesa}
+                    info={info}
+                    podeReceber={!!mesa && !!arrastando && mesaPodeReceber(mesa, reservas, arrastando)}
+                    arrastandoAlgo={!!arrastando}
+                    aoClicar={() => {
+                      if (mesa) cliqueProtegido(() => setMesaSelecionada(mesa));
+                    }}
+                  />
+                );
+              })}
             </div>
           </div>
 
@@ -258,7 +286,7 @@ export default function MapaPage() {
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
             />
-            <div className="max-h-[75vh] space-y-4 overflow-y-auto pb-24 pr-1 lg:pb-2">
+            <div className="max-h-[80vh] space-y-4 overflow-y-auto pb-24 pr-1 lg:pb-2">
               <GrupoCasais titulo="⏳ Aguardando mesa" cor="text-amber-600 dark:text-amber-400" reservas={lista.aguardando} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
               <GrupoCasais titulo="📍 Na mesa (reservado)" cor="text-blue-600 dark:text-blue-400" reservas={lista.naMesa} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
               <GrupoCasais titulo="🟠 Chegaram" cor="text-orange-600 dark:text-orange-400" reservas={lista.chegaram} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
@@ -266,7 +294,10 @@ export default function MapaPage() {
               <GrupoCasais titulo="✓ Finalizados" cor="text-gray-500" reservas={lista.finalizados} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
               <GrupoCasais titulo="👻 No-show / cancelados" cor="text-gray-400" reservas={lista.encerrados} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
               {Object.values(lista).every((g) => g.length === 0) && (
-                <p className="py-8 text-center text-sm text-gray-400">Nenhum casal neste turno.</p>
+                <div className="space-y-3 py-8 text-center">
+                  <p className="text-sm text-gray-400">Nenhum casal neste turno.</p>
+                  <Botao onClick={() => setNovoCasal(true)}>➕ Cadastrar reserva</Botao>
+                </div>
               )}
             </div>
           </div>
@@ -297,7 +328,7 @@ export default function MapaPage() {
       {/* ---------- MODAL DA MESA ---------- */}
       <Modal
         titulo={mesaSelecionada ? `Mesa ${mesaSelecionada.numero}` : ''}
-        aberto={!!mesaSelecionada && !reservaSelecionada}
+        aberto={!!mesaSelecionada && !reservaSelecionada && !novaReservaMesa}
         aoFechar={() => setMesaSelecionada(null)}
       >
         {mesaSelecionada && infoSelecionada && (
@@ -343,34 +374,44 @@ export default function MapaPage() {
                 </Botao>
               </div>
             ) : infoSelecionada.estado === 'bloqueada' ? (
-              <p className="text-gray-500 dark:text-gray-400">Mesa de apoio/balcão — bloqueada para uso.</p>
+              <p className="text-gray-500 dark:text-gray-400">Lugar de apoio/balcão — bloqueado para reservas.</p>
             ) : (
               <div className="space-y-3">
-                <p className="text-gray-500 dark:text-gray-400">
-                  Mesa livre. Arraste um casal da lista até ela, ou escolha abaixo:
-                </p>
-                {aguardandoParaMesa.slice(0, 8).map((r) => (
-                  <button
-                    key={r.id}
-                    className="flex w-full items-center justify-between rounded-xl bg-gray-100 px-4 py-3 text-left font-semibold transition active:scale-95 dark:bg-gray-700"
-                    onClick={async () => {
-                      try {
-                        await moverMesa(r.id, mesaSelecionada.id);
-                        await recarregar();
-                        setMesaSelecionada(null);
-                        setAviso({ tipo: 'ok', texto: `${r.nome} → mesa ${mesaSelecionada.numero} ✓` });
-                      } catch (e) {
-                        setAviso({ tipo: 'erro', texto: e instanceof Error ? e.message : 'Erro ao atribuir.' });
-                      }
-                    }}
-                  >
-                    <span>{r.nome}</span>
-                    <span className="text-sm text-gray-500 dark:text-gray-300">{TURNO_LABEL[r.turno]} →</span>
-                  </button>
-                ))}
-                {aguardandoParaMesa.length === 0 && (
-                  <p className="text-sm text-gray-400">Nenhum casal aguardando mesa neste turno.</p>
+                <Botao
+                  className="w-full"
+                  onClick={() => setNovaReservaMesa(mesaSelecionada)}
+                >
+                  ➕ Nova reserva nesta mesa
+                </Botao>
+                {aguardandoParaMesa.length > 0 && (
+                  <>
+                    <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
+                      Ou coloque um casal que está aguardando:
+                    </p>
+                    {aguardandoParaMesa.slice(0, 8).map((r) => (
+                      <button
+                        key={r.id}
+                        className="flex w-full items-center justify-between rounded-xl bg-gray-100 px-4 py-3 text-left font-semibold transition active:scale-95 dark:bg-gray-700"
+                        onClick={async () => {
+                          try {
+                            await moverMesa(r.id, mesaSelecionada.id);
+                            await recarregar();
+                            setMesaSelecionada(null);
+                            setAviso({ tipo: 'ok', texto: `${r.nome} → mesa ${mesaSelecionada.numero} ✓` });
+                          } catch (e) {
+                            setAviso({ tipo: 'erro', texto: e instanceof Error ? e.message : 'Erro ao atribuir.' });
+                          }
+                        }}
+                      >
+                        <span>{r.nome}</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-300">{TURNO_LABEL[r.turno]} →</span>
+                      </button>
+                    ))}
+                  </>
                 )}
+                <p className="text-sm text-gray-400">
+                  Dica: dá para arrastar um casal da lista direto para a mesa.
+                </p>
               </div>
             )}
           </div>
@@ -387,8 +428,27 @@ export default function MapaPage() {
         }}
       />
 
-      {/* novo casal */}
-      {novoCasal && <FormularioReserva aberto={novoCasal} aoFechar={() => setNovoCasal(false)} />}
+      {/* nova reserva (botão do topo) */}
+      {novoCasal && (
+        <FormularioReserva
+          aberto={novoCasal}
+          aoFechar={() => setNovoCasal(false)}
+          turnoInicial={turno !== 'agora' ? turno : undefined}
+        />
+      )}
+
+      {/* nova reserva já na mesa clicada */}
+      {novaReservaMesa && (
+        <FormularioReserva
+          aberto={!!novaReservaMesa}
+          aoFechar={() => {
+            setNovaReservaMesa(null);
+            setMesaSelecionada(null);
+          }}
+          turnoInicial={turno !== 'agora' ? turno : undefined}
+          mesaInicial={novaReservaMesa.id}
+        />
+      )}
 
       {/* novo passante */}
       <PassanteModal
@@ -402,22 +462,26 @@ export default function MapaPage() {
 
 /* ---------- Chip de mesa (arrastável + alvo de soltura) ---------- */
 function MesaChip({
+  numero,
+  pos,
   mesa,
   info,
   podeReceber,
   arrastandoAlgo,
   aoClicar,
 }: {
-  mesa: Mesa;
-  info: ReturnType<typeof estadoMesa>;
+  numero: string;
+  pos: PosMesa;
+  mesa: Mesa | null;
+  info: EstadoDaMesa;
   podeReceber: boolean;
   arrastandoAlgo: boolean;
   aoClicar: () => void;
 }) {
   const reservaArrastavel = info.reserva && STATUS_ATIVOS.includes(info.reserva.status) ? info.reserva : null;
-  const droppable = useDroppable({ id: `mesa-${mesa.id}`, data: { mesa }, disabled: !mesa.ativa });
+  const droppable = useDroppable({ id: `mesa-${numero}`, data: { mesa }, disabled: !mesa || !mesa.ativa });
   const draggable = useDraggable({
-    id: `mesa-res-${mesa.id}`,
+    id: `mesa-res-${numero}`,
     data: { reserva: reservaArrastavel },
     disabled: !reservaArrastavel,
   });
@@ -431,6 +495,10 @@ function MesaChip({
         ? 'ring-4 ring-red-400'
         : '';
 
+  const tamanho = pos.pequena
+    ? 'h-6 w-6 rounded-[5px] text-[9px] sm:h-7 sm:w-7 sm:text-[10px]'
+    : 'h-10 w-10 rounded-lg text-sm sm:h-12 sm:w-12';
+
   return (
     <button
       ref={(el) => {
@@ -440,12 +508,12 @@ function MesaChip({
       {...draggable.listeners}
       {...draggable.attributes}
       onClick={aoClicar}
-      className={`absolute flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-lg text-sm font-black shadow-md transition sm:h-14 sm:w-14 ${MESA_COR[info.estado]} ${destaque} ${draggable.isDragging ? 'opacity-30' : ''}`}
-      style={{ left: `${mesa.pos_x}%`, top: `${mesa.pos_y}%`, touchAction: 'manipulation' }}
-      title={`Mesa ${mesa.numero} — ${MESA_ESTADO_LABEL[info.estado]}`}
+      className={`absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center font-black shadow-md transition ${tamanho} ${MESA_COR[info.estado]} ${destaque} ${draggable.isDragging ? 'opacity-30' : ''}`}
+      style={{ left: `${pos.x}%`, top: `${pos.y}%`, touchAction: 'manipulation' }}
+      title={`Mesa ${numero} — ${MESA_ESTADO_LABEL[info.estado]}`}
     >
-      <span className="text-base leading-none sm:text-lg">{mesa.numero}</span>
-      {info.reserva && (
+      <span className={`leading-none ${pos.pequena ? '' : 'text-base sm:text-lg'}`}>{numero}</span>
+      {!pos.pequena && info.reserva && (
         <span className="max-w-full truncate px-0.5 text-[8px] font-semibold leading-tight sm:text-[9px]">
           {info.reserva.nome.split(' ')[0]}
         </span>
@@ -541,7 +609,10 @@ function PassanteModal({
   const [salvando, setSalvando] = useState(false);
 
   const livres = useMemo(
-    () => mesas.filter((m) => m.ativa && estadoMesa(m, reservas, turno).estado === 'livre'),
+    () =>
+      mesas
+        .filter((m) => m.ativa && estadoMesa(m, reservas, turno).estado === 'livre')
+        .sort((a, b) => a.numero.localeCompare(b.numero, 'pt-BR', { numeric: true })),
     [mesas, reservas, turno],
   );
 

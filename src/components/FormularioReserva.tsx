@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { criarReserva, editarReserva } from '@/lib/actions';
 import { PIX_LABEL, TURNOS, TURNO_LABEL } from '@/lib/constants';
 import { useDados } from '@/lib/data-context';
-import { mesasLivres } from '@/lib/mesa-estado';
+import { estadoMesa } from '@/lib/mesa-estado';
 import type { PixStatus, Reserva, Turno } from '@/lib/types';
 import { Botao, Modal, estiloInput, estiloRotulo } from './ui';
 
@@ -12,10 +12,14 @@ export function FormularioReserva({
   aberto,
   aoFechar,
   reserva,
+  turnoInicial,
+  mesaInicial,
 }: {
   aberto: boolean;
   aoFechar: () => void;
   reserva?: Reserva | null;
+  turnoInicial?: Turno;
+  mesaInicial?: string;
 }) {
   const { mesas, reservas, recarregar } = useDados();
   const [salvando, setSalvando] = useState(false);
@@ -23,15 +27,26 @@ export function FormularioReserva({
 
   const [nome, setNome] = useState(reserva?.nome ?? '');
   const [telefone, setTelefone] = useState(reserva?.telefone ?? '');
-  const [turno, setTurno] = useState<Turno>(reserva?.turno ?? '19:00');
-  const [tableId, setTableId] = useState(reserva?.table_id ?? '');
+  const [turno, setTurno] = useState<Turno>(reserva?.turno ?? turnoInicial ?? '19:00');
+  const [tableId, setTableId] = useState(reserva?.table_id ?? mesaInicial ?? '');
   const [pixStatus, setPixStatus] = useState<PixStatus>(reserva?.pix_status ?? 'pendente');
   const [observacao, setObservacao] = useState(reserva?.observacao ?? '');
 
-  const livres = useMemo(
-    () => mesasLivres(mesas, reservas, turno, reserva?.turno === turno ? reserva?.table_id : null),
-    [mesas, reservas, turno, reserva],
-  );
+  // Todas as mesas reserváveis do turno: livres selecionáveis,
+  // ocupadas aparecem desabilitadas com o nome de quem está nela.
+  const opcoesMesa = useMemo(() => {
+    return mesas
+      .filter((m) => m.ativa)
+      .sort((a, b) => a.numero.localeCompare(b.numero, 'pt-BR', { numeric: true }))
+      .map((m) => {
+        const { estado, reserva: ocupante } = estadoMesa(m, reservas, turno);
+        const minhaMesa = reserva?.turno === turno && reserva?.table_id === m.id;
+        const livre = minhaMesa || estado === 'livre' || estado === 'limpeza';
+        return { mesa: m, livre, ocupante: livre ? null : ocupante };
+      });
+  }, [mesas, reservas, turno, reserva]);
+
+  const totalLivres = opcoesMesa.filter((o) => o.livre).length;
 
   async function salvar() {
     if (!nome.trim()) {
@@ -64,7 +79,7 @@ export function FormularioReserva({
   }
 
   return (
-    <Modal titulo={reserva ? 'Editar casal' : 'Novo casal'} aberto={aberto} aoFechar={aoFechar}>
+    <Modal titulo={reserva ? 'Editar reserva' : 'Nova reserva'} aberto={aberto} aoFechar={aoFechar}>
       <div className="space-y-4">
         <div>
           <label className={estiloRotulo}>Nome do casal *</label>
@@ -93,15 +108,23 @@ export function FormularioReserva({
           </div>
         </div>
         <div>
-          <label className={estiloRotulo}>Mesa (opcional — dá para arrastar no mapa depois)</label>
+          <label className={estiloRotulo}>
+            Mesa — {totalLivres} livre(s) no turno {TURNO_LABEL[turno]}
+          </label>
           <select className={estiloInput} value={tableId} onChange={(e) => setTableId(e.target.value)}>
             <option value="">Sem mesa (aguardando)</option>
-            {livres.map((m) => (
-              <option key={m.id} value={m.id}>
-                Mesa {m.numero}
+            {opcoesMesa.map(({ mesa, livre, ocupante }) => (
+              <option key={mesa.id} value={mesa.id} disabled={!livre}>
+                Mesa {mesa.numero}
+                {livre ? '' : ` — ocupada${ocupante ? ` (${ocupante.nome})` : ''}`}
               </option>
             ))}
           </select>
+          {opcoesMesa.length === 0 && (
+            <p className="mt-1 text-sm font-semibold text-red-600 dark:text-red-400">
+              Nenhuma mesa cadastrada no banco — execute os scripts de migração no Supabase.
+            </p>
+          )}
         </div>
         <div>
           <label className={estiloRotulo}>Telefone (opcional)</label>
