@@ -41,7 +41,6 @@ import {
   LIBERADA_MS,
   type EstadoDaMesa,
   type Recebimento,
-  type TurnoMapa,
 } from '@/lib/mesa-estado';
 import type { Mesa, Reserva, Turno } from '@/lib/types';
 
@@ -68,9 +67,21 @@ function statusCurto(r: Reserva): string {
   return r.table_id ? 'Mesa definida' : 'Aguardando';
 }
 
+/** Turno sugerido pelo relógio: antes das 21h → 19h; antes das 22h → 21h. */
+function turnoPeloRelogio(): Turno {
+  const h = new Date().getHours();
+  if (h >= 22) return '22:00';
+  if (h >= 21) return '21:00';
+  return '19:00';
+}
+
 export default function MapaPage() {
   const { mesas, reservas, carregando, erro, supabaseHost, recarregar } = useDados();
-  const [turno, setTurno] = useState<TurnoMapa>('agora');
+  // Cada horário tem o SEU mapa — nunca misturados. Começa no turno do relógio.
+  const [turno, setTurno] = useState<Turno>('19:00');
+  useEffect(() => {
+    setTurno(turnoPeloRelogio());
+  }, []);
   const [busca, setBusca] = useState('');
   const [filtroLista, setFiltroLista] = useState<FiltroLista>('todos');
   const [mesaSelecionada, setMesaSelecionada] = useState<Mesa | null>(null);
@@ -144,38 +155,16 @@ export default function MapaPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mesas, reservas, turno, mesasAntigasOcupadas, tique]);
 
-  // Lista lateral: grupos sem sobreposição (cada casal aparece UMA vez).
+  // Lista lateral: SÓ os casais do horário selecionado, em grupos sem
+  // sobreposição (cada casal aparece UMA vez).
   const lista = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     const doTurno = reservas
-      .filter((r) => turno === 'agora' || r.turno === turno)
+      .filter((r) => r.turno === turno)
       .filter((r) => !termo || r.nome.toLowerCase().includes(termo))
-      .sort(
-        (a, b) =>
-          TURNOS.indexOf(a.turno) - TURNOS.indexOf(b.turno) || a.nome.localeCompare(b.nome, 'pt-BR'),
-      );
-    // Ordem dentro de cada horário: sem mesa primeiro, depois na mesa,
-    // chegou, sentado, finalizado e por último no-show/cancelado.
-    const peso = (r: Reserva) => {
-      if (STATUS_ATIVOS.includes(r.status)) {
-        if (!r.table_id) return 0;
-        if (r.status === 'sentado') return 3;
-        if (r.status === 'chegou') return 2;
-        return 1;
-      }
-      return r.status === 'finalizada' ? 4 : 5;
-    };
-    const porTurno = Object.fromEntries(
-      TURNOS.map((t) => [
-        t,
-        doTurno
-          .filter((r) => r.turno === t)
-          .sort((a, b) => peso(a) - peso(b) || a.nome.localeCompare(b.nome, 'pt-BR')),
-      ]),
-    ) as Record<Turno, Reserva[]>;
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
     return {
       doTurno,
-      porTurno,
       aguardando: doTurno.filter((r) => STATUS_ATIVOS.includes(r.status) && !r.table_id),
       naMesa: doTurno.filter(
         (r) => r.table_id && STATUS_ATIVOS.includes(r.status) && r.status !== 'chegou' && r.status !== 'sentado',
@@ -288,10 +277,7 @@ export default function MapaPage() {
   const infoSelecionada = mesaSelecionada ? (estadoDe.get(mesaSelecionada.id) ?? BLOQUEADA) : null;
   const aguardandoParaMesa = mesaSelecionada
     ? reservas.filter(
-        (r) =>
-          STATUS_ATIVOS.includes(r.status) &&
-          !r.table_id &&
-          (turno === 'agora' || r.turno === turno),
+        (r) => STATUS_ATIVOS.includes(r.status) && !r.table_id && r.turno === turno,
       )
     : [];
 
@@ -341,9 +327,9 @@ export default function MapaPage() {
           </div>
         </div>
 
-        {/* Filtro de turno (vale para o mapa e para a lista) */}
+        {/* Seletor de turno — cada horário tem o SEU mapa, nunca misturados */}
         <div className="flex gap-2">
-          {([...TURNOS, 'agora'] as TurnoMapa[]).map((t) => (
+          {TURNOS.map((t) => (
             <button
               key={t}
               onClick={() => setTurno(t)}
@@ -353,10 +339,15 @@ export default function MapaPage() {
                   : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200'
               }`}
             >
-              {t === 'agora' ? '⚡ Todos / Agora' : TURNO_LABEL[t]}
+              🕐 Mapa {TURNO_LABEL[t]}
             </button>
           ))}
         </div>
+        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">
+          Cada horário tem seu próprio mapa: as mesas mostram só as reservas de{' '}
+          {TURNO_LABEL[turno]}. Casais que ainda estão sentados de outro horário aparecem na mesa
+          até o caixa liberar.
+        </p>
 
         <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs font-semibold">
           {LEGENDA.map((e) => (
@@ -490,28 +481,12 @@ export default function MapaPage() {
             <div className="max-h-[80vh] space-y-4 overflow-y-auto pb-24 pr-1 lg:pb-2">
               {filtroLista === 'todos' ? (
                 <>
-                  {turno === 'agora' ? (
-                    // Visão geral: casais organizados por horário
-                    TURNOS.map((t) => (
-                      <GrupoCasais
-                        key={t}
-                        titulo={`🕐 Turno ${TURNO_LABEL[t]}`}
-                        cor="text-brand-600 dark:text-brand-400"
-                        reservas={lista.porTurno[t]}
-                        aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))}
-                      />
-                    ))
-                  ) : (
-                    // Dentro de um horário: agrupado por situação
-                    <>
-                      <GrupoCasais titulo="⏳ Aguardando mesa" cor="text-amber-600 dark:text-amber-400" reservas={lista.aguardando} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
-                      <GrupoCasais titulo="📍 Na mesa (reservado)" cor="text-blue-600 dark:text-blue-400" reservas={lista.naMesa} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
-                      <GrupoCasais titulo="🟠 Chegaram" cor="text-orange-600 dark:text-orange-400" reservas={lista.chegaram} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
-                      <GrupoCasais titulo="🔴 Sentados" cor="text-red-600 dark:text-red-400" reservas={lista.sentados} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
-                      <GrupoCasais titulo="✓ Finalizados" cor="text-gray-500" reservas={lista.finalizados} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
-                      <GrupoCasais titulo="👻 No-show / cancelados" cor="text-gray-400" reservas={lista.encerrados} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
-                    </>
-                  )}
+                  <GrupoCasais titulo="⏳ Aguardando mesa" cor="text-amber-600 dark:text-amber-400" reservas={lista.aguardando} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
+                  <GrupoCasais titulo="📍 Na mesa (reservado)" cor="text-blue-600 dark:text-blue-400" reservas={lista.naMesa} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
+                  <GrupoCasais titulo="🟠 Chegaram" cor="text-orange-600 dark:text-orange-400" reservas={lista.chegaram} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
+                  <GrupoCasais titulo="🔴 Sentados" cor="text-red-600 dark:text-red-400" reservas={lista.sentados} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
+                  <GrupoCasais titulo="✓ Finalizados" cor="text-gray-500" reservas={lista.finalizados} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
+                  <GrupoCasais titulo="👻 No-show / cancelados" cor="text-gray-400" reservas={lista.encerrados} aoClicar={(r) => cliqueProtegido(() => setReservaSelecionada(r))} />
                   {lista.doTurno.length === 0 && (
                     <div className="space-y-3 py-8 text-center">
                       <p className="text-sm text-gray-400">Nenhum casal neste turno.</p>
@@ -568,11 +543,9 @@ export default function MapaPage() {
             <div className="flex items-center gap-2">
               <span className={`inline-block h-5 w-5 rounded ${MESA_COR[infoSelecionada.estado].split(' ')[0]}`} />
               <span className="text-lg font-black">{MESA_ESTADO_LABEL[infoSelecionada.estado]}</span>
-              {turno !== 'agora' && (
-                <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-semibold dark:bg-gray-700">
-                  {TURNO_LABEL[turno]}
-                </span>
-              )}
+              <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-semibold dark:bg-gray-700">
+                Mapa {TURNO_LABEL[turno]}
+              </span>
             </div>
             {mesaSelecionada.observacao && (
               <p className="text-sm text-gray-500 dark:text-gray-400">📍 {mesaSelecionada.observacao}</p>
@@ -663,7 +636,7 @@ export default function MapaPage() {
         <FormularioReserva
           aberto={novoCasal}
           aoFechar={() => setNovoCasal(false)}
-          turnoInicial={turno !== 'agora' ? turno : undefined}
+          turnoInicial={turno}
         />
       )}
 
@@ -675,7 +648,7 @@ export default function MapaPage() {
             setNovaReservaMesa(null);
             setMesaSelecionada(null);
           }}
-          turnoInicial={turno !== 'agora' ? turno : undefined}
+          turnoInicial={turno}
           mesaInicial={novaReservaMesa.id}
         />
       )}

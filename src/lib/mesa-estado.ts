@@ -16,31 +16,35 @@ function finalizadaRecente(r: Reserva): boolean {
   return r.status === 'finalizada' && Date.now() - new Date(r.atualizado_em).getTime() < LIBERADA_MS;
 }
 
-/** Estado visual de uma mesa (cores do mapa) em um turno ou na operação atual. */
+/** Estado visual de uma mesa (cores do mapa) no turno selecionado.
+ *
+ *  Cada horário tem o SEU próprio mapa: reservas só aparecem no turno
+ *  delas. A única coisa que atravessa turnos é a realidade FÍSICA —
+ *  um casal sentado (ou que chegou) e ainda não saiu aparece em
+ *  qualquer mapa, para ninguém ser colocado em cima dele. */
 export function estadoMesa(mesa: Mesa, reservas: Reserva[], turno: TurnoMapa): EstadoDaMesa {
   if (!mesa.ativa) return { estado: 'bloqueada', reserva: null };
 
-  const daMesa = reservas.filter(
-    (r) => r.table_id === mesa.id && (turno === 'agora' || r.turno === turno),
-  );
+  const daMesa = reservas.filter((r) => r.table_id === mesa.id);
 
-  // Sentado e chegou prevalecem (no modo "agora", de qualquer turno).
+  // Físico (qualquer turno): sentado, chegou e mesa recém-liberada.
   const sentada = daMesa.find((r) => r.status === 'sentado');
   if (sentada) return { estado: 'ocupada', reserva: sentada };
   const chegada = daMesa.find((r) => r.status === 'chegou');
   if (chegada) return { estado: 'chegou', reserva: chegada };
-
-  const ativas = daMesa.filter((r) => STATUS_ATIVOS.includes(r.status));
-  if (ativas.length > 0) {
-    const porTurno = [...ativas].sort((a, b) => TURNOS.indexOf(a.turno) - TURNOS.indexOf(b.turno));
-    return { estado: 'reservada', reserva: porTurno[0] };
-  }
-
-  // Conta fechada: cinza por alguns segundos (ou até liberar manualmente), depois volta a livre.
   const liberada =
     daMesa.find(finalizadaRecente) ??
     daMesa.find((r) => r.status === 'finalizada' && !r.mesa_liberada);
   if (liberada) return { estado: 'limpeza', reserva: liberada };
+
+  // Reservas (ainda não chegaram): só contam no próprio turno.
+  const ativas = daMesa.filter(
+    (r) => STATUS_ATIVOS.includes(r.status) && (turno === 'agora' || r.turno === turno),
+  );
+  if (ativas.length > 0) {
+    const porTurno = [...ativas].sort((a, b) => TURNOS.indexOf(a.turno) - TURNOS.indexOf(b.turno));
+    return { estado: 'reservada', reserva: porTurno[0] };
+  }
 
   return { estado: 'livre', reserva: null };
 }
