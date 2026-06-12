@@ -5,6 +5,7 @@ import { SeletorTurno } from '@/components/SeletorTurno';
 import { Botao, Cartao } from '@/components/ui';
 import { AREA_LABEL, PIX_LABEL, STATUS_LABEL, TURNOS, TURNO_LABEL } from '@/lib/constants';
 import { useDados } from '@/lib/data-context';
+import { zerarDadosTeste } from '@/lib/actions';
 import { baixarCsv } from '@/lib/csv';
 import { brl, dataHora } from '@/lib/format';
 import { getSupabase } from '@/lib/supabase/client';
@@ -13,10 +14,11 @@ import type { CashClosure, Turno } from '@/lib/types';
 type Aba = 'resumo' | 'chegada' | 'caixa' | 'passantes' | 'noshow';
 
 export default function RelatoriosPage() {
-  const { reservas, carregando } = useDados();
+  const { reservas, carregando, recarregar } = useDados();
   const [aba, setAba] = useState<Aba>('resumo');
   const [turno, setTurno] = useState<Turno | 'todos'>('todos');
   const [fechamentos, setFechamentos] = useState<CashClosure[]>([]);
+  const [zerando, setZerando] = useState(false);
 
   useEffect(() => {
     getSupabase()
@@ -85,6 +87,25 @@ export default function RelatoriosPage() {
       geral: linhaDe(() => true),
     };
   }, [reservas, fechamentos]);
+
+  async function zerarTudo() {
+    if (
+      !window.confirm(
+        'Zerar dados de teste?\n\n• Todos os fechamentos e pagamentos serão apagados.\n• Passantes de teste serão removidos.\n• Reservas originais voltam para "Confirmada" sem mesa.\n\nEssa ação não pode ser desfeita.',
+      )
+    )
+      return;
+    setZerando(true);
+    try {
+      await zerarDadosTeste();
+      await recarregar();
+      setFechamentos([]);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Erro ao zerar dados.');
+    } finally {
+      setZerando(false);
+    }
+  }
 
   function exportar() {
     if (aba === 'resumo') {
@@ -183,7 +204,15 @@ export default function RelatoriosPage() {
             Resumo da noite, listas e exportações.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Botao
+            variante="perigo"
+            className="bg-red-100 !text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:!text-red-200"
+            onClick={zerarTudo}
+            disabled={zerando}
+          >
+            {zerando ? '⏳ Zerando…' : '🗑️ Zerar teste'}
+          </Botao>
           <Botao variante="secundario" onClick={() => window.print()}>
             🖨️ Imprimir
           </Botao>

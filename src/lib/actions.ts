@@ -332,3 +332,47 @@ export async function liberarMesa(id: string): Promise<void> {
   if (error) throw new Error(traduzirErro(error.message));
   await registrarEvento(id, 'mesa_liberada');
 }
+
+/**
+ * Zera todos os dados de teste: apaga fechamentos, pagamentos, eventos e
+ * passantes criados durante testes; devolve as reservas originais ao estado
+ * inicial (confirmada, sem mesa, sem crédito aplicado).
+ */
+export async function zerarDadosTeste(): Promise<void> {
+  exigirConexao();
+  const supabase = getSupabase();
+
+  const { error: e1 } = await supabase.from('cash_closures').delete().not('id', 'is', null);
+  if (e1) throw new Error(traduzirErro(e1.message));
+
+  const { error: e2 } = await supabase.from('payments').delete().not('id', 'is', null);
+  if (e2) throw new Error(traduzirErro(e2.message));
+
+  const { error: e3 } = await supabase.from('reservation_events').delete().not('id', 'is', null);
+  if (e3) throw new Error(traduzirErro(e3.message));
+
+  // Remove passantes criados durante o teste
+  const { error: e4 } = await supabase.from('reservations').delete().eq('origem', 'passante');
+  if (e4) throw new Error(traduzirErro(e4.message));
+
+  // Devolve todas as reservas ao estado inicial
+  const { error: e5 } = await supabase
+    .from('reservations')
+    .update({
+      status: 'confirmada',
+      table_id: null,
+      mesa_liberada: false,
+      credito_aplicado: false,
+      credito_aplicado_em: null,
+    })
+    .eq('origem', 'reserva');
+  if (e5) throw new Error(traduzirErro(e5.message));
+
+  // Pix pago → pendente (isento permanece isento)
+  const { error: e6 } = await supabase
+    .from('reservations')
+    .update({ pix_status: 'pendente' })
+    .eq('origem', 'reserva')
+    .eq('pix_status', 'pago');
+  if (e6) throw new Error(traduzirErro(e6.message));
+}
