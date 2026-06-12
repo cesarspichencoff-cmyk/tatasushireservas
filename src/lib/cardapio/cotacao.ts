@@ -179,14 +179,20 @@ export function parsearCotacao(texto: string): LinhaCotacao[] {
 const unidadeDoItem = new Map<string, string>();
 DADOS.itens.forEach((it) => unidadeDoItem.set(it.n, it.u));
 
-export function agruparCotacao(linhas: LinhaCotacao[]): {
+export function agruparCotacao(
+  linhas: LinhaCotacao[],
+  itensExtras?: Record<string, { n: string; u: string }>,
+): {
   casados: ItemCotado[];
   soltos: LinhaCotacao[];
 } {
   const porItem = new Map<string, ItemCotado>();
   const soltos: LinhaCotacao[] = [];
 
-  for (const l of linhas) {
+  for (const bruta of linhas) {
+    // itens cadastrados pelo usuário em cotações anteriores são conhecidos
+    const extra = !bruta.item ? itensExtras?.[normalizar(bruta.nome)] : undefined;
+    const l = extra ? { ...bruta, item: extra.n } : bruta;
     if (!l.item) {
       soltos.push(l);
       continue;
@@ -195,7 +201,7 @@ export function agruparCotacao(linhas: LinhaCotacao[]): {
     if (!atual) {
       porItem.set(l.item, {
         item: l.item,
-        unid: unidadeDoItem.get(l.item) ?? l.unid ?? 'kg',
+        unid: unidadeDoItem.get(l.item) ?? extra?.u ?? l.unid ?? 'kg',
         preco: l.preco,
         marca: l.marca,
         ofertas: 1,

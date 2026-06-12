@@ -173,6 +173,7 @@ export default function PaginaCardapios() {
                 definirPreco={definirPreco}
                 definirFornecedor={definirFornecedor}
                 cadastrarItem={cadastrarItem}
+                itensExtras={itensExtras}
               />
             )}
             {aba === 'cardapio' && (

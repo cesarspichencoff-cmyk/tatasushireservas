@@ -51,6 +51,8 @@ export function AbaCompras({
   fatores?: Record<string, number>;
 }) {
   const [novoItemDia, setNovoItemDia] = useState<number | null>(null);
+  const [fotoPendente, setFotoPendente] = useState<string | null>(null);
+  const [diasDaNota, setDiasDaNota] = useState<Set<number>>(new Set());
 
   const podeAjustarQtd = papel === 'gestor' || papel === 'cozinha';
   const podeComprar = papel === 'compras' || papel === 'gestor';
@@ -100,6 +102,145 @@ export function AbaCompras({
         </Botao>
       </div>
 
+      {/* Notas fiscais da semana — uma compra pode cobrir vários dias */}
+      {(podeComprar || podeReceber || (estado.notasFiscais ?? []).length > 0) && (
+        <Cartao className="space-y-3 print:hidden">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="font-display text-lg font-semibold">📑 Notas fiscais</h3>
+            {(podeComprar || podeReceber) && (
+              <label className="cursor-pointer rounded-full bg-ouro-300/20 px-3.5 py-2 text-[11px] font-extrabold uppercase tracking-wide text-ouro-600 ring-1 ring-ouro-400/40 hover:bg-ouro-300/30">
+                📸 Foto da nota fiscal
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={async (ev) => {
+                    const f = ev.target.files?.[0];
+                    ev.target.value = '';
+                    if (!f) return;
+                    setFotoPendente(await comprimirImagem(f));
+                    setDiasDaNota(new Set());
+                  }}
+                />
+              </label>
+            )}
+          </div>
+          {(estado.notasFiscais ?? []).length === 0 ? (
+            <p className="text-xs text-carvao-400">
+              Tire a foto da nota na hora do recebimento — o app pergunta a quais dias de compra ela se
+              refere e deixa tudo conferível.
+            </p>
+          ) : (
+            <ul className="flex flex-wrap gap-3">
+              {(estado.notasFiscais ?? []).map((n, ni) => (
+                <li
+                  key={ni}
+                  className="flex items-center gap-2.5 rounded-2xl bg-areia-100 p-2 pr-3 ring-1 ring-carvao-200 dark:bg-carvao-800 dark:ring-carvao-600"
+                >
+                  <a href={n.foto} target="_blank" rel="noreferrer" title="Abrir nota fiscal">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={n.foto}
+                      alt="Nota fiscal"
+                      className="h-14 w-14 rounded-xl object-cover ring-2 ring-brand-500/50"
+                    />
+                  </a>
+                  <span>
+                    <span className="block text-[11px] font-extrabold uppercase text-brand-600">
+                      {n.dias.map((d) => DIAS_SEMANA[d].slice(0, 3)).join(' · ')}
+                    </span>
+                    <span className="block text-[10px] text-carvao-400">
+                      anexada em {n.em.slice(8, 10)}/{n.em.slice(5, 7)}
+                    </span>
+                  </span>
+                  {(podeComprar || podeReceber) && (
+                    <button
+                      onClick={() =>
+                        atualizar((e) => ({
+                          ...e,
+                          notasFiscais: (e.notasFiscais ?? []).filter((_, i) => i !== ni),
+                        }))
+                      }
+                      aria-label="Remover nota fiscal"
+                      className="text-carvao-300 hover:text-[#b04c41]"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Cartao>
+      )}
+
+      {/* Pergunta da nota: a quais dias se refere? */}
+      <Modal
+        titulo="Essa nota é de quais dias?"
+        aberto={fotoPendente !== null}
+        aoFechar={() => setFotoPendente(null)}
+      >
+        {fotoPendente && (
+          <div className="space-y-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={fotoPendente}
+              alt="Nota fiscal"
+              className="mx-auto max-h-44 rounded-2xl object-contain ring-1 ring-carvao-200"
+            />
+            <p className="text-sm text-carvao-500 dark:text-carvao-300">
+              Uma compra pode cobrir mais de um dia — marque todos os dias de cardápio que esta nota atende:
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {DIAS_SEMANA.map((nome, i) => (
+                <label
+                  key={i}
+                  className={`flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold ring-1 transition ${
+                    diasDaNota.has(i)
+                      ? 'bg-brand-600/10 text-brand-700 ring-brand-500/50 dark:text-brand-300'
+                      : 'bg-white text-carvao-600 ring-carvao-200 dark:bg-carvao-800 dark:text-areia-200 dark:ring-carvao-600'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={diasDaNota.has(i)}
+                    onChange={() =>
+                      setDiasDaNota((s) => {
+                        const novo = new Set(s);
+                        if (novo.has(i)) novo.delete(i);
+                        else novo.add(i);
+                        return novo;
+                      })
+                    }
+                    className="h-4 w-4 accent-brand-600"
+                  />
+                  {nome}
+                </label>
+              ))}
+            </div>
+            <Botao
+              variante="sucesso"
+              className="w-full"
+              disabled={diasDaNota.size === 0}
+              onClick={() => {
+                const dias = Array.from(diasDaNota).sort((a, b) => a - b);
+                atualizar((e) => ({
+                  ...e,
+                  notasFiscais: [
+                    ...(e.notasFiscais ?? []),
+                    { foto: fotoPendente, dias, em: new Date().toISOString() },
+                  ],
+                }));
+                setFotoPendente(null);
+              }}
+            >
+              Anexar a {diasDaNota.size} dia{diasDaNota.size > 1 ? 's' : ''}
+            </Botao>
+          </div>
+        )}
+      </Modal>
+
       {estado.dias.map((dia, di) => {
         const linhas = linhasDoDia(estado, di, fatores);
         if (!dia.principal && linhas.length === 0) return null;
@@ -120,7 +261,7 @@ export function AbaCompras({
               l.status.compradoQtd !== undefined &&
               l.status.recebidoQtd < l.status.compradoQtd),
         ).length;
-        const nota = estado.notas?.[di];
+        const notasDoDia = (estado.notasFiscais ?? []).filter((n) => n.dias.includes(di)).length;
 
         return (
           <Cartao key={di} className="space-y-3">
@@ -136,6 +277,12 @@ export function AbaCompras({
                 {custo.itensComPreco > 0 && <> · ≈ {formatarReais(custo.total)}</>}
                 {divergencias > 0 && (
                   <span className="font-extrabold text-[#b04c41]"> · ⚠ {divergencias} divergências</span>
+                )}
+                {notasDoDia > 0 && (
+                  <span className="font-bold text-brand-600">
+                    {' '}
+                    · 📎 {notasDoDia} nota{notasDoDia > 1 ? 's' : ''}
+                  </span>
                 )}
               </p>
             </div>
@@ -337,63 +484,14 @@ export function AbaCompras({
               </div>
             )}
 
-            <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
-              {podeAjustarQtd ? (
-                <button
-                  onClick={() => setNovoItemDia(di)}
-                  className="text-sm font-semibold text-brand-600 hover:text-brand-700"
-                >
-                  + Adicionar item extra
-                </button>
-              ) : (
-                <span />
-              )}
-
-              {/* Nota fiscal do dia: foto direto da câmera + conferência */}
-              {(podeComprar || podeReceber) &&
-                (nota ? (
-                  <span className="flex items-center gap-2">
-                    <a href={nota} target="_blank" rel="noreferrer" title="Abrir nota fiscal">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={nota}
-                        alt={`Nota fiscal de ${DIAS_SEMANA[di]}`}
-                        className="h-14 w-14 rounded-xl object-cover ring-2 ring-brand-500/50"
-                      />
-                    </a>
-                    <span className="text-[11px] font-bold uppercase text-brand-600">📎 Nota anexada</span>
-                    <button
-                      onClick={() =>
-                        atualizar((e) => {
-                          const notas = { ...(e.notas ?? {}) };
-                          delete notas[di];
-                          return { ...e, notas };
-                        })
-                      }
-                      aria-label="Remover nota fiscal"
-                      className="text-carvao-300 hover:text-[#b04c41]"
-                    >
-                      ✕
-                    </button>
-                  </span>
-                ) : (
-                  <label className="cursor-pointer rounded-full bg-ouro-300/20 px-3.5 py-2 text-[11px] font-extrabold uppercase tracking-wide text-ouro-600 ring-1 ring-ouro-400/40 hover:bg-ouro-300/30">
-                    📸 Foto da nota fiscal
-                    <input
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      className="hidden"
-                      onChange={async (ev) => {
-                        const f = ev.target.files?.[0];
-                        if (!f) return;
-                        const dataUrl = await comprimirImagem(f);
-                        atualizar((e) => ({ ...e, notas: { ...(e.notas ?? {}), [di]: dataUrl } }));
-                      }}
-                    />
-                  </label>
-                ))}
-            </div>
+            {podeAjustarQtd && (
+              <button
+                onClick={() => setNovoItemDia(di)}
+                className="text-sm font-semibold text-brand-600 hover:text-brand-700 print:hidden"
+              >
+                + Adicionar item extra
+              </button>
+            )}
           </Cartao>
         );
       })}

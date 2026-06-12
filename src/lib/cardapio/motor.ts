@@ -156,11 +156,66 @@ export function chaveDoDia(dia: DiaCardapio): string {
     .join('|');
 }
 
+/* --------- garantia: o que está escrito no cardápio entra na lista ---- */
+
+function tokensTexto(s: string): string[] {
+  return normalizar(s)
+    .split(/[^a-z0-9]+/)
+    .filter((t) => t.length > 2);
+}
+
+/** Encontra o item do catálogo citado num trecho de texto do cardápio. */
+function itemDoTexto(parte: string): { n: string; u: string; f: number } | null {
+  const toks = new Set(tokensTexto(parte));
+  if (toks.size === 0) return null;
+  let melhor: { n: string; u: string; f: number } | null = null;
+  let melhorNota = 0;
+  for (const it of DADOS.itens) {
+    const itoks = tokensTexto(it.n);
+    if (itoks.length === 0 || itoks.length > 3) continue;
+    if (!itoks.every((t) => toks.has(t))) continue;
+    const nota = itoks.length * 1000 + Math.min(it.f, 999);
+    if (nota > melhorNota) {
+      melhorNota = nota;
+      melhor = it;
+    }
+  }
+  return melhor;
+}
+
+/** Quantidade padrão por pessoa para item completado (heurística do histórico). */
+function qtdPadraoPorPessoa(categoria: string, unid: string, ehProteina: boolean): number {
+  if (ehProteina) return 0.16; // kg de proteína por pessoa
+  const porUnid: Record<string, number> = {
+    kg: 0.05,
+    un: 0.08,
+    mç: 0.04,
+    pct: 0.04,
+    lata: 0.04,
+    lt: 0.03,
+    bd: 0.02,
+    bag: 0.02,
+  };
+  let q = porUnid[unid] ?? 0.04;
+  if (categoria === 'sobremesa') q *= 0.5;
+  if (categoria === 'salada' && unid === 'un') q = 0.1;
+  return q;
+}
+
+/** Proteína de reserva quando o prato descreve carne e nada veio do histórico. */
+const PROTEINA_PADRAO: Partial<Record<Proteina, { item: string; unid: string }>> = {
+  bovina: { item: 'Acém', unid: 'kg' },
+  frango: { item: 'File de frango sem osso', unid: 'kg' },
+  suina: { item: 'Lombo suíno', unid: 'kg' },
+  ovo: { item: 'Ovos', unid: 'bd' },
+};
+
 /**
  * Gera a lista sugerida do dia: combinação exata do histórico quando existe;
- * senão soma os mapas de cada componente. Escala pela curva de pessoas.
- * `fatores` é o aprendizado da casa: correções de quantidade que a cozinha
- * fez em semanas passadas (ex.: arroz sempre ajustado p/ +15%).
+ * senão soma os mapas de cada componente. Em seguida garante que tudo que
+ * está DESCRITO no cardápio (proteína, salada, legume, verdura, sobremesa)
+ * apareça na lista, mesmo que o histórico esteja incompleto.
+ * Escala pela curva de pessoas. `fatores` é o aprendizado da casa.
  */
 export function listaDoDia(dia: DiaCardapio, fatores?: Record<string, number>): ItemSugerido[] {
   const fator = dia.pessoas > 0 ? dia.pessoas / DADOS.baseline : 1;
@@ -184,6 +239,43 @@ export function listaDoDia(dia: DiaCardapio, fatores?: Record<string, number>): 
       if (!opcao || typeof opcao !== 'string') continue;
       const itens = porTipoOpcao.get(`${tipo}|${normalizar(opcao)}`);
       itens?.forEach(({ i, q, u }) => adiciona(i, q, u));
+    }
+  }
+
+  // 2ª passada: completa com os ingredientes citados no texto do cardápio
+  const completa = (texto: string, categoria: string) => {
+    if (!texto) return;
+    for (const parte of texto.split(/\s+com\s+|\s+e\s+|,|\+|·|\//i)) {
+      const it = itemDoTexto(parte);
+      if (!it) continue;
+      const k = normalizar(it.n);
+      if (acc.has(k) || excluidos.has(k)) continue;
+      // já existe um item mais específico? ("Frango inteiro" cobre "Frango")
+      const toks = tokensTexto(it.n);
+      const coberto = Array.from(acc.values()).some((v) => {
+        const vt = new Set(tokensTexto(v.item));
+        return toks.every((t) => vt.has(t));
+      });
+      if (coberto) continue;
+      const ehProt = it.u === 'kg' && proteinaDoPrato(it.n) !== 'outros';
+      adiciona(it.n, qtdPadraoPorPessoa(categoria, it.u, ehProt) * DADOS.baseline, it.u);
+    }
+  };
+  completa(dia.principal, 'principal');
+  completa(dia.guarnicaoFixa, 'guarnicaoFixa');
+  completa(dia.guarnicao, 'guarnicao');
+  completa(dia.salada, 'salada');
+  completa(dia.sobremesa, 'sobremesa');
+
+  // garantia final: prato com carne descrita SEMPRE leva a proteína na lista
+  if (dia.principal) {
+    const alvo = proteinaDoPrato(dia.principal);
+    if (alvo !== 'outros') {
+      const tem = Array.from(acc.values()).some((v) => proteinaDoPrato(v.item) === alvo);
+      const padrao = PROTEINA_PADRAO[alvo];
+      if (!tem && padrao) {
+        adiciona(padrao.item, qtdPadraoPorPessoa('principal', padrao.unid, padrao.unid === 'kg') * DADOS.baseline, padrao.unid);
+      }
     }
   }
 

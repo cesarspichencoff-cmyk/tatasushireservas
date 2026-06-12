@@ -17,10 +17,12 @@ export function AbaCotacao({
   definirPreco,
   definirFornecedor,
   cadastrarItem,
+  itensExtras = {},
 }: {
   definirPreco: (itemNorm: string, valor: number | null) => void;
   definirFornecedor?: (itemNorm: string, marca: string | null) => void;
   cadastrarItem?: (norm: string, nome: string, unid: string) => void;
+  itensExtras?: Record<string, { n: string; u: string }>;
 }) {
   const [texto, setTexto] = useState('');
   const [lido, setLido] = useState<LinhaCotacao[] | null>(null);
@@ -51,8 +53,8 @@ export function AbaCotacao({
   };
 
   const { casados, soltos } = useMemo(
-    () => (lido ? agruparCotacao(lido) : { casados: [], soltos: [] as LinhaCotacao[] }),
-    [lido],
+    () => (lido ? agruparCotacao(lido, itensExtras) : { casados: [], soltos: [] as LinhaCotacao[] }),
+    [lido, itensExtras],
   );
 
   const selecionados = casados.filter((c) => !ignorados.has(c.item));

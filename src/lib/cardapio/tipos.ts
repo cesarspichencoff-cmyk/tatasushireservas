@@ -56,6 +56,13 @@ export interface RegistroEtapa {
   papel: Papel;
 }
 
+/** Nota fiscal fotografada — uma compra pode cobrir vários dias. */
+export interface NotaFiscal {
+  foto: string; // dataURL comprimida
+  dias: number[]; // índices dos dias (0=segunda … 6=domingo)
+  em: string; // quando foi anexada (ISO)
+}
+
 export interface EstadoSemana {
   versao: 1;
   orcamento: number | null;
@@ -71,8 +78,10 @@ export interface EstadoSemana {
   obsCozinha: string;
   /** refeições servidas de fato em cada dia (contagem das meninas) */
   refeicoes?: Record<number, number>;
-  /** foto da nota fiscal do dia (dataURL comprimida) */
+  /** foto da nota fiscal do dia (modelo antigo — mantido por compatibilidade) */
   notas?: Record<number, string>;
+  /** notas fiscais da semana, cada uma vinculada aos dias que cobre */
+  notasFiscais?: NotaFiscal[];
 }
 
 export interface Aviso {
