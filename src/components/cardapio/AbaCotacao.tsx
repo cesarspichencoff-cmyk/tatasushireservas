@@ -19,7 +19,7 @@ export function AbaCotacao({
   cadastrarItem,
   itensExtras = {},
 }: {
-  definirPreco: (itemNorm: string, valor: number | null) => void;
+  definirPreco: (itemNorm: string, valor: number | null, nome?: string) => void;
   definirFornecedor?: (itemNorm: string, marca: string | null) => void;
   cadastrarItem?: (norm: string, nome: string, unid: string) => void;
   itensExtras?: Record<string, { n: string; u: string }>;
@@ -61,7 +61,7 @@ export function AbaCotacao({
 
   const aplicar = () => {
     selecionados.forEach((c) => {
-      definirPreco(normalizar(c.item), c.preco);
+      definirPreco(normalizar(c.item), c.preco, c.item);
       definirFornecedor?.(normalizar(c.item), c.marca);
     });
     setAplicado(selecionados.length);
@@ -71,7 +71,7 @@ export function AbaCotacao({
     const norm = normalizar(s.nome);
     const unid = unidades[idx] ?? s.unid ?? 'kg';
     cadastrarItem?.(norm, s.nome, unid);
-    definirPreco(norm, s.preco);
+    definirPreco(norm, s.preco, s.nome);
     definirFornecedor?.(norm, s.marca);
     setCadastrados((c) => new Set(c).add(idx));
   };

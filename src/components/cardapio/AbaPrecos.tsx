@@ -15,7 +15,7 @@ export function AbaPrecos({
   itensExtras = {},
 }: {
   precos: Record<string, number>;
-  definirPreco: (itemNorm: string, valor: number | null) => void;
+  definirPreco: (itemNorm: string, valor: number | null, nome?: string) => void;
   fornecedores?: Record<string, string>;
   itensExtras?: Record<string, { n: string; u: string }>;
 }) {
@@ -72,7 +72,7 @@ export function AbaPrecos({
                     value={precos[k] ?? ''}
                     placeholder="0,00"
                     onChange={(e) =>
-                      definirPreco(k, e.target.value === '' ? null : Number(e.target.value))
+                      definirPreco(k, e.target.value === '' ? null : Number(e.target.value), i.n)
                     }
                     className="w-24 rounded-xl border border-carvao-200 bg-white px-2 py-1.5 text-right font-bold dark:border-carvao-600 dark:bg-carvao-900"
                   />

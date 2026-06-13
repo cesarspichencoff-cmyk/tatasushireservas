@@ -3,40 +3,55 @@
 import { useState } from 'react';
 import { AlternadorTema } from '@/components/AlternadorTema';
 import { LogoTata } from '@/components/LogoTata';
+import { ToastHost } from '@/components/Toast';
+import { AbaAceitacao } from '@/components/cardapio/AbaAceitacao';
+import { AbaAuditoria } from '@/components/cardapio/AbaAuditoria';
 import { AbaCardapio } from '@/components/cardapio/AbaCardapio';
 import { AbaCompras } from '@/components/cardapio/AbaCompras';
 import { AbaCotacao } from '@/components/cardapio/AbaCotacao';
+import { AbaDashboard } from '@/components/cardapio/AbaDashboard';
+import { AbaDesperdicio } from '@/components/cardapio/AbaDesperdicio';
+import { AbaEstoque } from '@/components/cardapio/AbaEstoque';
 import { AbaFluxo } from '@/components/cardapio/AbaFluxo';
 import { AbaPrecos } from '@/components/cardapio/AbaPrecos';
+import { AbaRadar } from '@/components/cardapio/AbaRadar';
+import { AbaSimulador } from '@/components/cardapio/AbaSimulador';
+import { Assistente } from '@/components/cardapio/Assistente';
 import { PosterSemana } from '@/components/cardapio/PosterSemana';
 import {
   idSemanaIso,
   idsSemanas,
   periodoSemana,
   rotuloSemana,
+  useAceitacao,
   useAprendizado,
+  useDesperdicio,
+  useEstoque,
+  useEventos,
   useFornecedores,
+  useHistoricoPrecos,
   useItensExtras,
   usePapel,
   usePrecos,
   useSemana,
 } from '@/lib/cardapio/estado';
-import type { Etapa, Papel } from '@/lib/cardapio/tipos';
+import { PAPEIS, pode } from '@/lib/cardapio/org';
+import type { Etapa } from '@/lib/cardapio/tipos';
 
 const ABAS = [
+  { id: 'painel', rotulo: '📊 Painel' },
   { id: 'cotacao', rotulo: '📋 Cotação' },
   { id: 'cardapio', rotulo: '🍽️ Cardápio' },
+  { id: 'simulador', rotulo: '⚖️ Simulador' },
+  { id: 'estoque', rotulo: '📦 Estoque' },
   { id: 'compras', rotulo: '🛒 Compras' },
   { id: 'fluxo', rotulo: '🚦 Acompanhar' },
+  { id: 'desperdicio', rotulo: '♻️ Desperdício' },
+  { id: 'aceitacao', rotulo: '👍 Aceitação' },
   { id: 'precos', rotulo: '💰 Preços' },
+  { id: 'radar', rotulo: '📡 Radar' },
+  { id: 'auditoria', rotulo: '🛡️ Auditoria' },
 ] as const;
-
-const PAPEIS: { id: Papel; rotulo: string }[] = [
-  { id: 'gestor', rotulo: 'Gestor' },
-  { id: 'cozinha', rotulo: 'Cozinha' },
-  { id: 'compras', rotulo: 'Compras' },
-  { id: 'recebimento', rotulo: 'Recebimento' },
-];
 
 const ROTULO_ETAPA: Record<Etapa, string> = {
   rascunho: 'Rascunho',
@@ -56,19 +71,27 @@ const COR_ETAPA: Record<Etapa, string> = {
 
 export default function PaginaCardapios() {
   const [semanaId, setSemanaId] = useState(() => idSemanaIso(new Date()));
-  const [aba, setAba] = useState<(typeof ABAS)[number]['id']>('cardapio');
+  const [aba, setAba] = useState<(typeof ABAS)[number]['id']>('painel');
   const [posterAberto, setPosterAberto] = useState(false);
+
   const { estado, atualizar, pronto } = useSemana(semanaId);
   const { precos, definirPreco } = usePrecos();
   const { fornecedores, definirFornecedor } = useFornecedores();
   const { itensExtras, cadastrarItem } = useItensExtras();
   const { fatores, aprenderDeSemana } = useAprendizado();
   const { papel, setPapel } = usePapel();
+  const { estoque, movimentar, definirMinimo, definirSaldo } = useEstoque();
+  const { aceitacao, avaliar } = useAceitacao();
+  const { eventos, adicionar: addEvento, remover: rmEvento } = useEventos();
+  const { registros: desperdicio, adicionar: addDesperdicio, remover: rmDesperdicio } = useDesperdicio(semanaId);
+  const historico = useHistoricoPrecos();
 
   const semanas = idsSemanas();
   const idxSemana = semanas.indexOf(semanaId);
 
-  const podeEditarCardapio = papel === 'gestor' && (estado.etapa === 'rascunho' || estado.etapa === 'cozinha');
+  const podeEditarCardapio = pode(papel, 'cardapio:editar') && (estado.etapa === 'rascunho' || estado.etapa === 'cozinha');
+  const podeEstoque = pode(papel, 'estoque:gerenciar');
+  const podeAvaliar = pode(papel, 'cardapio:editar');
 
   if (posterAberto) {
     return <PosterSemana estado={estado} semanaId={semanaId} aoFechar={() => setPosterAberto(false)} />;
@@ -87,7 +110,7 @@ export default function PaginaCardapios() {
                 TATÁ&nbsp;SUSHI
               </div>
               <div className="whitespace-nowrap text-[10px] font-extrabold uppercase tracking-[0.3em] text-brand-200">
-                Cardápios da Equipe
+                Gestão de Alimentação
               </div>
             </div>
           </div>
@@ -100,7 +123,7 @@ export default function PaginaCardapios() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="font-display text-2xl font-bold text-brand-800 dark:text-brand-300 sm:text-3xl">
-              Cardápio · Semana {idxSemana >= 0 ? idxSemana + 1 : ''}
+              Semana {idxSemana >= 0 ? idxSemana + 1 : ''}
               <span
                 className={`ml-2.5 inline-flex translate-y-[-2px] items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ring-1 ${COR_ETAPA[estado.etapa]}`}
               >
@@ -140,6 +163,7 @@ export default function PaginaCardapios() {
             <button
               key={p.id}
               onClick={() => setPapel(p.id)}
+              title={p.descricao}
               className={`rounded-full px-3 py-1.5 text-[12px] font-extrabold uppercase tracking-wide transition ${
                 papel === p.id
                   ? 'bg-brand-700 text-white shadow-suave'
@@ -157,7 +181,7 @@ export default function PaginaCardapios() {
             <button
               key={a.id}
               onClick={() => setAba(a.id)}
-              className={`min-h-10 grow whitespace-nowrap rounded-full px-4 text-[12px] font-extrabold uppercase tracking-wide transition ${
+              className={`min-h-10 shrink-0 whitespace-nowrap rounded-full px-4 text-[12px] font-extrabold uppercase tracking-wide transition ${
                 aba === a.id
                   ? 'bg-gradient-to-r from-brand-700 to-brand-600 text-white shadow-suave'
                   : 'text-carvao-500 hover:bg-brand-50 hover:text-brand-700 dark:text-areia-200 dark:hover:bg-carvao-700'
@@ -172,6 +196,19 @@ export default function PaginaCardapios() {
           <p className="py-10 text-center text-sm text-carvao-400">Carregando semana…</p>
         ) : (
           <>
+            {aba === 'painel' && (
+              <AbaDashboard
+                estado={estado}
+                semanaId={semanaId}
+                precos={precos}
+                fatores={fatores}
+                estoque={estoque}
+                historico={historico}
+                aceitacao={aceitacao}
+                fornecedores={fornecedores}
+                irPara={(a) => setAba(a as (typeof ABAS)[number]['id'])}
+              />
+            )}
             {aba === 'cotacao' && (
               <AbaCotacao
                 definirPreco={definirPreco}
@@ -187,6 +224,26 @@ export default function PaginaCardapios() {
                 podeEditar={podeEditarCardapio}
                 precos={precos}
                 definirPreco={definirPreco}
+              />
+            )}
+            {aba === 'simulador' && (
+              <AbaSimulador
+                estado={estado}
+                atualizar={atualizar}
+                precos={precos}
+                fatores={fatores}
+                podeEditar={podeEditarCardapio}
+              />
+            )}
+            {aba === 'estoque' && (
+              <AbaEstoque
+                estado={estado}
+                fatores={fatores}
+                estoque={estoque}
+                movimentar={movimentar}
+                definirMinimo={definirMinimo}
+                definirSaldo={definirSaldo}
+                podeEditar={podeEstoque}
               />
             )}
             {aba === 'compras' && (
@@ -209,6 +266,29 @@ export default function PaginaCardapios() {
                 aprenderDeSemana={aprenderDeSemana}
               />
             )}
+            {aba === 'desperdicio' && (
+              <AbaDesperdicio
+                estado={estado}
+                precos={precos}
+                fatores={fatores}
+                registros={desperdicio}
+                adicionar={addDesperdicio}
+                remover={rmDesperdicio}
+                podeEditar={podeEstoque}
+              />
+            )}
+            {aba === 'aceitacao' && (
+              <AbaAceitacao
+                estado={estado}
+                aceitacao={aceitacao}
+                avaliar={avaliar}
+                eventos={eventos}
+                addEvento={addEvento}
+                rmEvento={rmEvento}
+                desperdicio={desperdicio}
+                podeEditar={podeAvaliar}
+              />
+            )}
             {aba === 'precos' && (
               <AbaPrecos
                 precos={precos}
@@ -217,9 +297,14 @@ export default function PaginaCardapios() {
                 itensExtras={itensExtras}
               />
             )}
+            {aba === 'radar' && <AbaRadar precos={precos} historico={historico} fornecedores={fornecedores} />}
+            {aba === 'auditoria' && <AbaAuditoria papel={papel} />}
           </>
         )}
       </main>
+
+      <Assistente contexto={{ estado, semanaId, precos, historico, fornecedores, aceitacao, estoque, fatores }} />
+      <ToastHost />
     </>
   );
 }
