@@ -44,7 +44,7 @@ export function AbaRadar({
       <div className="grid grid-cols-3 gap-3">
         <Kpi rotulo="Itens monitorados" valor={radar.length} tom="azul" icone="📡" />
         <Kpi rotulo="Alertas ativos" valor={alertas.length} tom={alertas.length ? 'vermelho' : 'verde'} icone="🚨" />
-        <Kpi rotulo="Fornecedores" valor={fornecedoresUsados.length} tom="neutro" icone="🎬" />
+        <Kpi rotulo="Fornecedores" valor={fornecedoresUsados.length} tom="neutro" icone="🏬" />
       </div>
 
       {/* Alertas com frase pronta */}
@@ -94,7 +94,7 @@ export function AbaRadar({
 
       {/* Fornecedores mais usados */}
       {fornecedoresUsados.length > 0 && (
-        <Secao titulo="🎬 Fornecedores mais usados">
+        <Secao titulo="🏬 Fornecedores mais usados">
           <Cartao className="flex flex-wrap gap-2">
             {fornecedoresUsados.map(([f, n]) => (
               <Pilula key={f} tom="verde">
