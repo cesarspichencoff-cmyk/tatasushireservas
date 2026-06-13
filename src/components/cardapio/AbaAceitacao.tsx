@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { toast } from '@/components/Toast';
+import { QrCode } from '@/components/QrCode';
 import { BarraMini, Botao, Cartao, EstadoVazio, Pilula, Secao, estiloInput, estiloRotulo } from '@/components/ui';
 import { DIAS_SEMANA, formatarQtd, normalizar } from '@/lib/cardapio/motor';
 import type { Aceitacao, EstadoSemana, EventoDemanda, RegistroDesperdicio } from '@/lib/cardapio/tipos';
@@ -73,9 +74,31 @@ export function AbaAceitacao({
   ];
 
   const pratosSemana = estado.dias.map((d) => d.principal).filter(Boolean);
+  const urlAvaliar = (typeof window !== 'undefined' ? window.location.origin : '') + '/avaliar';
 
   return (
     <div className="space-y-5">
+      {/* Pesquisa por QR — funcionários avaliam o prato do dia */}
+      <Secao titulo="📱 Pesquisa por QR">
+        <Cartao className="flex flex-col items-center gap-4 sm:flex-row">
+          <QrCode url={urlAvaliar} size={132} className="shrink-0 ring-1 ring-carvao-200" />
+          <div className="min-w-0 space-y-1.5 text-center sm:text-left">
+            <p className="text-sm text-carvao-600 dark:text-areia-200">
+              Imprima no pôster ou deixe num tablet na saída do refeitório. A equipe aponta a câmera e avalia o{' '}
+              <strong>prato do dia</strong> com um toque — os votos entram aqui automaticamente.
+            </p>
+            <a
+              href={urlAvaliar}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-block break-all text-xs font-semibold text-brand-600 underline dark:text-brand-300"
+            >
+              {urlAvaliar}
+            </a>
+          </div>
+        </Cartao>
+      </Secao>
+
       {/* Avaliação dos pratos da semana */}
       <Secao titulo="🗳️ Avaliar pratos da semana">
         {pratosSemana.length === 0 ? (
