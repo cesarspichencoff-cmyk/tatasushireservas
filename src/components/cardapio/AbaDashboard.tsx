@@ -11,7 +11,6 @@ import {
 } from '@/lib/cardapio/indicadores';
 import { analisarRadar, fraseAlerta } from '@/lib/cardapio/radar';
 import { useAuditoria } from '@/lib/cardapio/estado';
-import { CartaoNuvem } from './CartaoNuvem';
 import type { Aceitacao, Estoque, EstadoSemana, HistoricoPrecos } from '@/lib/cardapio/tipos';
 
 export function AbaDashboard({
@@ -62,8 +61,6 @@ export function AbaDashboard({
 
   return (
     <div className="space-y-5">
-      <CartaoNuvem />
-
       {/* KPIs principais */}
       <div className="grid animate-subir grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi
