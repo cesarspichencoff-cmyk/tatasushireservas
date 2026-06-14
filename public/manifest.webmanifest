@@ -1,7 +1,7 @@
 {
-  "name": "Tatá Sushi — Cardápios da Equipe",
-  "short_name": "Cardápios",
-  "description": "Planejamento da refeição dos funcionários: cardápio semanal, lista de compras automática e fluxo de aprovação entre setores.",
+  "name": "Tatá House — Refeitório do Tatá Sushi",
+  "short_name": "Tatá House",
+  "description": "Planejamento do cardápio do refeitório, cotação, lista de compras, estoque e custo por refeição.",
   "lang": "pt-BR",
   "start_url": "/",
   "display": "standalone",

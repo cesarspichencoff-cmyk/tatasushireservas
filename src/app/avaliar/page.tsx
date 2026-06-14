@@ -51,7 +51,7 @@ export default function PaginaAvaliar() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-8 bg-gradient-to-b from-brand-800 via-brand-700 to-brand-900 px-6 py-10 text-center text-white">
       <div className="space-y-1">
-        <div className="font-display text-sm font-bold uppercase tracking-[0.4em] text-brand-200">Tatá Sushi</div>
+        <div className="font-display text-sm font-bold uppercase tracking-[0.4em] text-brand-200">Tatá House</div>
         <div className="text-[11px] font-extrabold uppercase tracking-[0.3em] text-ouro-300">Como foi o almoço de hoje?</div>
       </div>
 

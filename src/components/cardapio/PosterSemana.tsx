@@ -115,7 +115,7 @@ export function PosterSemana({
                 <img src={logo} alt="" className="h-16 w-auto max-w-[140px] object-contain" />
               ) : (
                 <div className="text-center font-display text-[15px] font-black tracking-[0.3em] text-brand-800">
-                  TATÁ SUSHI
+                  TATÁ HOUSE
                 </div>
               )}
               <QrCode url={urlAvaliar} size={96} className="ring-1 ring-brand-200" />
@@ -200,7 +200,7 @@ export function PosterSemana({
           <div className="flex items-center justify-center gap-3">
             <span className="h-px grow bg-gradient-to-r from-transparent to-brand-600/50" aria-hidden />
             <p className="whitespace-nowrap text-[10px] font-extrabold uppercase tracking-[0.26em] text-brand-800">
-              Bom apetite, equipe TATÁ!
+              Bom apetite! · TATÁ HOUSE
             </p>
             <span className="h-px grow bg-gradient-to-l from-transparent to-brand-600/50" aria-hidden />
           </div>

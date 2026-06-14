@@ -15,14 +15,14 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: 'TATÁ Sushi — Cardápios da Equipe',
+  title: 'Tatá House — Refeitório do Tatá Sushi',
   description:
-    'Planejamento da refeição dos funcionários: cardápio semanal, lista de compras automática e fluxo de aprovação entre setores.',
+    'Tatá House: planejamento do cardápio do refeitório, cotação, lista de compras, estoque e custo por refeição.',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Cardápios',
+    title: 'Tatá House',
   },
   icons: {
     icon: '/icons/icon-192.png',

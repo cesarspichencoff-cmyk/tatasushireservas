@@ -13,7 +13,7 @@ export function Assistente({ contexto }: { contexto: ContextoAssistente }) {
   const [aberto, setAberto] = useState(false);
   const [entrada, setEntrada] = useState('');
   const [falas, setFalas] = useState<Fala[]>([
-    { de: 'assistente', texto: 'Oi! Sou o assistente do Tatá. Posso analisar custos, preços, aceitação e estoque. Pergunte ou escolha abaixo 👇' },
+    { de: 'assistente', texto: 'Oi! Sou o assistente da Tatá House. Posso analisar custos, preços, aceitação e estoque. Pergunte ou escolha abaixo 👇' },
   ]);
 
   const proativo = useMemo(() => insightProativo(contexto), [contexto]);
@@ -44,7 +44,7 @@ export function Assistente({ contexto }: { contexto: ContextoAssistente }) {
           <div className="flex items-center gap-2 bg-gradient-to-r from-brand-800 to-brand-600 px-4 py-3 text-white">
             <span className="text-xl">🤖</span>
             <div>
-              <p className="font-display text-sm font-bold tracking-wide">Assistente Tatá</p>
+              <p className="font-display text-sm font-bold tracking-wide">Assistente Tatá House</p>
               <p className="text-[10px] uppercase tracking-wider text-brand-200">análise inteligente local</p>
             </div>
           </div>
