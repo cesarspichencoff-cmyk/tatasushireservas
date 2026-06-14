@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AlternadorTema } from '@/components/AlternadorTema';
 import { BottomNav, GRUPOS } from '@/components/BottomNav';
-import { ToastHost } from '@/components/Toast';
+import { ToastHost, toast } from '@/components/Toast';
 import { Icone } from '@/components/Icones';
 import { BottomSheet, Skeleton } from '@/components/ui';
 import { AbaAceitacao } from '@/components/cardapio/AbaAceitacao';
@@ -21,10 +21,12 @@ import { AbaSimulador } from '@/components/cardapio/AbaSimulador';
 import { Assistente } from '@/components/cardapio/Assistente';
 import { PosterSemana } from '@/components/cardapio/PosterSemana';
 import {
+  deslocarSemana,
   idSemanaIso,
-  idsSemanas,
+  lerSemana,
   periodoSemana,
   rotuloSemana,
+  semanasComConteudo,
   useAceitacao,
   useAprendizado,
   useDesperdicio,
@@ -108,15 +110,43 @@ export default function PaginaCardapios() {
   const { registros: desperdicio, adicionar: addDesperdicio, remover: rmDesperdicio } = useDesperdicio(semanaId);
   const historico = useHistoricoPrecos();
 
-  const semanas = idsSemanas();
-  const idxSemana = semanas.indexOf(semanaId);
+  const semanaAtualId = idSemanaIso(new Date());
 
   const grupoAtivo = GRUPOS.find((g) => g.abas.includes(aba)) ?? GRUPOS[0];
   const subAbas = grupoAtivo.abas;
 
-  const irSemana = (delta: number) => {
-    const i = idxSemana + delta;
-    if (i >= 0 && i < semanas.length) setSemanaId(semanas[i]);
+  const irSemana = (delta: number) => setSemanaId(deslocarSemana(semanaId, delta));
+
+  // lista de semanas para o seletor: janela ao redor de hoje + as que têm cardápio
+  const listaSemanas = useMemo(() => {
+    const set = new Set<string>();
+    for (let i = -2; i <= 8; i++) set.add(deslocarSemana(semanaAtualId, i));
+    semanasComConteudo().forEach((id) => set.add(id));
+    set.add(semanaId);
+    return Array.from(set).sort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [semanaId, semanaAtualId, semanaSheet]);
+
+  const duplicarSemanaAnterior = () => {
+    const origem = lerSemana(deslocarSemana(semanaId, -1));
+    if (!origem.dias.some((d) => d.principal)) {
+      toast('A semana anterior está vazia', 'erro');
+      return;
+    }
+    atualizar((e) => ({
+      ...e,
+      dias: e.dias.map((d, i) => ({
+        ...d,
+        principal: origem.dias[i]?.principal ?? '',
+        guarnicaoFixa: origem.dias[i]?.guarnicaoFixa ?? d.guarnicaoFixa,
+        guarnicao: origem.dias[i]?.guarnicao ?? '',
+        salada: origem.dias[i]?.salada ?? '',
+        sobremesa: origem.dias[i]?.sobremesa ?? '',
+      })),
+      ajustes: {},
+    }));
+    toast('Cardápio duplicado da semana anterior');
+    setSemanaSheet(false);
   };
 
   const podeEditarCardapio = pode(papel, 'cardapio:editar') && (estado.etapa === 'rascunho' || estado.etapa === 'cozinha');
@@ -142,10 +172,10 @@ export default function PaginaCardapios() {
             )}
             <div className="min-w-0 leading-tight">
               <div className="truncate font-display text-[17px] font-bold tracking-[0.18em] sm:text-[19px] sm:tracking-[0.26em]">
-                TATÁ&nbsp;SUSHI
+                TATÁ&nbsp;HOUSE
               </div>
               <div className="truncate text-[10px] font-extrabold uppercase tracking-[0.3em] text-brand-200">
-                Gestão de Alimentação
+                Refeitório do Tatá Sushi
               </div>
             </div>
           </div>
@@ -176,7 +206,7 @@ export default function PaginaCardapios() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="font-display text-2xl font-bold text-brand-800 dark:text-brand-300 sm:text-3xl">
-              Semana {idxSemana >= 0 ? idxSemana + 1 : ''}
+              {periodoSemana(semanaId)}
               <span
                 className={`ml-2.5 inline-flex translate-y-[-2px] items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ring-1 ${COR_ETAPA[estado.etapa]}`}
               >
@@ -184,7 +214,8 @@ export default function PaginaCardapios() {
               </span>
             </h1>
             <p className="text-sm font-semibold text-carvao-500 dark:text-carvao-300">
-              📅 {periodoSemana(semanaId)} <span className="font-normal text-carvao-400">(segunda a domingo)</span>
+              {semanaId === semanaAtualId ? 'Semana atual' : 'Semana planejada'}{' '}
+              <span className="font-normal text-carvao-400">· segunda a domingo</span>
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -192,24 +223,22 @@ export default function PaginaCardapios() {
             <div className="flex items-center rounded-2xl border border-carvao-200 bg-white p-1 dark:border-carvao-600 dark:bg-carvao-900">
               <button
                 onClick={() => irSemana(-1)}
-                disabled={idxSemana <= 0}
                 aria-label="Semana anterior"
-                className="flex h-9 w-9 items-center justify-center rounded-xl text-carvao-500 transition hover:bg-carvao-100 disabled:opacity-30 dark:hover:bg-carvao-800"
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-carvao-500 transition hover:bg-carvao-100 dark:hover:bg-carvao-800"
               >
                 <Icone nome="anterior" tam={18} />
               </button>
               <button
                 onClick={() => setSemanaSheet(true)}
-                className="flex min-w-[92px] items-center justify-center gap-1.5 rounded-xl px-1 py-1 text-sm font-bold transition hover:bg-carvao-100 dark:hover:bg-carvao-800"
+                className="flex min-w-[104px] items-center justify-center gap-1.5 rounded-xl px-1 py-1 text-sm font-bold tabular-nums transition hover:bg-carvao-100 dark:hover:bg-carvao-800"
               >
                 <Icone nome="calendario" tam={15} className="text-carvao-400" />
-                {idxSemana >= 0 ? `Semana ${idxSemana + 1}` : '—'}
+                {periodoSemana(semanaId)}
               </button>
               <button
                 onClick={() => irSemana(1)}
-                disabled={idxSemana >= semanas.length - 1}
                 aria-label="Próxima semana"
-                className="flex h-9 w-9 items-center justify-center rounded-xl text-carvao-500 transition hover:bg-carvao-100 disabled:opacity-30 dark:hover:bg-carvao-800"
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-carvao-500 transition hover:bg-carvao-100 dark:hover:bg-carvao-800"
               >
                 <Icone nome="proximo" tam={18} />
               </button>
@@ -379,22 +408,56 @@ export default function PaginaCardapios() {
       </main>
 
       <BottomSheet titulo="Escolher semana" aberto={semanaSheet} aoFechar={() => setSemanaSheet(false)}>
+        <div className="mb-3 space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={duplicarSemanaAnterior}
+              disabled={!podeEditarCardapio}
+              className="flex items-center justify-center gap-1.5 rounded-2xl bg-brand-50 px-3 py-2.5 text-[13px] font-bold text-brand-700 ring-1 ring-brand-500/30 transition hover:bg-brand-100 disabled:opacity-40 dark:bg-carvao-700 dark:text-brand-300"
+            >
+              <Icone nome="somar" tam={16} /> Duplicar anterior
+            </button>
+            <button
+              onClick={() => {
+                setSemanaId(deslocarSemana(semanaId, 1));
+                setSemanaSheet(false);
+              }}
+              className="flex items-center justify-center gap-1.5 rounded-2xl bg-carvao-100 px-3 py-2.5 text-[13px] font-bold text-carvao-600 transition hover:bg-carvao-200 dark:bg-carvao-700 dark:text-areia-200"
+            >
+              <Icone nome="proximo" tam={16} /> Próxima semana
+            </button>
+          </div>
+          <label className="flex items-center gap-2 rounded-2xl border border-carvao-200 px-3 py-2 dark:border-carvao-600">
+            <Icone nome="calendario" tam={16} className="shrink-0 text-carvao-400" />
+            <span className="shrink-0 text-[13px] font-semibold text-carvao-500">Ir para a semana de</span>
+            <input
+              type="date"
+              onChange={(e) => {
+                if (!e.target.value) return;
+                const [y, m, d] = e.target.value.split('-').map(Number);
+                setSemanaId(idSemanaIso(new Date(y, m - 1, d)));
+                setSemanaSheet(false);
+              }}
+              className="min-w-0 flex-1 bg-transparent text-sm outline-none dark:[color-scheme:dark]"
+            />
+          </label>
+        </div>
         <div className="space-y-1">
-          {semanas.map((id, i) => (
+          {listaSemanas.map((id) => (
             <button
               key={id}
               onClick={() => {
                 setSemanaId(id);
                 setSemanaSheet(false);
               }}
-              className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm font-semibold transition ${
+              className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm font-semibold tabular-nums transition ${
                 id === semanaId
                   ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-500/30 dark:bg-carvao-700 dark:text-brand-300'
                   : 'hover:bg-carvao-50 dark:hover:bg-carvao-800'
               }`}
             >
-              <span>{rotuloSemana(id, i + 1)}</span>
-              {i === 0 && <span className="text-[11px] font-bold text-brand-600 dark:text-brand-400">atual</span>}
+              <span>{rotuloSemana(id)}</span>
+              {id === semanaAtualId && <span className="text-[11px] font-bold text-brand-600 dark:text-brand-400">atual</span>}
             </button>
           ))}
         </div>
