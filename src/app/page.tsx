@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { AlternadorTema } from '@/components/AlternadorTema';
+import { BottomNav, GRUPOS } from '@/components/BottomNav';
 import { ToastHost } from '@/components/Toast';
+import { Skeleton } from '@/components/ui';
 import { AbaAceitacao } from '@/components/cardapio/AbaAceitacao';
 import { AbaAuditoria } from '@/components/cardapio/AbaAuditoria';
 import { AbaCardapio } from '@/components/cardapio/AbaCardapio';
@@ -36,7 +38,7 @@ import {
 } from '@/lib/cardapio/estado';
 import { useLogo } from '@/lib/cardapio/logo';
 import { PAPEIS, pode } from '@/lib/cardapio/org';
-import type { Etapa } from '@/lib/cardapio/tipos';
+import type { Etapa, Papel } from '@/lib/cardapio/tipos';
 
 const ABAS = [
   { id: 'painel', rotulo: '📊 Painel' },
@@ -52,6 +54,23 @@ const ABAS = [
   { id: 'radar', rotulo: '📡 Radar' },
   { id: 'auditoria', rotulo: '🛡️ Auditoria' },
 ] as const;
+
+type AbaId = (typeof ABAS)[number]['id'];
+
+const ABA_LABEL: Record<string, string> = {
+  painel: 'Painel',
+  cotacao: 'Cotação',
+  cardapio: 'Cardápio',
+  simulador: 'Simulador',
+  estoque: 'Estoque',
+  compras: 'Compras',
+  fluxo: 'Acompanhar',
+  desperdicio: 'Desperdício',
+  aceitacao: 'Aceitação',
+  precos: 'Preços',
+  radar: 'Radar',
+  auditoria: 'Auditoria',
+};
 
 const ROTULO_ETAPA: Record<Etapa, string> = {
   rascunho: 'Rascunho',
@@ -71,7 +90,7 @@ const COR_ETAPA: Record<Etapa, string> = {
 
 export default function PaginaCardapios() {
   const [semanaId, setSemanaId] = useState(() => idSemanaIso(new Date()));
-  const [aba, setAba] = useState<(typeof ABAS)[number]['id']>('painel');
+  const [aba, setAba] = useState<AbaId>('painel');
   const [posterAberto, setPosterAberto] = useState(false);
 
   const { estado, atualizar, pronto } = useSemana(semanaId);
@@ -90,6 +109,14 @@ export default function PaginaCardapios() {
   const semanas = idsSemanas();
   const idxSemana = semanas.indexOf(semanaId);
 
+  const grupoAtivo = GRUPOS.find((g) => g.abas.includes(aba)) ?? GRUPOS[0];
+  const subAbas = grupoAtivo.abas;
+
+  const irSemana = (delta: number) => {
+    const i = idxSemana + delta;
+    if (i >= 0 && i < semanas.length) setSemanaId(semanas[i]);
+  };
+
   const podeEditarCardapio = pode(papel, 'cardapio:editar') && (estado.etapa === 'rascunho' || estado.etapa === 'cozinha');
   const podeEstoque = pode(papel, 'estoque:gerenciar');
   const podeAvaliar = pode(papel, 'cardapio:editar');
@@ -104,27 +131,46 @@ export default function PaginaCardapios() {
       <header className="sticky top-0 z-40 bg-gradient-to-r from-brand-800 via-brand-600 to-brand-800 text-white shadow-media print:hidden">
         <div className="h-1 w-full bg-gradient-to-r from-ouro-600 via-ouro-300 to-ouro-600" />
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-3 px-4">
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             {logo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={logo} alt="" className="h-10 w-auto max-w-[120px] shrink-0 object-contain" />
             ) : (
               <span className="h-9 w-1.5 shrink-0 rounded-full bg-gradient-to-b from-ouro-300 to-ouro-500" aria-hidden />
             )}
-            <div className="leading-tight">
-              <div className="whitespace-nowrap font-display text-[17px] font-bold tracking-[0.18em] sm:text-[19px] sm:tracking-[0.26em]">
+            <div className="min-w-0 leading-tight">
+              <div className="truncate font-display text-[17px] font-bold tracking-[0.18em] sm:text-[19px] sm:tracking-[0.26em]">
                 TATÁ&nbsp;SUSHI
               </div>
-              <div className="whitespace-nowrap text-[10px] font-extrabold uppercase tracking-[0.3em] text-brand-200">
+              <div className="truncate text-[10px] font-extrabold uppercase tracking-[0.3em] text-brand-200">
                 Gestão de Alimentação
               </div>
             </div>
           </div>
-          <AlternadorTema />
+          <div className="flex shrink-0 items-center gap-2">
+            <label className="relative">
+              <span className="sr-only">Papel</span>
+              <select
+                value={papel}
+                onChange={(e) => setPapel(e.target.value as Papel)}
+                className="appearance-none rounded-full bg-white/15 py-1.5 pl-3 pr-7 text-xs font-semibold text-white ring-1 ring-white/25 focus:outline-none focus:ring-2 focus:ring-ouro-300"
+              >
+                {PAPEIS.map((p) => (
+                  <option key={p.id} value={p.id} className="text-carvao-900">
+                    {p.rotulo}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-white/70" aria-hidden>
+                ▼
+              </span>
+            </label>
+            <AlternadorTema />
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl space-y-4 px-4 py-5">
+      <main className="mx-auto max-w-5xl space-y-4 px-4 pb-28 pt-5 lg:pb-8">
         {/* Cabeçalho do módulo */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -141,53 +187,44 @@ export default function PaginaCardapios() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <select
-              value={semanaId}
-              onChange={(e) => setSemanaId(e.target.value)}
-              className="min-h-10 rounded-2xl border border-carvao-200 bg-white px-3 py-2 text-sm font-semibold dark:border-carvao-600 dark:bg-carvao-900"
-            >
-              {semanas.map((id, i) => (
-                <option key={id} value={id}>
-                  {rotuloSemana(id, i + 1)}
-                  {i === 0 ? ' (atual)' : ''}
-                </option>
-              ))}
-            </select>
+            {/* Stepper de semana — navegação por polegar */}
+            <div className="flex items-center rounded-2xl border border-carvao-200 bg-white p-1 dark:border-carvao-600 dark:bg-carvao-900">
+              <button
+                onClick={() => irSemana(-1)}
+                disabled={idxSemana <= 0}
+                aria-label="Semana anterior"
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-xl text-carvao-500 transition hover:bg-carvao-100 disabled:opacity-30 dark:hover:bg-carvao-800"
+              >
+                ‹
+              </button>
+              <span className="min-w-[80px] select-none text-center text-sm font-bold">
+                {idxSemana >= 0 ? `Semana ${idxSemana + 1}` : '—'}
+              </span>
+              <button
+                onClick={() => irSemana(1)}
+                disabled={idxSemana >= semanas.length - 1}
+                aria-label="Próxima semana"
+                className="flex h-9 w-9 items-center justify-center rounded-xl text-xl text-carvao-500 transition hover:bg-carvao-100 disabled:opacity-30 dark:hover:bg-carvao-800"
+              >
+                ›
+              </button>
+            </div>
             <button
               onClick={() => setPosterAberto(true)}
-              className="min-h-10 whitespace-nowrap rounded-2xl bg-gradient-to-r from-brand-700 to-brand-600 px-4 py-2 text-sm font-extrabold uppercase tracking-wide text-white shadow-suave ring-1 ring-ouro-400/50 transition hover:from-brand-800 hover:to-brand-700"
+              className="flex h-11 min-h-11 items-center gap-1.5 whitespace-nowrap rounded-2xl bg-gradient-to-r from-brand-700 to-brand-600 px-4 text-sm font-bold text-white shadow-suave ring-1 ring-ouro-400/50 transition hover:from-brand-800 hover:to-brand-700"
             >
-              🖼️ Pôster
+              🖼️ <span className="hidden sm:inline">Pôster</span>
             </button>
           </div>
         </div>
 
-        {/* Papel (simulação dos setores no protótipo) */}
-        <div className="flex flex-wrap items-center gap-1.5 print:hidden">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-carvao-400">Estou vendo como:</span>
-          {PAPEIS.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => setPapel(p.id)}
-              title={p.descricao}
-              className={`rounded-full px-3 py-1.5 text-[12px] font-extrabold uppercase tracking-wide transition ${
-                papel === p.id
-                  ? 'bg-brand-700 text-white shadow-suave'
-                  : 'bg-white text-carvao-500 ring-1 ring-carvao-200 hover:bg-brand-50 hover:text-brand-700 dark:bg-carvao-800 dark:text-areia-200 dark:ring-carvao-600'
-              }`}
-            >
-              {p.rotulo}
-            </button>
-          ))}
-        </div>
-
-        {/* Abas */}
-        <nav className="flex gap-1 overflow-x-auto rounded-full bg-white p-1 ring-1 ring-carvao-200 dark:bg-carvao-800 dark:ring-carvao-600 print:hidden">
+        {/* Navegação completa — desktop */}
+        <nav className="hidden gap-1 overflow-x-auto rounded-full bg-white p-1 ring-1 ring-carvao-200 lg:flex dark:bg-carvao-800 dark:ring-carvao-600 print:hidden">
           {ABAS.map((a) => (
             <button
               key={a.id}
               onClick={() => setAba(a.id)}
-              className={`min-h-10 shrink-0 whitespace-nowrap rounded-full px-4 text-[12px] font-extrabold uppercase tracking-wide transition ${
+              className={`min-h-10 shrink-0 whitespace-nowrap rounded-full px-4 text-[12px] font-bold tracking-tight transition ${
                 aba === a.id
                   ? 'bg-gradient-to-r from-brand-700 to-brand-600 text-white shadow-suave'
                   : 'text-carvao-500 hover:bg-brand-50 hover:text-brand-700 dark:text-areia-200 dark:hover:bg-carvao-700'
@@ -198,8 +235,35 @@ export default function PaginaCardapios() {
           ))}
         </nav>
 
+        {/* Sub-navegação da área — mobile */}
+        {subAbas.length > 1 && (
+          <div className="flex gap-1 overflow-x-auto rounded-2xl bg-carvao-100/70 p-1 lg:hidden dark:bg-carvao-800/70 print:hidden">
+            {subAbas.map((id) => (
+              <button
+                key={id}
+                onClick={() => setAba(id as AbaId)}
+                className={`min-h-9 flex-1 whitespace-nowrap rounded-xl px-3 text-[13px] font-semibold transition ${
+                  aba === id
+                    ? 'bg-white text-brand-700 shadow-suave dark:bg-carvao-700 dark:text-brand-300'
+                    : 'text-carvao-500 dark:text-areia-200'
+                }`}
+              >
+                {ABA_LABEL[id]}
+              </button>
+            ))}
+          </div>
+        )}
+
         {!pronto ? (
-          <p className="py-10 text-center text-sm text-carvao-400">Carregando semana…</p>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-24" />
+              ))}
+            </div>
+            <Skeleton className="h-32" />
+            <Skeleton className="h-48" />
+          </div>
         ) : (
           <>
             {aba === 'painel' && (
@@ -212,7 +276,7 @@ export default function PaginaCardapios() {
                 historico={historico}
                 aceitacao={aceitacao}
                 fornecedores={fornecedores}
-                irPara={(a) => setAba(a as (typeof ABAS)[number]['id'])}
+                irPara={(a) => setAba(a as AbaId)}
               />
             )}
             {aba === 'cotacao' && (
@@ -309,6 +373,7 @@ export default function PaginaCardapios() {
         )}
       </main>
 
+      <BottomNav grupoAtivo={grupoAtivo.id} aoSelecionar={(g) => setAba((GRUPOS.find((x) => x.id === g) ?? GRUPOS[0]).abas[0] as AbaId)} />
       <Assistente contexto={{ estado, semanaId, precos, historico, fornecedores, aceitacao, estoque, fatores }} />
       <ToastHost />
     </>
