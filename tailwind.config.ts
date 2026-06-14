@@ -90,12 +90,22 @@ const config: Config = {
         brilho: {
           '100%': { transform: 'translateX(100%)' },
         },
+        estourar: {
+          '0%': { opacity: '0', transform: 'scale(.6)' },
+          '60%': { opacity: '1', transform: 'scale(1.12)' },
+          '100%': { transform: 'scale(1)' },
+        },
+        confete: {
+          to: { transform: 'translate(var(--tx, 0), -120px) rotate(540deg)', opacity: '0' },
+        },
       },
       animation: {
         subir: 'subir .28s cubic-bezier(.21,.8,.35,1) both',
         aparecer: 'aparecer .2s ease-out both',
         deslizar: 'deslizar .3s cubic-bezier(.21,.8,.35,1) both',
         brilho: 'brilho 1.4s infinite',
+        estourar: 'estourar .42s cubic-bezier(.21,.8,.35,1) both',
+        confete: 'confete .9s ease-out forwards',
       },
     },
   },

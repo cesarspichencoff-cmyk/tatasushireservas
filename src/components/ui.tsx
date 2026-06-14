@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { Icone } from './Icones';
 
@@ -277,4 +278,46 @@ export function Stepper({
       </button>
     </div>
   );
+}
+
+/** Número que "conta" até o valor (recompensa visual sutil em KPIs/ROI). */
+export function Contador({
+  valor,
+  formato,
+  duracao = 650,
+  className = '',
+}: {
+  valor: number;
+  formato?: (n: number) => string;
+  duracao?: number;
+  className?: string;
+}) {
+  const [n, setN] = useState(valor);
+  const de = useRef(valor);
+
+  useEffect(() => {
+    const inicio = de.current;
+    const delta = valor - inicio;
+    if (delta === 0) return;
+    const reduz =
+      typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduz) {
+      de.current = valor;
+      setN(valor);
+      return;
+    }
+    let raf = 0;
+    const t0 = performance.now();
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - t0) / duracao);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setN(inicio + delta * eased);
+      if (p < 1) raf = requestAnimationFrame(tick);
+      else de.current = valor;
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [valor, duracao]);
+
+  return <span className={className}>{formato ? formato(n) : Math.round(n).toLocaleString('pt-BR')}</span>;
 }

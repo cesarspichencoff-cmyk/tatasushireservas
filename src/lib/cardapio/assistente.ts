@@ -130,3 +130,27 @@ export function responder(pergunta: string, ctx: ContextoAssistente): RespostaAs
     itens: PERGUNTAS_SUGERIDAS,
   };
 }
+
+/**
+ * Insight proativo: o app fala primeiro. Retorna o alerta mais relevante do
+ * momento (preço, estoque ou aceitação) ou null se está tudo tranquilo.
+ */
+export function insightProativo(ctx: ContextoAssistente): RespostaAssistente | null {
+  const altas = analisarRadar(ctx.precos, ctx.historico, ctx.fornecedores).filter((r) => r.alerta === 'alta');
+  if (altas.length > 0) return { texto: `💡 ${fraseAlerta(altas[0])}` };
+
+  const baixos = alertasEstoque(ctx.estoque);
+  if (baixos.length > 0)
+    return {
+      texto: `📦 ${baixos.length} ${baixos.length === 1 ? 'item está' : 'itens estão'} no limite do estoque:`,
+      itens: baixos.slice(0, 4).map((a) => `${a.item} — ${formatarQtd(a.qtd)} ${a.unid}`),
+    };
+
+  const ruins = rankingAceitacao(ctx.aceitacao).filter((r) => r.media < 2.5);
+  if (ruins.length > 0)
+    return {
+      texto: `👎 ${ruins[0].prato} teve aceitação baixa (nota ${ruins[0].media.toFixed(1)}). Vale considerar tirar do cardápio.`,
+    };
+
+  return null;
+}
