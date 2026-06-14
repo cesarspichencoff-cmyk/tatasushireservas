@@ -13,10 +13,11 @@ import {
   temHistoricoExato,
   validarSemana,
   listaDoDia,
-  custoDaLista,
   formatarReais,
   normalizar,
 } from '@/lib/cardapio/motor';
+import { custoTipado, resolverPreco } from '@/lib/cardapio/precos';
+import { useEstimativas } from '@/lib/cardapio/estimativas';
 import type { DiaCardapio, EstadoSemana, Proteina } from '@/lib/cardapio/tipos';
 import { SeletorPrato } from './SeletorPrato';
 
@@ -64,6 +65,7 @@ export function AbaCardapio({
   precos: Record<string, number>;
   definirPreco?: (itemNorm: string, valor: number | null) => void;
 }) {
+  const { estimativas, gerarEstimativas } = useEstimativas();
   const avisos = validarSemana(estado.dias);
   const temPrecos = Object.keys(precos).length > 0;
 
@@ -85,10 +87,16 @@ export function AbaCardapio({
   const custoSemana = estado.dias.reduce(
     (acc, d) => {
       if (!d.principal) return acc;
-      const c = custoDaLista(listaDoDia(d), precos);
-      return { total: acc.total + c.total, com: acc.com + c.itensComPreco, itens: acc.itens + c.itensTotal };
+      const itens = listaDoDia(d).map((s) => ({ norm: normalizar(s.item), qtd: s.qtd }));
+      const c = custoTipado(itens, precos, estimativas);
+      return {
+        total: acc.total + c.total,
+        real: acc.real + c.real,
+        estimado: acc.estimado + c.estimado,
+        itens: acc.itens + itens.length,
+      };
     },
-    { total: 0, com: 0, itens: 0 },
+    { total: 0, real: 0, estimado: 0, itens: 0 },
   );
 
   // medidor de regras (rotação de proteínas)
@@ -103,17 +111,22 @@ export function AbaCardapio({
   const custoRef = totalPessoas > 0 && custoSemana.total > 0 ? custoSemana.total / totalPessoas : null;
   const dentroOrcamento = estado.orcamento ? custoSemana.total <= estado.orcamento : null;
 
-  // itens da semana ainda sem preço — a cotação é a guia: tem que zerar isso
-  const semPreco = (() => {
-    const m = new Map<string, { item: string; unid: string }>();
+  // classifica os itens da semana por tipo de preço: real / estimado / sem
+  const { semPreco, qtdEstimados, normsSemana } = (() => {
+    const sem = new Map<string, { item: string; unid: string }>();
+    const est = new Set<string>();
+    const todos = new Set<string>();
     estado.dias.forEach((d) => {
       if (!d.principal) return;
       listaDoDia(d).forEach((s) => {
         const norm = normalizar(s.item);
-        if (!(precos[norm] > 0)) m.set(norm, { item: s.item, unid: s.unid });
+        todos.add(norm);
+        const tipo = resolverPreco(norm, precos, estimativas).tipo;
+        if (tipo === 'sem') sem.set(norm, { item: s.item, unid: s.unid });
+        else if (tipo === 'estimado') est.add(norm);
       });
     });
-    return Array.from(m.entries());
+    return { semPreco: Array.from(sem.entries()), qtdEstimados: est.size, normsSemana: Array.from(todos) };
   })();
 
   return (
@@ -156,6 +169,14 @@ export function AbaCardapio({
           <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
             <Pilula tom={frango >= 3 && frango <= 4 ? 'verde' : 'ouro'}>Frango {frango}/4</Pilula>
             <Pilula tom={suina <= 2 ? 'verde' : 'vermelho'}>Suína {suina}/2</Pilula>
+            {diasMontados > 0 &&
+              (semPreco.length > 0 ? (
+                <Pilula tom="vermelho">{semPreco.length} sem preço</Pilula>
+              ) : qtdEstimados > 0 ? (
+                <Pilula tom="ouro">{qtdEstimados} estimado(s)</Pilula>
+              ) : custoSemana.total > 0 ? (
+                <Pilula tom="verde">✓ Preços ok</Pilula>
+              ) : null)}
             {erros > 0 ? (
               <Pilula tom="vermelho">
                 {erros} {erros === 1 ? 'erro' : 'erros'}
@@ -196,7 +217,11 @@ export function AbaCardapio({
       <div className="grid gap-3 lg:grid-cols-2">
         {estado.dias.map((dia, i) => {
           const lista = dia.principal ? listaDoDia(dia) : [];
-          const custo = custoDaLista(lista, precos);
+          const custo = custoTipado(
+            lista.map((s) => ({ norm: normalizar(s.item), qtd: s.qtd })),
+            precos,
+            estimativas,
+          );
           const prot = dia.principal ? proteinaDoPrato(dia.principal) : 'outros';
           return (
             <Cartao key={i} className="space-y-2.5 overflow-hidden">
@@ -266,7 +291,13 @@ export function AbaCardapio({
                   )}
                   {' · '}
                   {lista.length} itens de compra
-                  {custo.itensComPreco > 0 && <> · ≈ {formatarReais(custo.total)}</>}
+                  {custo.total > 0 && <> · ≈ {formatarReais(custo.total)}</>}
+                  {custo.itensEstimados > 0 && (
+                    <span className="font-semibold text-[#9a6c17] dark:text-[#e3b45c]"> · {custo.itensEstimados} estimado(s)</span>
+                  )}
+                  {custo.itensSemPreco > 0 && (
+                    <span className="font-semibold text-[#b04c41]"> · {custo.itensSemPreco} sem preço</span>
+                  )}
                 </p>
               )}
             </Cartao>
@@ -298,9 +329,20 @@ export function AbaCardapio({
         )}
         {temPrecos && semPreco.length > 0 && (
           <div className="rounded-2xl bg-ouro-300/15 p-3 ring-1 ring-ouro-400/30">
-            <p className="mb-2 text-xs font-bold uppercase tracking-wide text-ouro-600">
-              ⚠️ {semPreco.length} itens da semana ainda sem preço — complete para o custo cobrir tudo:
-            </p>
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs font-bold uppercase tracking-wide text-ouro-600">
+                ⚠️ {semPreco.length} itens da semana ainda sem preço — complete para o custo cobrir tudo:
+              </p>
+              {podeEditar && (
+                <Botao
+                  variante="secundario"
+                  className="!min-h-8 !px-3 !py-1 text-[11px]"
+                  onClick={() => gerarEstimativas(normsSemana, precos)}
+                >
+                  <Icone nome="raio" tam={13} /> Estimar por mercado
+                </Botao>
+              )}
+            </div>
             <div className="flex flex-wrap gap-2">
               {semPreco.slice(0, 16).map(([norm, s]) => (
                 <span

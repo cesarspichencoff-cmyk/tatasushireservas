@@ -2,6 +2,8 @@
 
 import { Botao, Cartao } from '@/components/ui';
 import { DIAS_SEMANA, formatarReais, linhasDoDia } from '@/lib/cardapio/motor';
+import { resolverPreco } from '@/lib/cardapio/precos';
+import { useEstimativas } from '@/lib/cardapio/estimativas';
 import type { EstadoSemana, Etapa, Papel } from '@/lib/cardapio/tipos';
 
 const ETAPAS: { id: Etapa; rotulo: string; quem: string }[] = [
@@ -36,9 +38,23 @@ export function AbaFluxo({
   fatores?: Record<string, number>;
   aprenderDeSemana?: (estado: EstadoSemana) => void;
 }) {
+  const { estimativas } = useEstimativas();
   const idxAtual = ETAPAS.findIndex((e) => e.id === estado.etapa);
   const acao = ACAO_POR_ETAPA[estado.etapa];
   const podeAgir = acao ? acao.papeis.includes(papel) : false;
+
+  // itens da semana ainda sem preço (nem real, nem estimado) — exigem revisão
+  // antes de fechar o cardápio / finalizar as compras
+  const itensSemPreco = (() => {
+    const s = new Set<string>();
+    estado.dias.forEach((_, di) =>
+      linhasDoDia(estado, di, fatores).forEach((l) => {
+        if (resolverPreco(l.chave, precos, estimativas).tipo === 'sem') s.add(l.chave);
+      }),
+    );
+    return s.size;
+  })();
+  const exigePrecoAntes = estado.etapa === 'rascunho' || estado.etapa === 'cozinha';
 
   const totais = estado.dias.reduce(
     (acc, _, di) => {
@@ -69,6 +85,15 @@ export function AbaFluxo({
 
   const avancar = () => {
     if (!acao) return;
+    // bloqueio leve: confirma antes de fechar se há itens sem preço
+    if (exigePrecoAntes && itensSemPreco > 0) {
+      const ok = window.confirm(
+        `${itensSemPreco} item(ns) ainda estão sem preço (nem real, nem estimado).\n\n` +
+          'O ideal é lançar o preço real ou gerar uma estimativa antes de avançar, ' +
+          'para o custo da semana cobrir tudo.\n\nAvançar mesmo assim?',
+      );
+      if (!ok) return;
+    }
     // semana concluída: o app aprende com os ajustes de quantidade feitos
     if (acao.proxima === 'concluido') aprenderDeSemana?.(estado);
     atualizar((e) => ({
@@ -201,6 +226,19 @@ export function AbaFluxo({
           );
         })}
       </Cartao>
+
+      {/* Aviso de preço pendente antes de fechar */}
+      {exigePrecoAntes && itensSemPreco > 0 && (
+        <Cartao className="!py-3 ring-1 ring-[#b04c41]/30">
+          <p className="text-sm font-semibold text-[#b04c41]">
+            ⛔ {itensSemPreco} {itensSemPreco === 1 ? 'item' : 'itens'} sem preço.
+          </p>
+          <p className="mt-0.5 text-xs text-carvao-500 dark:text-areia-200">
+            Lance o preço real na aba <strong>Cotação/Compras</strong> ou gere uma estimativa na aba{' '}
+            <strong>Cardápio</strong> antes de fechar — assim o custo da semana fica completo.
+          </p>
+        </Cartao>
+      )}
 
       {/* Ações */}
       {acao && (

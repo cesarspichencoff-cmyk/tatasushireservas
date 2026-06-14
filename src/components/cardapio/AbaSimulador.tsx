@@ -5,14 +5,16 @@ import { toast } from '@/components/Toast';
 import { Botao, Cartao, EstadoVazio, Kpi, Pilula, Secao } from '@/components/ui';
 import {
   DIAS_SEMANA,
-  custoDaLista,
   formatarReais,
   listaDoDia,
+  normalizar,
   proteinaDoPrato,
   ROTULO_PROTEINA,
   sugerirSemana,
   sugerirSemanaCriativa,
 } from '@/lib/cardapio/motor';
+import { custoTipado } from '@/lib/cardapio/precos';
+import { useEstimativas } from '@/lib/cardapio/estimativas';
 import type { DiaCardapio, EstadoSemana } from '@/lib/cardapio/tipos';
 
 interface Cenario {
@@ -37,12 +39,16 @@ export function AbaSimulador({
   podeEditar: boolean;
 }) {
   const [alternativa, setAlternativa] = useState<{ rotulo: string; dias: DiaCardapio[] } | null>(null);
+  const { estimativas } = useEstimativas();
 
   const pessoas = estado.dias.map((d) => d.pessoas);
-  const temPrecos = Object.keys(precos).length > 0;
+  const temPrecos = Object.keys(precos).length > 0 || Object.keys(estimativas).length > 0;
+
+  const itensDoDia = (dia: DiaCardapio) =>
+    listaDoDia(dia, fatores).map((s) => ({ norm: normalizar(s.item), qtd: s.qtd }));
 
   const custoDias = (dias: DiaCardapio[]) =>
-    dias.reduce((t, dia) => (dia.principal ? t + custoDaLista(listaDoDia(dia, fatores), precos).total : t), 0);
+    dias.reduce((t, dia) => (dia.principal ? t + custoTipado(itensDoDia(dia), precos, estimativas).total : t), 0);
 
   const cenarioDe = (rotulo: string, dias: DiaCardapio[]): Cenario => {
     const custo = custoDias(dias);
@@ -50,8 +56,19 @@ export function AbaSimulador({
     return { rotulo, dias, custo, pessoas: totalPessoas, custoRef: totalPessoas > 0 ? custo / totalPessoas : 0 };
   };
 
-  const atual = useMemo(() => cenarioDe('Semana atual', estado.dias), [estado.dias, precos, fatores]); // eslint-disable-line react-hooks/exhaustive-deps
+  const atual = useMemo(() => cenarioDe('Semana atual', estado.dias), [estado.dias, precos, estimativas, fatores]); // eslint-disable-line react-hooks/exhaustive-deps
   const alt = alternativa ? cenarioDe(alternativa.rotulo, alternativa.dias) : null;
+
+  // composição de preço da semana atual: real / estimado / sem
+  const tipado = useMemo(
+    () =>
+      custoTipado(
+        estado.dias.flatMap((d) => (d.principal ? itensDoDia(d) : [])),
+        precos,
+        estimativas,
+      ),
+    [estado.dias, precos, estimativas, fatores], // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   const economia = alt ? (atual.custoRef - alt.custoRef) * Math.max(atual.pessoas, alt.pessoas) : 0;
   const economiaMes = economia * 4.3;
@@ -83,12 +100,12 @@ export function AbaSimulador({
       .map((d, i) => ({
         dia: i,
         prato: d.principal,
-        custo: d.principal ? custoDaLista(listaDoDia(d, fatores), precos).total : 0,
+        custo: d.principal ? custoTipado(itensDoDia(d), precos, estimativas).total : 0,
       }))
       .filter((x) => x.prato && x.custo > 0)
       .sort((a, b) => b.custo - a.custo)
       .slice(0, 4);
-  }, [estado.dias, precos, fatores]);
+  }, [estado.dias, precos, estimativas, fatores]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (estado.dias.every((d) => !d.principal)) {
     return <EstadoVazio icone="⚖️" titulo="Monte um cardápio para simular" texto="O simulador compara o custo da semana atual com alternativas mais econômicas ou criativas." />;
@@ -124,6 +141,22 @@ export function AbaSimulador({
           icone="🗓️"
         />
       </div>
+
+      {/* Selos de composição do preço */}
+      {(tipado.itensEstimados > 0 || tipado.itensSemPreco > 0) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {tipado.real > 0 && <Pilula tom="verde">real {formatarReais(tipado.real)}</Pilula>}
+          {tipado.itensEstimados > 0 && (
+            <Pilula tom="ouro">
+              {tipado.itensEstimados} estimado(s) · {formatarReais(tipado.estimado)}
+            </Pilula>
+          )}
+          {tipado.itensSemPreco > 0 && <Pilula tom="vermelho">{tipado.itensSemPreco} sem preço</Pilula>}
+          <span className="text-[11px] text-carvao-400">
+            valores estimados são de mercado — confirme com a cotação real.
+          </span>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2">
         <Botao onClick={() => gerar('economica')} className="flex-1">
