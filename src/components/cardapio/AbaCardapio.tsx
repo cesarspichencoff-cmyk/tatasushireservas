@@ -13,13 +13,26 @@ import {
   temHistoricoExato,
   validarSemana,
   listaDoDia,
+  fonteIngredientes,
   formatarReais,
   normalizar,
 } from '@/lib/cardapio/motor';
 import { custoTipado, resolverPreco } from '@/lib/cardapio/precos';
+import { RECEITAS_POR_CATEGORIA } from '@/lib/cardapio/receitas';
 import { useEstimativas } from '@/lib/cardapio/estimativas';
 import type { DiaCardapio, EstadoSemana, Proteina } from '@/lib/cardapio/tipos';
 import { SeletorPrato } from './SeletorPrato';
+
+/** Junta pratos com receita (primeiro) e as opções históricas, sem repetir. */
+function mesclarOpcoes(receitas: string[], base: string[]): string[] {
+  const vistos = new Set(receitas.map((r) => normalizar(r)));
+  return [...receitas, ...base.filter((o) => !vistos.has(normalizar(o)))];
+}
+
+const OPC_PRINCIPAIS = mesclarOpcoes(RECEITAS_POR_CATEGORIA.principal, DADOS.listas.principais);
+const OPC_GUARNICOES = mesclarOpcoes(RECEITAS_POR_CATEGORIA.guarnicao, DADOS.listas.guarnicoes);
+const OPC_SALADAS = mesclarOpcoes(RECEITAS_POR_CATEGORIA.salada, DADOS.listas.saladas);
+const OPC_SOBREMESAS = mesclarOpcoes(RECEITAS_POR_CATEGORIA.sobremesa, DADOS.listas.sobremesas);
 
 const COR_PROTEINA: Record<string, string> = {
   bovina: 'bg-[#8a3b34]/10 text-[#8a3b34] ring-[#8a3b34]/25 dark:text-[#e0867c]',
@@ -223,6 +236,7 @@ export function AbaCardapio({
             estimativas,
           );
           const prot = dia.principal ? proteinaDoPrato(dia.principal) : 'outros';
+          const fonte = fonteIngredientes(dia);
           return (
             <Cartao key={i} className="space-y-2.5 overflow-hidden">
               <div
@@ -246,7 +260,7 @@ export function AbaCardapio({
               <SeletorPrato
                 rotulo="Principal"
                 valor={dia.principal}
-                opcoes={DADOS.listas.principais}
+                opcoes={OPC_PRINCIPAIS}
                 aoEscolher={(v) => setDia(i, { principal: v })}
                 desabilitado={!podeEditar}
                 destaque={<BadgeProteina prato={dia.principal} />}
@@ -262,43 +276,55 @@ export function AbaCardapio({
                 <SeletorPrato
                   rotulo="Guarnição"
                   valor={dia.guarnicao}
-                  opcoes={DADOS.listas.guarnicoes}
+                  opcoes={OPC_GUARNICOES}
                   aoEscolher={(v) => setDia(i, { guarnicao: v })}
                   desabilitado={!podeEditar}
                 />
                 <SeletorPrato
                   rotulo="Salada"
                   valor={dia.salada}
-                  opcoes={DADOS.listas.saladas}
+                  opcoes={OPC_SALADAS}
                   aoEscolher={(v) => setDia(i, { salada: v })}
                   desabilitado={!podeEditar}
                 />
                 <SeletorPrato
                   rotulo="Sobremesa"
                   valor={dia.sobremesa}
-                  opcoes={DADOS.listas.sobremesas}
+                  opcoes={OPC_SOBREMESAS}
                   aoEscolher={(v) => setDia(i, { sobremesa: v })}
                   desabilitado={!podeEditar}
                 />
               </div>
 
               {dia.principal && (
-                <p className="text-xs text-carvao-400">
-                  {temHistoricoExato(dia) ? (
-                    <span className="font-semibold text-brand-600">● Combinação já usada antes</span>
-                  ) : (
-                    <span>○ Combinação nova — lista montada por componente</span>
+                <>
+                  <p className="text-xs text-carvao-400">
+                    {fonte === 'receita' ? (
+                      <span className="font-semibold text-brand-600">● Receita cadastrada</span>
+                    ) : fonte === 'estimado' ? (
+                      <span className="font-semibold text-[#b04c41]">▲ Ingredientes estimados</span>
+                    ) : temHistoricoExato(dia) ? (
+                      <span className="font-semibold text-brand-600">● Combinação já usada antes</span>
+                    ) : (
+                      <span>○ Combinação nova — lista por componente</span>
+                    )}
+                    {' · '}
+                    {lista.length} itens de compra
+                    {custo.total > 0 && <> · ≈ {formatarReais(custo.total)}</>}
+                    {custo.itensEstimados > 0 && (
+                      <span className="font-semibold text-[#9a6c17] dark:text-[#e3b45c]"> · {custo.itensEstimados} estimado(s)</span>
+                    )}
+                    {custo.itensSemPreco > 0 && (
+                      <span className="font-semibold text-[#b04c41]"> · {custo.itensSemPreco} sem preço</span>
+                    )}
+                  </p>
+                  {fonte === 'estimado' && (
+                    <p className="rounded-xl bg-[#b04c41]/10 px-2.5 py-1.5 text-[11px] font-semibold text-[#b04c41] ring-1 ring-[#b04c41]/20">
+                      ⚠️ Este prato não tem receita cadastrada — os ingredientes são um chute. Escolha um prato com
+                      receita ou complete os itens na lista de compras.
+                    </p>
                   )}
-                  {' · '}
-                  {lista.length} itens de compra
-                  {custo.total > 0 && <> · ≈ {formatarReais(custo.total)}</>}
-                  {custo.itensEstimados > 0 && (
-                    <span className="font-semibold text-[#9a6c17] dark:text-[#e3b45c]"> · {custo.itensEstimados} estimado(s)</span>
-                  )}
-                  {custo.itensSemPreco > 0 && (
-                    <span className="font-semibold text-[#b04c41]"> · {custo.itensSemPreco} sem preço</span>
-                  )}
-                </p>
+                </>
               )}
             </Cartao>
           );
