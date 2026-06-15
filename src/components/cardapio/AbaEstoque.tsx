@@ -178,7 +178,7 @@ export function AbaEstoque({
                 onClick={baixaPeloCardapio}
                 className="w-full rounded-2xl border border-brand-600/40 bg-brand-50 px-4 py-2.5 text-sm font-extrabold uppercase tracking-wide text-brand-700 transition hover:bg-brand-100 dark:bg-carvao-800 dark:text-brand-300"
               >
-                ↗ Dar baixa do consumo do cardápio
+                ↧ Dar baixa do consumo do cardápio
               </button>
             </Cartao>
           </Secao>
