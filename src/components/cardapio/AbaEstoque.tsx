@@ -5,6 +5,7 @@ import { toast } from '@/components/Toast';
 import { Botao, Cartao, EstadoVazio, Kpi, Pilula, Secao, estiloInput } from '@/components/ui';
 import { DADOS, formatarQtd, normalizar } from '@/lib/cardapio/motor';
 import { consumoDaSemana, necessidadeDeCompra } from '@/lib/cardapio/indicadores';
+import { AbaInventario } from './AbaInventario';
 import type { Estoque, EstadoSemana, MovEstoque } from '@/lib/cardapio/tipos';
 
 export function AbaEstoque({
@@ -27,6 +28,7 @@ export function AbaEstoque({
   const [busca, setBusca] = useState('');
   const [novoItem, setNovoItem] = useState('');
   const [novaQtd, setNovaQtd] = useState('');
+  const [invAberto, setInvAberto] = useState(false);
 
   const consumo = useMemo(() => consumoDaSemana(estado, fatores), [estado, fatores]);
   const necessidade = useMemo(() => necessidadeDeCompra(consumo, estoque), [consumo, estoque]);
@@ -75,11 +77,33 @@ export function AbaEstoque({
 
   return (
     <div className="space-y-5">
+      <AbaInventario
+        aberto={invAberto}
+        aoFechar={() => setInvAberto(false)}
+        estoque={estoque}
+        definirSaldo={definirSaldo}
+        podeEditar={podeEditar}
+      />
+
       <div className="grid grid-cols-3 gap-3">
         <Kpi rotulo="Itens em estoque" valor={Object.keys(estoque).length} tom="neutro" icone="📦" />
         <Kpi rotulo="A comprar" valor={aComprar.length} detalhe="após descontar estoque" tom="ouro" icone="🛒" />
         <Kpi rotulo="No mínimo" valor={baixos.length} detalhe="estoque baixo" tom={baixos.length ? 'vermelho' : 'verde'} icone="⚠️" />
       </div>
+
+      {/* Inventário mensal — contagem física do estoque */}
+      <button
+        onClick={() => setInvAberto(true)}
+        className="flex w-full items-center justify-between gap-3 rounded-2xl border border-brand-600/30 bg-brand-50 px-4 py-3 text-left transition hover:bg-brand-100 dark:bg-carvao-800 dark:hover:bg-carvao-700"
+      >
+        <span>
+          <span className="block text-sm font-extrabold text-brand-700 dark:text-brand-300">📋 Inventário mensal</span>
+          <span className="block text-[11px] text-carvao-500 dark:text-areia-200">
+            Conte o estoque do mês e veja as divergências (esperado × contado).
+          </span>
+        </span>
+        <span className="shrink-0 text-brand-600 dark:text-brand-300">→</span>
+      </button>
 
       {/* Necessidade real de compra */}
       <Secao
@@ -154,7 +178,7 @@ export function AbaEstoque({
                 onClick={baixaPeloCardapio}
                 className="w-full rounded-2xl border border-brand-600/40 bg-brand-50 px-4 py-2.5 text-sm font-extrabold uppercase tracking-wide text-brand-700 transition hover:bg-brand-100 dark:bg-carvao-800 dark:text-brand-300"
               >
-                ↧ Dar baixa do consumo do cardápio
+                ↗ Dar baixa do consumo do cardápio
               </button>
             </Cartao>
           </Secao>
