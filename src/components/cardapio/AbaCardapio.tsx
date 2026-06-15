@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Botao, Cartao, Pilula, Stepper } from '@/components/ui';
 import { Icone } from '@/components/Icones';
 import {
@@ -22,6 +23,7 @@ import { RECEITAS_POR_CATEGORIA } from '@/lib/cardapio/receitas';
 import { useEstimativas } from '@/lib/cardapio/estimativas';
 import type { DiaCardapio, EstadoSemana, Proteina } from '@/lib/cardapio/tipos';
 import { SeletorPrato } from './SeletorPrato';
+import { OperacaoDia } from './OperacaoDia';
 
 /** Junta pratos com receita (primeiro) e as opções históricas, sem repetir. */
 function mesclarOpcoes(receitas: string[], base: string[]): string[] {
@@ -79,6 +81,7 @@ export function AbaCardapio({
   definirPreco?: (itemNorm: string, valor: number | null) => void;
 }) {
   const { estimativas, gerarEstimativas } = useEstimativas();
+  const [opDia, setOpDia] = useState(false);
   const avisos = validarSemana(estado.dias);
   const temPrecos = Object.keys(precos).length > 0;
 
@@ -144,6 +147,20 @@ export function AbaCardapio({
 
   return (
     <div className="space-y-4">
+      <OperacaoDia aberto={opDia} aoFechar={() => setOpDia(false)} estado={estado} atualizar={atualizar} />
+
+      {/* Atalho: Modo Operação do Dia (foco da cozinha) */}
+      <button
+        onClick={() => setOpDia(true)}
+        className="flex w-full items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-brand-800 to-brand-600 px-4 py-3 text-left text-white shadow-suave ring-1 ring-ouro-400/40 transition hover:from-brand-900 hover:to-brand-700"
+      >
+        <span>
+          <span className="block text-sm font-extrabold tracking-wide">⚡ Operação do Dia</span>
+          <span className="block text-[11px] text-brand-100">O que produzir, receber e comprar hoje — em um toque.</span>
+        </span>
+        <span className="shrink-0 text-lg">→</span>
+      </button>
+
       {/* Resumo vivo — acompanha a rolagem dos dias */}
       <div className="sticky top-[60px] z-30 -mx-4 bg-areia-50/85 px-4 py-2 backdrop-blur-md dark:bg-carvao-950/85">
         <Cartao className="!p-3">
