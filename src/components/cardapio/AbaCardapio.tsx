@@ -28,6 +28,7 @@ import { ChefIA } from './ChefIA';
 import { PrevisaoPresenca } from './PrevisaoPresenca';
 import { ComoFazer } from './ComoFazer';
 import { AntiMonotonia } from './AntiMonotonia';
+import { TermometroAlmoco } from './TermometroAlmoco';
 
 /** Junta pratos com receita (primeiro) e as opções históricas, sem repetir. */
 function mesclarOpcoes(receitas: string[], base: string[]): string[] {
@@ -246,6 +247,9 @@ export function AbaCardapio({
             ))}
         </Cartao>
       )}
+
+      {/* Termômetro em tempo real — satisfação do almoço de hoje */}
+      <TermometroAlmoco estado={estado} />
 
       {/* Monotonia percebida — repetição de textura ou acompanhamentos */}
       <AntiMonotonia estado={estado} />

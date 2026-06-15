@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { idSemanaIso, useAceitacao, useSemana } from '@/lib/cardapio/estado';
 import { DIAS_SEMANA } from '@/lib/cardapio/motor';
+import { registrarVotoDia } from '@/lib/cardapio/termometro';
 
 const VOTOS: { v: 'bom' | 'ok' | 'ruim'; emoji: string; rotulo: string; cor: string }[] = [
   { v: 'bom', emoji: '😋', rotulo: 'Gostei', cor: 'from-brand-500 to-brand-700' },
@@ -45,6 +46,7 @@ export default function PaginaAvaliar() {
       /* sem suporte a vibração */
     }
     avaliar(prato, voto);
+    registrarVotoDia(prato, voto);
     setVotou(emoji);
   };
 
