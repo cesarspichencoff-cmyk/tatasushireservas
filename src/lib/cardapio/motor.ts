@@ -311,3 +311,5 @@ export function formatarQtd(qtd: number): string {
 export function formatarReais(v: number): string {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
+/** Alias de listaDoDia — compatibilidade com imports legados */
+export const linhasDoDia = listaDoDia;

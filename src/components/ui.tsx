@@ -1,3 +1,4 @@
+import React from 'react';
 'use client';
 
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
@@ -105,3 +106,72 @@ export const estiloInput =
 
 export const estiloRotulo =
   'mb-1.5 block text-xs font-bold uppercase tracking-[0.12em] text-carvao-400 dark:text-carvao-300';
+  export function Pilula({ classe, children }: { classe: string; children: React.ReactNode }) {
+  return (
+    <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-bold ${classe}`}>
+      <i className="h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-60" aria-hidden />
+      {children}
+    </span>
+  );
+}
+
+export function Secao({ titulo, children, className = '' }: { titulo?: string; children: React.ReactNode; className?: string }) {
+  return (
+    <section className={`mb-6 ${className}`}>
+      {titulo && <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-carvao-400">{titulo}</h2>}
+      {children}
+    </section>
+  );
+}
+
+export function EstadoVazio({ mensagem = 'Nenhum dado encontrado.' }: { mensagem?: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-carvao-300">
+      <span className="text-4xl mb-2">🍱</span>
+      <p className="text-sm">{mensagem}</p>
+    </div>
+  );
+}
+
+export function BarraMini({ valor, max, className = '' }: { valor: number; max: number; className?: string }) {
+  const pct = max > 0 ? Math.min((valor / max) * 100, 100) : 0;
+  return (
+    <div className={`h-1.5 w-full rounded-full bg-carvao-100 dark:bg-carvao-700 ${className}`}>
+      <div className="h-full rounded-full bg-brand-500 transition-all" style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
+export function Kpi({ label, valor, sub }: { label: string; valor: string | number; sub?: string }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[11px] font-bold uppercase tracking-widest text-carvao-400">{label}</span>
+      <span className="text-2xl font-semibold tracking-tight">{valor}</span>
+      {sub && <span className="text-xs text-carvao-400">{sub}</span>}
+    </div>
+  );
+}
+
+export function Contador({ valor, label }: { valor: number; label: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xl font-bold">{valor}</span>
+      <span className="text-sm text-carvao-400">{label}</span>
+    </div>
+  );
+}
+
+export function Skeleton({ className = '' }: { className?: string }) {
+  return <div className={`animate-pulse rounded-2xl bg-carvao-100 dark:bg-carvao-700 ${className}`} />;
+}
+
+export function BottomSheet({ aberto, aoFechar, children }: { aberto: boolean; aoFechar: () => void; children: React.ReactNode }) {
+  if (!aberto) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-carvao-950/55 backdrop-blur-[2px]" onClick={aoFechar}>
+      <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-white p-6 shadow-flutuante dark:bg-carvao-850" onClick={e => e.stopPropagation()}>
+        {children}
+      </div>
+    </div>
+  );
+}
