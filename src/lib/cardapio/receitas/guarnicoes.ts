@@ -2,6 +2,34 @@ import type { Receita } from './tipos';
 
 export const PRATOS: Receita[] = [
   {
+    nome: 'Arroz e Feijão',
+    categoria: 'guarnicao',
+    classe: 'economica',
+    proteina: 'outros',
+    tags: ['base', 'classico', 'economico', 'fixa'],
+    ingredientes: [
+      { item: 'Arroz', unid: 'kg', porPessoa: 0.09 },
+      { item: 'Feijão Carioca', unid: 'kg', porPessoa: 0.05 },
+      { item: 'Alho', unid: 'kg', porPessoa: 0.005 },
+      { item: 'Cebola', unid: 'kg', porPessoa: 0.01 },
+      { item: 'Óleo', unid: 'ml', porPessoa: 8 },
+      { item: 'Sal', unid: 'g', porPessoa: 5 },
+    ],
+    preparo: [
+      'Refogue o alho no óleo e cozinhe o arroz com água quente e sal (proporção dobrada) até secar.',
+      'Cozinhe o feijão na pressão até ficar macio.',
+      'Prepare um refogado de alho e cebola e incorpore parte do feijão amassado para encorpar o caldo.',
+      'Junte o restante do feijão, cozinhe até apurar e sirva ao lado do arroz soltinho.',
+    ],
+    rendimentoPorcaoG: 340,
+    tempoMin: 60,
+    complexidade: 'media',
+    obsOperacional: 'Base do prato feito brasileiro: cozinhar arroz e feijão em lotes separados; manter ambos em rechaud a 65°C.',
+    nutricao: { kcal: 380, prot: 14, carb: 72, gord: 5, fibra: 8, sodio: 630 },
+    substituicoes: ['Feijão preto no lugar do carioca', 'Arroz integral para mais fibras'],
+    adequacaoRefeitorio: 98,
+  },
+  {
     nome: 'Arroz branco',
     categoria: 'guarnicao',
     classe: 'economica',

@@ -4,7 +4,6 @@ import { useMemo, useState } from 'react';
 import { Botao, Cartao, Pilula, Stepper } from '@/components/ui';
 import { Icone } from '@/components/Icones';
 import {
-  DADOS,
   DIAS_SEMANA,
   PESSOAS_PADRAO,
   proteinaDoPrato,
@@ -19,7 +18,7 @@ import {
   normalizar,
 } from '@/lib/cardapio/motor';
 import { custoTipado, resolverPreco } from '@/lib/cardapio/precos';
-import { RECEITAS_POR_CATEGORIA } from '@/lib/cardapio/receitas';
+import { RECEITAS_POR_CATEGORIA, GUARNICOES_FIXAS } from '@/lib/cardapio/receitas';
 import { useEstimativas } from '@/lib/cardapio/estimativas';
 import { useAceitacao, semanasComConteudo, lerSemana } from '@/lib/cardapio/estado';
 import type { DiaCardapio, EstadoSemana, Proteina } from '@/lib/cardapio/tipos';
@@ -320,7 +319,7 @@ export function AbaCardapio({
                 <SeletorPrato
                   rotulo="Guarnição fixa"
                   valor={dia.guarnicaoFixa}
-                  opcoes={DADOS.listas.guarnicoesFixas}
+                  opcoes={GUARNICOES_FIXAS}
                   aoEscolher={(v) => setDia(i, { guarnicaoFixa: v })}
                   desabilitado={!podeEditar}
                 />

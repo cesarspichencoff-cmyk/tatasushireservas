@@ -99,6 +99,19 @@ export const RECEITAS_POR_CATEGORIA: Record<CategoriaReceita, string[]> = {
   sobremesa: TODAS_RECEITAS.filter((r) => r.categoria === 'sobremesa').map((r) => r.nome),
 };
 
+/**
+ * Guarnições fixas (base de arroz e feijão) — todas com receita na
+ * biblioteca. Usadas no seletor "Guarnição fixa" do cardápio para que
+ * NENHUMA opção exista sem receita completa. A primeira é o padrão do dia.
+ */
+export const GUARNICOES_FIXAS: string[] = [
+  'Arroz e Feijão',
+  'Arroz branco',
+  'Feijão carioca',
+  'Feijão preto',
+  'Arroz integral',
+].filter((nome) => !!RECEITAS[normReceita(nome)]);
+
 /* ------------------------------ custo ao vivo ------------------------------ */
 
 export interface CustoReceita {
