@@ -30,6 +30,7 @@ export function ListaCompras({
   onAjuste,
   onAddManual,
   onRmManual,
+  onEditManual,
 }: {
   estado: EstadoSemana;
   fatores?: Record<string, number>;
@@ -39,6 +40,7 @@ export function ListaCompras({
   onAjuste?: (dia: number, chave: string, qtd: number | null, removido?: boolean, obs?: string, unid?: string) => void;
   onAddManual?: (dia: number, item: string, unid: string, qtd: number) => void;
   onRmManual?: (dia: number, idx: number) => void;
+  onEditManual?: (dia: number, idx: number, patch: { qtd?: number; unid?: string }) => void;
 }) {
   const [busca, setBusca] = useState('');
   const [editando, setEditando] = useState(false);
@@ -158,25 +160,24 @@ export function ListaCompras({
                             value={l.qtd}
                             onChange={(e) =>
                               l.manual
-                                ? undefined
+                                ? onEditManual?.(di, Number(l.chave.split(':')[1]), { qtd: Number(e.target.value) })
                                 : onAjuste!(di, l.chave, Number(e.target.value))
                             }
-                            disabled={l.manual}
-                            className="h-9 w-16 rounded-lg border border-carvao-200 bg-white px-1.5 text-center font-bold tabular-nums disabled:opacity-50 dark:border-carvao-600 dark:bg-carvao-900"
+                            className="h-9 w-16 rounded-lg border border-carvao-200 bg-white px-1.5 text-center font-bold tabular-nums dark:border-carvao-600 dark:bg-carvao-900"
                           />
-                          {l.manual ? (
-                            <span className="w-12 text-center text-xs text-carvao-400">{unidAtual}</span>
-                          ) : (
-                            <select
-                              value={unidAtual}
-                              onChange={(e) => onAjuste!(di, l.chave, null, undefined, undefined, e.target.value)}
-                              className="h-9 rounded-lg border border-carvao-200 bg-white px-1 text-xs dark:border-carvao-600 dark:bg-carvao-900"
-                            >
-                              {DADOS.unidades.map((u) => (
-                                <option key={u}>{u}</option>
-                              ))}
-                            </select>
-                          )}
+                          <select
+                            value={unidAtual}
+                            onChange={(e) =>
+                              l.manual
+                                ? onEditManual?.(di, Number(l.chave.split(':')[1]), { unid: e.target.value })
+                                : onAjuste!(di, l.chave, null, undefined, undefined, e.target.value)
+                            }
+                            className="h-9 rounded-lg border border-carvao-200 bg-white px-1 text-xs dark:border-carvao-600 dark:bg-carvao-900"
+                          >
+                            {DADOS.unidades.map((u) => (
+                              <option key={u}>{u}</option>
+                            ))}
+                          </select>
                           <button
                             onClick={() => setObsAberta(obsAberta === `${di}:${l.chave}` ? null : `${di}:${l.chave}`)}
                             aria-label="Observação"

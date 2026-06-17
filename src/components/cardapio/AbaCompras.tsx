@@ -158,6 +158,19 @@ export function AbaCompras({
       };
     });
 
+  const editManual = (dia: number, idx: number, patch: { qtd?: number; unid?: string }) =>
+    atualizar((e) => {
+      const lista = e.manuais[dia] ?? [];
+      const alvo = lista[idx];
+      if (!alvo) return e;
+      if (patch.qtd !== undefined) registrarAuditoria({ acao: 'ajustou item extra', alvo: alvo.item, para: patch.qtd });
+      if (patch.unid !== undefined) registrarAuditoria({ acao: 'alterou unidade (extra)', alvo: alvo.item, para: patch.unid });
+      return {
+        ...e,
+        manuais: { ...e.manuais, [dia]: lista.map((m, i) => (i === idx ? { ...m, ...patch } : m)) },
+      };
+    });
+
   // ações em lote — sobre todos os itens do dia
   const comprarTudo = (dia: number) =>
     atualizar((e) => {
@@ -222,6 +235,7 @@ export function AbaCompras({
           onAjuste={(dia, chave, qtd, removido, obs, unid) => setAjuste(dia, chave, qtd, removido, obs, unid)}
           onAddManual={addManual}
           onRmManual={rmManual}
+          onEditManual={editManual}
         />
       )}
 
