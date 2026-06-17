@@ -34,7 +34,7 @@ function gravar(chave: string, valor: unknown) {
 }
 
 export type PerfilLogin = 'gerencia' | 'compras' | 'cozinha';
-export type AbaId = 'painel' | 'cotacao' | 'cardapio' | 'chefIA' | 'compras' | 'feedback' | 'gerencial';
+export type AbaId = 'painel' | 'cotacao' | 'cardapio' | 'compras' | 'feedback' | 'gerencial';
 
 export interface DefPerfil {
   id: PerfilLogin;
@@ -53,7 +53,7 @@ export const PERFIS: DefPerfil[] = [
     descricao: 'Acesso completo: painel, cardápio, custos, compras e configurações',
     icone: '👑',
     papel: 'administrador',
-    abas: ['painel', 'cotacao', 'cardapio', 'chefIA', 'compras', 'feedback', 'gerencial'],
+    abas: ['painel', 'cotacao', 'cardapio', 'compras', 'feedback', 'gerencial'],
     pinPadrao: '1234',
   },
   {
@@ -71,7 +71,7 @@ export const PERFIS: DefPerfil[] = [
     descricao: 'Cardápio, conferência, recebimento, inventário e feedback',
     icone: '👩‍🍳',
     papel: 'cozinha',
-    abas: ['cardapio', 'chefIA', 'compras', 'feedback'],
+    abas: ['cardapio', 'compras', 'feedback'],
     pinPadrao: '2222',
   },
 ];
@@ -83,10 +83,10 @@ export function perfilDe(id: PerfilLogin | null): DefPerfil | null {
 /** Abas visíveis para um papel (navegação muda conforme o login). */
 export function abasDoPapel(papel: Papel): AbaId[] {
   const mapa: Record<Papel, AbaId[]> = {
-    administrador: ['painel', 'cotacao', 'cardapio', 'chefIA', 'compras', 'feedback', 'gerencial'],
-    gestor: ['painel', 'cotacao', 'cardapio', 'chefIA', 'compras', 'feedback', 'gerencial'],
+    administrador: ['painel', 'cotacao', 'cardapio', 'compras', 'feedback', 'gerencial'],
+    gestor: ['painel', 'cotacao', 'cardapio', 'compras', 'feedback', 'gerencial'],
     compras: ['cotacao', 'compras'],
-    cozinha: ['cardapio', 'chefIA', 'compras', 'feedback'],
+    cozinha: ['cardapio', 'compras', 'feedback'],
     recebimento: ['compras'],
   };
   return mapa[papel] ?? ['painel'];

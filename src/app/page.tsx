@@ -17,7 +17,6 @@ import { AbaFluxo } from '@/components/cardapio/AbaFluxo';
 import { AbaPrecos } from '@/components/cardapio/AbaPrecos';
 import { AbaRadar } from '@/components/cardapio/AbaRadar';
 import { CentralGerencial } from '@/components/cardapio/CentralGerencial';
-import { ChefIATab } from '@/components/cardapio/ChefIATab';
 import { Assistente } from '@/components/cardapio/Assistente';
 import { PosterSemana } from '@/components/cardapio/PosterSemana';
 import {
@@ -49,7 +48,6 @@ const ABAS = [
   { id: 'painel', rotulo: '📊 Painel' },
   { id: 'cotacao', rotulo: '📋 Cotação' },
   { id: 'cardapio', rotulo: '🍽️ Cardápio' },
-  { id: 'chefIA', rotulo: '🤖 Chef IA' },
   { id: 'compras', rotulo: '🛒 Compras' },
   { id: 'feedback', rotulo: '👍 Feedback' },
   { id: 'gerencial', rotulo: '📈 Gerencial' },
@@ -324,10 +322,6 @@ export default function PaginaCardapios() {
                 precos={precos}
                 definirPreco={definirPreco}
               />
-            )}
-
-            {aba === 'chefIA' && (
-              <ChefIATab estado={estado} precos={precos} semanaId={semanaId} />
             )}
 
             {aba === 'gerencial' && (

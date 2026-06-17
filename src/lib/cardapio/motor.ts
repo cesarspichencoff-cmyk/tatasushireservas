@@ -4,7 +4,7 @@
    ===================================================================== */
 
 import dadosJson from './dados.json';
-import { receitaDoPrato } from './receitas';
+import { receitaDoPrato, RECEITAS_POR_CATEGORIA } from './receitas';
 import type {
   Aviso,
   DadosCardapio,
@@ -400,152 +400,144 @@ export function custoDaLista(
   return { total, itensComPreco: com, itensTotal: itens.length };
 }
 
-/* -------------------- sugestão automática de semana ------------------ */
+/* ------------------- diversidade: técnica & família ------------------ */
 
-/** Combos do histórico bons para sugestão (cardápio completo). */
-const COMBOS_COMPLETOS = DADOS.combos.filter((c) => c.p && c.gf && c.s && c.sb);
+/** Técnica de preparo do prato — usada para não repetir o mesmo método. */
+const TECNICAS: [string, RegExp][] = [
+  ['frito', /frit|empanad|milanesa|a dore|crocante|nuggets|past[eé]l/],
+  ['grelhado', /grelhad|chapa|na brasa|churrasc|espet/],
+  ['assado', /assad|forno|gratinad|de forno|rost/],
+  ['ensopado', /ensopad|cozid|caldo|guisad|panela|sopa|moqueca|vaca atolad/],
+  ['refogado', /refogad|saltead|acebolad|picadinho/],
+  ['molho', /ao molho|strogonoff|estrogonofe|fricasse|xadrez|curry|parmegiana|rol[eê]|madeira/],
+  ['moido', /moid|almondega|kibe|hamburguer|bolinho|croquete|polpetone|escondidinho/],
+  ['recheado', /rechead|enrolad|wrap|panqueca|tort/],
+];
 
-function comboParaDia(c: DadosCombo, pessoas: number): DiaCardapio {
-  return {
-    pessoas,
-    principal: c.p ?? '',
-    guarnicaoFixa: c.gf ?? '',
-    guarnicao: c.g ?? '',
-    salada: c.s ?? '',
-    sobremesa: c.sb ?? '',
-  };
+/** Método de preparo (grelhado, assado, ao molho, …) para medir variedade. */
+export function tecnicaDoPrato(prato: string | null | undefined): string {
+  const n = normalizar(prato);
+  if (!n) return 'outro';
+  const r = receitaDoPrato(prato);
+  if (r?.tags?.length) {
+    for (const [t, re] of TECNICAS) if (r.tags.some((tag) => re.test(normalizar(tag)))) return t;
+  }
+  for (const [t, re] of TECNICAS) if (re.test(n)) return t;
+  return 'outro';
 }
+
+/** Pratos que, na prática, são "o mesmo prato" compartilham família. */
+const FAMILIAS_ESPECIAIS = [
+  'almondega', 'strogonoff', 'estrogonofe', 'lasanha', 'feijoada', 'escondidinho',
+  'parmegiana', 'panqueca', 'yakisoba', 'xadrez', 'curry', 'picadinho', 'moqueca',
+  'kibe', 'hamburguer', 'nhoque', 'risoto', 'tropeiro', 'virado', 'cuscuz',
+  'bobó', 'bobo', 'dobradinha', 'rabada', 'fricasse', 'torta', 'quiche',
+  'bolinho', 'croquete', 'polpetone', 'feijoada',
+];
 
 /**
- * Monta uma semana a partir do histórico real respeitando a rotação de
- * proteínas (suína ≤2, frango 3–4, sem repetir proteína em dias seguidos,
- * sem repetir prato). Busca aleatória com pontuação — melhor de N tentativas.
+ * Família operacional do prato. "Almôndega ao molho" e "Almôndega acebolada"
+ * caem na mesma família (almondega) e não devem coexistir na semana. Quando
+ * não há família especial, a chave é proteína+técnica — assim "Frango
+ * grelhado" e "Frango assado" são famílias diferentes, mas dois grelhados de
+ * frango colidem.
  */
-export function sugerirSemana(pessoas: number[], precos: Record<string, number>): DiaCardapio[] | null {
-  if (COMBOS_COMPLETOS.length < 7) return null;
-  const temPrecos = Object.keys(precos).length > 3;
-
-  let melhor: DiaCardapio[] | null = null;
-  let melhorNota = -Infinity;
-
-  for (let tent = 0; tent < 220; tent++) {
-    const pool = [...COMBOS_COMPLETOS].sort(() => Math.random() - 0.5);
-    const dias: DiaCardapio[] = [];
-    const usados = new Set<string>();
-    let suina = 0;
-    let frango = 0;
-    let anterior: Proteina | null = null;
-    let ok = true;
-
-    for (let d = 0; d < 7; d++) {
-      const faltam = 7 - d;
-      const cand = pool.find((c) => {
-        const prot = proteinaDoPrato(c.p);
-        if (usados.has(normalizar(c.p ?? ''))) return false;
-        if (prot === anterior && prot !== 'outros') return false;
-        if (prot === 'suina' && suina >= 2) return false;
-        if (prot === 'frango' && frango >= 4) return false;
-        // garante espaço para fechar frango 3×
-        if (prot !== 'frango' && frango + faltam - 1 < 3) return false;
-        return true;
-      });
-      if (!cand) {
-        ok = false;
-        break;
-      }
-      const prot = proteinaDoPrato(cand.p);
-      if (prot === 'suina') suina++;
-      if (prot === 'frango') frango++;
-      anterior = prot;
-      usados.add(normalizar(cand.p ?? ''));
-      dias.push(comboParaDia(cand, pessoas[d] ?? DADOS.baseline));
-      pool.splice(pool.indexOf(cand), 1);
-    }
-    if (!ok || frango < 3) continue;
-
-    let nota = 0;
-    dias.forEach((dia, d) => {
-      const lista = listaDoDia(dia);
-      if (temPrecos) {
-        const c = custoDaLista(lista, precos);
-        // custo por pessoa: quanto menor, melhor (peso principal)
-        if (c.itensComPreco > 0) nota -= (c.total / Math.max(dia.pessoas, 1)) * 10;
-      }
-      // confiabilidade: combos mais usados no histórico pontuam mais
-      const combo = porChave.get(normalizar(chaveDoDia(dia)));
-      nota += Math.min(combo?.occ ?? 0, 5);
-      void d;
-    });
-    if (nota > melhorNota) {
-      melhorNota = nota;
-      melhor = dias;
-    }
-  }
-  return melhor;
+export function familiaDoPrato(prato: string | null | undefined): string {
+  const n = normalizar(prato);
+  if (!n) return '';
+  for (const f of FAMILIAS_ESPECIAIS) if (n.includes(f)) return f;
+  return `${proteinaDoPrato(prato)}:${tecnicaDoPrato(prato)}`;
 }
 
-/* --------------- sugestão criativa (fora do histórico) ---------------- */
-
-/** Componentes que têm mapa de distribuição próprio (lista de compra gerável). */
-function opcoesComMapa(tipo: string, lista: string[]): string[] {
-  return lista.filter((op) => porTipoOpcao.has(`${tipo}|${normalizar(op)}`));
+/** Nota nutricional 0–100 do prato a partir da receita (penaliza excessos). */
+export function notaNutricaoPrato(prato: string | null | undefined): number {
+  const r = receitaDoPrato(prato);
+  if (!r?.nutricao) return 60;
+  const nu = r.nutricao;
+  let s = 100;
+  if (nu.kcal > 600) s -= 16;
+  else if (nu.kcal > 500) s -= 8;
+  if (nu.sodio > 900) s -= 20;
+  else if (nu.sodio > 700) s -= 10;
+  if (nu.gord > 28) s -= 14;
+  else if (nu.gord > 20) s -= 6;
+  if (nu.prot >= 30) s += 6;
+  else if (nu.prot < 12) s -= 8;
+  if (nu.fibra >= 5) s += 6;
+  return Math.max(20, Math.min(100, s));
 }
 
-/** Custo por pessoa do mapa de um componente (para ranquear o que está barato). */
-function custoComponente(tipo: string, op: string, precos: Record<string, number>): number | null {
-  const itens = porTipoOpcao.get(`${tipo}|${normalizar(op)}`);
-  if (!itens) return null;
-  let total = 0;
-  let com = 0;
-  for (const { i, q } of itens) {
-    const p = precos[normalizar(i)];
-    if (p !== undefined && p > 0) {
-      total += p * q;
-      com++;
-    }
-  }
-  return com > 0 ? total / DADOS.baseline : null;
-}
+/* -------------------- sugestão automática de semana ------------------ */
 
 function sortear<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
+/** Aceitação mínima que a IA precisa para ponderar (nota média 0–5). */
+export interface AceitacaoLeve {
+  n: number;
+  somaNotas: number;
+  bom?: number;
+  ruim?: number;
+}
+
+export interface OpcoesSugestao {
+  /** Aceitação histórica por prato (normalizado) — pesa muito na decisão. */
+  aceitacao?: Record<string, AceitacaoLeve>;
+  /** Frequência de uso recente por prato (normalizado) — penaliza repetição. */
+  frequencia?: Record<string, number>;
+  /** Estoque disponível por item (normalizado) — leve bônus para o que já há. */
+  estoque?: Record<string, number>;
+  /** Modo criativo: prioriza combinações inéditas em vez de já aprovadas. */
+  criativo?: boolean;
+}
+
+/* Principais aptos: têm receita completa e são adequados a refeitório. */
+function principaisAptos(): string[] {
+  return RECEITAS_POR_CATEGORIA.principal.filter((nome) => {
+    const r = receitaDoPrato(nome);
+    return !!r && r.adequacaoRefeitorio >= 60;
+  });
+}
+
 /**
- * Monta uma semana NOVA: recombina principais, guarnições, saladas e
- * sobremesas que nunca apareceram juntos no histórico — culinária brasileira
- * simples, com a distribuição de alimentos que a casa já usa. Com a cotação
- * aplicada, puxa para as proteínas que estão baratas na semana.
+ * Monta uma semana equilibrando, NESTA ordem de prioridade:
+ *  1. Viabilidade operacional (receita completa + rotação de proteínas)
+ *  2. Aceitação do público (avaliações históricas)
+ *  3. Diversidade (proteína, técnica e família sem repetição)
+ *  4. Equilíbrio nutricional (nota dos macros)
+ *  5. Estoque disponível
+ *  6. Custo
+ * Regras duras: suína ≤2, frango 3–4, sem proteína em dias seguidos, sem
+ * repetir prato. Família repetida (ex.: duas almôndegas) é fortemente
+ * penalizada. Busca aleatória — melhor de N tentativas.
  */
-export function sugerirSemanaCriativa(
+function montarSemana(
   pessoas: number[],
   precos: Record<string, number>,
+  opts: OpcoesSugestao,
 ): DiaCardapio[] | null {
-  const principais = opcoesComMapa('principal', DADOS.listas.principais);
-  const guarnicoes = opcoesComMapa('guarnicao', DADOS.listas.guarnicoes);
-  const saladas = opcoesComMapa('salada', DADOS.listas.saladas);
-  const sobremesas = opcoesComMapa('sobremesa', DADOS.listas.sobremesas);
+  const principais = principaisAptos();
   if (principais.length < 7) return null;
+  const guarnicoes = RECEITAS_POR_CATEGORIA.guarnicao;
+  const saladas = RECEITAS_POR_CATEGORIA.salada;
+  const sobremesas = RECEITAS_POR_CATEGORIA.sobremesa;
 
   const temPrecos = Object.keys(precos).length > 3;
+  const aceit = opts.aceitacao ?? {};
+  const freq = opts.frequencia ?? {};
+  const estoque = opts.estoque ?? {};
 
-  // ranking de custo dos principais: quem está barato na cotação sobe
-  const custoPrincipal = new Map<string, number>();
-  if (temPrecos) {
-    principais.forEach((p) => {
-      const c = custoComponente('principal', p, precos);
-      if (c !== null) custoPrincipal.set(normalizar(p), c);
-    });
-  }
+  const notaAceitacao = (nome: string): number => {
+    const a = aceit[normalizar(nome)];
+    return a && a.n > 0 ? a.somaNotas / a.n : 0; // 0–5
+  };
 
   let melhor: DiaCardapio[] | null = null;
   let melhorNota = -Infinity;
 
-  for (let tent = 0; tent < 220; tent++) {
+  for (let tent = 0; tent < 400; tent++) {
     const poolP = sortear(principais);
-    const poolG = sortear(guarnicoes);
-    const poolS = sortear(saladas);
-    const poolSb = sortear(sobremesas);
     const dias: DiaCardapio[] = [];
     const usados = new Set<string>();
     let suina = 0;
@@ -577,26 +569,93 @@ export function sugerirSemanaCriativa(
         pessoas: pessoas[d] ?? DADOS.baseline,
         principal: cand,
         guarnicaoFixa: 'Arroz e Feijão',
-        guarnicao: poolG[d % Math.max(poolG.length, 1)] ?? '',
-        salada: poolS[d % Math.max(poolS.length, 1)] ?? '',
-        sobremesa: poolSb[d % Math.max(poolSb.length, 1)] ?? '',
+        guarnicao: '',
+        salada: '',
+        sobremesa: '',
       });
       poolP.splice(poolP.indexOf(cand), 1);
     }
     if (!ok || frango < 3) continue;
 
+    // acompanhamentos variados (sem repetir ao longo da semana)
+    const pg = sortear(guarnicoes);
+    const ps = sortear(saladas);
+    const psb = sortear(sobremesas);
+    dias.forEach((dia, d) => {
+      dia.guarnicao = pg[d % Math.max(pg.length, 1)] ?? '';
+      dia.salada = ps[d % Math.max(ps.length, 1)] ?? '';
+      dia.sobremesa = psb[d % Math.max(psb.length, 1)] ?? '';
+    });
+
+    /* ---------- pontuação multi-critério (ordem de prioridade) ---------- */
     let nota = 0;
+
+    // 2) Aceitação do público — peso dominante
+    let somaAceit = 0;
+    let comAceit = 0;
+    dias.forEach((dia) => {
+      const a = notaAceitacao(dia.principal);
+      if (a > 0) {
+        somaAceit += a;
+        comAceit++;
+      }
+    });
+    if (comAceit > 0) nota += (somaAceit / comAceit) * 40;
+
+    // 3) Diversidade — proteínas e técnicas distintas; família repetida pune
+    const tecnicas = dias.map((dia) => tecnicaDoPrato(dia.principal));
+    const familias = dias.map((dia) => familiaDoPrato(dia.principal));
+    const protsDistintas = new Set(dias.map((dia) => proteinaDoPrato(dia.principal))).size;
+    const tecnicasDistintas = new Set(tecnicas).size;
+    nota += protsDistintas * 6 + tecnicasDistintas * 6;
+    // técnica repetida acima de 2× incomoda; família repetida é quase proibida
+    const contTec: Record<string, number> = {};
+    tecnicas.forEach((t) => (contTec[t] = (contTec[t] ?? 0) + 1));
+    Object.values(contTec).forEach((c) => {
+      if (c > 2) nota -= (c - 2) * 8;
+    });
+    const famDup = familias.length - new Set(familias).size;
+    nota -= famDup * 25;
+    // penaliza pratos repetidos nas últimas semanas (anti-monotonia)
+    dias.forEach((dia) => {
+      const f = freq[normalizar(dia.principal)] ?? 0;
+      if (f > 0) nota -= f * 5;
+    });
+
+    // 4) Equilíbrio nutricional — média da nota de macros
+    const mediaNutri =
+      dias.reduce((a, dia) => a + notaNutricaoPrato(dia.principal), 0) / dias.length;
+    nota += mediaNutri * 0.4;
+
+    // 5) Estoque disponível — leve bônus para o que já temos
+    if (Object.keys(estoque).length > 0) {
+      dias.forEach((dia) => {
+        const itens = listaDoDia(dia);
+        const cobertos = itens.filter((s) => (estoque[normalizar(s.item)] ?? 0) > 0).length;
+        nota += cobertos * 0.5;
+      });
+    }
+
+    // 6) Custo — peso menor (não decide sozinho)
+    if (temPrecos) {
+      let custoPorPessoa = 0;
+      dias.forEach((dia) => {
+        const c = custoDaLista(listaDoDia(dia), precos);
+        if (c.itensComPreco > 0) custoPorPessoa += c.total / Math.max(dia.pessoas, 1);
+      });
+      nota -= custoPorPessoa * 2;
+    }
+
+    // 7) Ajuste de modo — criativo busca o inédito; padrão valoriza o aprovado
     let novas = 0;
     dias.forEach((dia) => {
-      if (temPrecos) {
-        const c = custoDaLista(listaDoDia(dia), precos);
-        if (c.itensComPreco > 0) nota -= (c.total / Math.max(dia.pessoas, 1)) * 10;
-        const cp = custoPrincipal.get(normalizar(dia.principal));
-        if (cp !== undefined) nota -= cp * 5; // peso extra na proteína barata
+      if (temHistoricoExato(dia)) {
+        if (!opts.criativo) nota += 1.5;
+      } else {
+        novas++;
       }
-      if (!temHistoricoExato(dia)) novas++;
     });
-    nota += novas * 2; // criativo de verdade: combinações inéditas pontuam
+    if (opts.criativo) nota += novas * 3;
 
     if (nota > melhorNota) {
       melhorNota = nota;
@@ -604,6 +663,30 @@ export function sugerirSemanaCriativa(
     }
   }
   return melhor;
+}
+
+/**
+ * Sugestão "aprovada": prioriza pratos com boa aceitação e já testados,
+ * mantendo diversidade e equilíbrio nutricional.
+ */
+export function sugerirSemana(
+  pessoas: number[],
+  precos: Record<string, number>,
+  opts: OpcoesSugestao = {},
+): DiaCardapio[] | null {
+  return montarSemana(pessoas, precos, { ...opts, criativo: false });
+}
+
+/**
+ * Sugestão criativa: recombina a biblioteca de receitas priorizando
+ * combinações inéditas, sem abrir mão da diversidade nem da nutrição.
+ */
+export function sugerirSemanaCriativa(
+  pessoas: number[],
+  precos: Record<string, number>,
+  opts: OpcoesSugestao = {},
+): DiaCardapio[] | null {
+  return montarSemana(pessoas, precos, { ...opts, criativo: true });
 }
 
 /* ------------------------------ util --------------------------------- */

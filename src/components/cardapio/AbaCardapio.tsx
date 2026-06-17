@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Botao, Cartao, Pilula, Stepper } from '@/components/ui';
 import { Icone } from '@/components/Icones';
 import {
@@ -21,12 +21,14 @@ import {
 import { custoTipado, resolverPreco } from '@/lib/cardapio/precos';
 import { RECEITAS_POR_CATEGORIA } from '@/lib/cardapio/receitas';
 import { useEstimativas } from '@/lib/cardapio/estimativas';
+import { useAceitacao, semanasComConteudo, lerSemana } from '@/lib/cardapio/estado';
 import type { DiaCardapio, EstadoSemana, Proteina } from '@/lib/cardapio/tipos';
 import { SeletorPrato } from './SeletorPrato';
 import { OperacaoDia } from './OperacaoDia';
 import { ChefIA } from './ChefIA';
 import { PrevisaoPresenca } from './PrevisaoPresenca';
 import { ComoFazer } from './ComoFazer';
+import { NutricaoPrato } from './NutricaoPrato';
 import { AntiMonotonia } from './AntiMonotonia';
 import { TermometroAlmoco } from './TermometroAlmoco';
 import { IndicadorNutricional } from './IndicadorNutricional';
@@ -81,9 +83,25 @@ export function AbaCardapio({
   definirPreco?: (itemNorm: string, valor: number | null) => void;
 }) {
   const { estimativas, gerarEstimativas } = useEstimativas();
+  const { aceitacao } = useAceitacao();
   const [opDia, setOpDia] = useState(false);
   const avisos = validarSemana(estado.dias);
   const temPrecos = Object.keys(precos).length > 0;
+
+  // Frequência de uso dos pratos nas últimas 4 semanas — alimenta a IA para
+  // evitar repetir na geração automática (anti-monotonia entre semanas).
+  const frequencia = useMemo(() => {
+    const cont: Record<string, number> = {};
+    for (const sid of semanasComConteudo().slice(-4)) {
+      lerSemana(sid).dias.forEach((d) => {
+        if (d.principal) {
+          const k = normalizar(d.principal);
+          cont[k] = (cont[k] ?? 0) + 1;
+        }
+      });
+    }
+    return cont;
+  }, []);
 
   const setDia = (i: number, patch: Partial<DiaCardapio>) =>
     atualizar((e) => ({
@@ -96,6 +114,7 @@ export function AbaCardapio({
     const sugestao = fn(
       estado.dias.map((d) => d.pessoas),
       precos,
+      { aceitacao, frequencia },
     );
     if (sugestao) atualizar((e) => ({ ...e, dias: sugestao }));
   };
@@ -359,6 +378,8 @@ export function AbaCardapio({
                   <div>
                     <ComoFazer prato={dia.principal} />
                   </div>
+                  {/* Nutrição por prato — visão principal (item 1) */}
+                  <NutricaoPrato prato={dia.principal} />
                 </>
               )}
             </Cartao>

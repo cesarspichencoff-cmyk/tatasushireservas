@@ -96,13 +96,22 @@ export function AbaCompras({
     }
   };
 
-  const podeAjustarQtd = papel === 'gestor' || papel === 'cozinha';
-  const podeComprar = papel === 'compras' || papel === 'gestor';
-  const podeReceber = papel === 'recebimento' || papel === 'gestor';
+  const podeAjustarQtd = papel === 'administrador' || papel === 'gestor' || papel === 'cozinha';
+  const podeComprar = papel === 'compras' || papel === 'gestor' || papel === 'administrador';
+  const podeReceber = papel === 'recebimento' || papel === 'gestor' || papel === 'administrador';
 
   const setAjuste = (dia: number, chave: string, qtd: number | null, removido?: boolean, obs?: string, unidOverride?: string) => {
     if (qtd !== null) {
       registrarAuditoria({ acao: 'ajustou quantidade', alvo: chave, para: qtd });
+    }
+    if (removido) {
+      registrarAuditoria({ acao: 'removeu item da lista', alvo: chave });
+    }
+    if (unidOverride !== undefined) {
+      registrarAuditoria({ acao: 'alterou unidade', alvo: chave, para: unidOverride });
+    }
+    if (obs !== undefined && obs.trim()) {
+      registrarAuditoria({ acao: 'observação no item', alvo: chave, para: obs.trim() });
     }
     atualizar((e) => ({
       ...e,
@@ -131,17 +140,23 @@ export function AbaCompras({
       },
     }));
 
-  const addManual = (dia: number, item: string, unid: string, qtd: number) =>
+  const addManual = (dia: number, item: string, unid: string, qtd: number) => {
+    registrarAuditoria({ acao: 'adicionou item extra', alvo: item, para: `${qtd} ${unid}` });
     atualizar((e) => ({
       ...e,
       manuais: { ...e.manuais, [dia]: [...(e.manuais[dia] ?? []), { item, unid, qtd }] },
     }));
+  };
 
   const rmManual = (dia: number, idx: number) =>
-    atualizar((e) => ({
-      ...e,
-      manuais: { ...e.manuais, [dia]: (e.manuais[dia] ?? []).filter((_, i) => i !== idx) },
-    }));
+    atualizar((e) => {
+      const alvo = (e.manuais[dia] ?? [])[idx];
+      if (alvo) registrarAuditoria({ acao: 'removeu item extra', alvo: alvo.item });
+      return {
+        ...e,
+        manuais: { ...e.manuais, [dia]: (e.manuais[dia] ?? []).filter((_, i) => i !== idx) },
+      };
+    });
 
   // ações em lote — sobre todos os itens do dia
   const comprarTudo = (dia: number) =>
@@ -198,7 +213,16 @@ export function AbaCompras({
       </div>
 
       {modo === 'lista' && (
-        <ListaCompras estado={estado} fatores={fatores} atualizar={atualizar} podeComprar={podeComprar} />
+        <ListaCompras
+          estado={estado}
+          fatores={fatores}
+          atualizar={atualizar}
+          podeComprar={podeComprar}
+          podeEditar={podeAjustarQtd}
+          onAjuste={(dia, chave, qtd, removido, obs, unid) => setAjuste(dia, chave, qtd, removido, obs, unid)}
+          onAddManual={addManual}
+          onRmManual={rmManual}
+        />
       )}
 
       {/* Conciliação automática — preço vs histórico e quantidade vs cardápio */}

@@ -3,13 +3,18 @@
 /* =====================================================================
    Lista de compras — modo compacto (item 15) + conferência cardápio ×
    compras (item 16). Agrupada por dia, com checkbox de conferência,
-   cabeçalho mostrando o que será servido e o status do dia. Limpa no
-   celular e fácil de imprimir.
+   cabeçalho mostrando o que será servido e o status do dia.
+
+   Edição manual (item 4): com permissão, a equipe ajusta quantidade,
+   unidade, remove itens, adiciona itens extras e deixa observação —
+   direto aqui, sem precisar do modo detalhado. Toda alteração é
+   registrada na auditoria pelos handlers recebidos.
    ===================================================================== */
 
 import { useMemo, useState } from 'react';
-import { Cartao, Pilula, estiloInput } from '@/components/ui';
-import { DIAS_SEMANA, formatarQtd, linhasDoDia, normalizar } from '@/lib/cardapio/motor';
+import { Botao, Cartao, Modal, Pilula, estiloInput } from '@/components/ui';
+import { Icone } from '@/components/Icones';
+import { DADOS, DIAS_SEMANA, formatarQtd, linhasDoDia, normalizar } from '@/lib/cardapio/motor';
 import type { EstadoSemana } from '@/lib/cardapio/tipos';
 
 function hojeIso(): string {
@@ -21,14 +26,27 @@ export function ListaCompras({
   fatores,
   atualizar,
   podeComprar,
+  podeEditar = false,
+  onAjuste,
+  onAddManual,
+  onRmManual,
 }: {
   estado: EstadoSemana;
   fatores?: Record<string, number>;
   atualizar: (fn: (e: EstadoSemana) => EstadoSemana) => void;
   podeComprar: boolean;
+  podeEditar?: boolean;
+  onAjuste?: (dia: number, chave: string, qtd: number | null, removido?: boolean, obs?: string, unid?: string) => void;
+  onAddManual?: (dia: number, item: string, unid: string, qtd: number) => void;
+  onRmManual?: (dia: number, idx: number) => void;
 }) {
   const [busca, setBusca] = useState('');
+  const [editando, setEditando] = useState(false);
+  const [novoItemDia, setNovoItemDia] = useState<number | null>(null);
+  const [obsAberta, setObsAberta] = useState<string | null>(null);
   const n = normalizar(busca);
+
+  const podeMexer = podeEditar && !!onAjuste;
 
   const toggle = (di: number, chave: string, comprado: boolean) =>
     atualizar((e) => ({
@@ -58,12 +76,32 @@ export function ListaCompras({
 
   return (
     <div className="space-y-3">
-      <input
-        className={`${estiloInput} print:hidden`}
-        placeholder="🔎 Buscar item…"
-        value={busca}
-        onChange={(e) => setBusca(e.target.value)}
-      />
+      <div className="flex items-center gap-2 print:hidden">
+        <input
+          className={`${estiloInput} flex-1`}
+          placeholder="🔎 Buscar item…"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+        />
+        {podeMexer && (
+          <button
+            onClick={() => setEditando((v) => !v)}
+            className={`flex shrink-0 items-center gap-1.5 rounded-2xl px-3.5 py-2.5 text-[13px] font-bold ring-1 transition ${
+              editando
+                ? 'bg-brand-600 text-white ring-brand-600'
+                : 'bg-white text-brand-700 ring-brand-500/30 hover:bg-brand-50 dark:bg-carvao-800 dark:text-brand-300'
+            }`}
+          >
+            <Icone nome={editando ? 'check' : 'raio'} tam={16} /> {editando ? 'Concluir' : 'Editar'}
+          </button>
+        )}
+      </div>
+
+      {editando && (
+        <p className="rounded-xl bg-ouro-300/15 px-3 py-2 text-[12px] font-semibold text-ouro-600 ring-1 ring-ouro-400/30">
+          ✏️ Modo edição — ajuste quantidades, troque unidades, remova ou adicione itens. Tudo fica registrado no histórico.
+        </p>
+      )}
 
       {!algumDia && (
         <p className="text-sm text-carvao-400">Monte o cardápio para gerar a lista de compras.</p>
@@ -102,6 +140,81 @@ export function ListaCompras({
               <ul className="divide-y divide-carvao-100 dark:divide-carvao-700/60">
                 {linhas.map((l) => {
                   const comprado = !!l.status.compradoEm;
+                  const unidAtual = estado.ajustes[di]?.[l.chave]?.unidOverride ?? l.unid;
+                  const obs = estado.ajustes[di]?.[l.chave]?.obs;
+
+                  if (editando && podeMexer) {
+                    return (
+                      <li key={l.chave} className="px-3 py-2.5">
+                        <div className="flex items-center gap-2">
+                          <span className="min-w-0 flex-1 text-sm font-medium">
+                            {l.item}
+                            {l.manual && <span className="ml-1 text-[10px] font-bold uppercase text-ouro-600">extra</span>}
+                          </span>
+                          <input
+                            type="number"
+                            min={0}
+                            step="0.1"
+                            value={l.qtd}
+                            onChange={(e) =>
+                              l.manual
+                                ? undefined
+                                : onAjuste!(di, l.chave, Number(e.target.value))
+                            }
+                            disabled={l.manual}
+                            className="h-9 w-16 rounded-lg border border-carvao-200 bg-white px-1.5 text-center font-bold tabular-nums disabled:opacity-50 dark:border-carvao-600 dark:bg-carvao-900"
+                          />
+                          {l.manual ? (
+                            <span className="w-12 text-center text-xs text-carvao-400">{unidAtual}</span>
+                          ) : (
+                            <select
+                              value={unidAtual}
+                              onChange={(e) => onAjuste!(di, l.chave, null, undefined, undefined, e.target.value)}
+                              className="h-9 rounded-lg border border-carvao-200 bg-white px-1 text-xs dark:border-carvao-600 dark:bg-carvao-900"
+                            >
+                              {DADOS.unidades.map((u) => (
+                                <option key={u}>{u}</option>
+                              ))}
+                            </select>
+                          )}
+                          <button
+                            onClick={() => setObsAberta(obsAberta === `${di}:${l.chave}` ? null : `${di}:${l.chave}`)}
+                            aria-label="Observação"
+                            className={`flex h-8 w-8 items-center justify-center rounded-full transition ${
+                              obs ? 'text-brand-600' : 'text-carvao-300 hover:text-brand-600'
+                            }`}
+                          >
+                            <Icone nome="feedback" tam={15} />
+                          </button>
+                          <button
+                            onClick={() =>
+                              l.manual
+                                ? onRmManual?.(di, Number(l.chave.split(':')[1]))
+                                : onAjuste!(di, l.chave, null, true)
+                            }
+                            aria-label={`Remover ${l.item}`}
+                            className="flex h-8 w-8 items-center justify-center rounded-full text-carvao-300 hover:bg-[#b04c41]/10 hover:text-[#b04c41]"
+                          >
+                            <Icone nome="fechar" tam={15} />
+                          </button>
+                        </div>
+                        {obsAberta === `${di}:${l.chave}` && (
+                          <input
+                            autoFocus
+                            type="text"
+                            defaultValue={obs ?? ''}
+                            placeholder="Observação / justificativa (ex.: cozinha pediu mais 5 kg)"
+                            onBlur={(e) => onAjuste!(di, l.chave, null, undefined, e.target.value)}
+                            className="mt-2 w-full rounded-lg border border-carvao-200 bg-white px-2 py-1.5 text-[12px] dark:border-carvao-600 dark:bg-carvao-900"
+                          />
+                        )}
+                        {obs && obsAberta !== `${di}:${l.chave}` && (
+                          <p className="mt-1 text-[11px] italic text-carvao-400">📝 {obs}</p>
+                        )}
+                      </li>
+                    );
+                  }
+
                   return (
                     <li key={l.chave}>
                       <button
@@ -122,9 +235,10 @@ export function ListaCompras({
                         <span className={`min-w-0 flex-1 text-sm ${comprado ? 'text-carvao-400 line-through' : 'font-medium'}`}>
                           {l.item}
                           {l.manual && <span className="ml-1 text-[10px] font-bold uppercase text-ouro-600">extra</span>}
+                          {obs && <span className="ml-1 text-[11px] italic text-carvao-400">· 📝</span>}
                         </span>
                         <span className={`shrink-0 text-sm font-bold tabular-nums ${comprado ? 'text-carvao-400' : ''}`}>
-                          {formatarQtd(l.qtd)} {l.unid}
+                          {formatarQtd(l.qtd)} {unidAtual}
                         </span>
                       </button>
                     </li>
@@ -132,9 +246,88 @@ export function ListaCompras({
                 })}
               </ul>
             )}
+
+            {editando && podeMexer && onAddManual && (
+              <button
+                onClick={() => setNovoItemDia(di)}
+                className="flex w-full items-center gap-1.5 px-4 py-2.5 text-[13px] font-semibold text-brand-600 hover:bg-brand-50 dark:hover:bg-carvao-800/40 print:hidden"
+              >
+                <Icone nome="somar" tam={16} /> Adicionar item extra
+              </button>
+            )}
           </Cartao>
         );
       })}
+
+      {/* Modal de item extra */}
+      {onAddManual && (
+        <FormNovoItem
+          diaIdx={novoItemDia}
+          aoFechar={() => setNovoItemDia(null)}
+          aoSalvar={(dia, item, unid, qtd) => {
+            onAddManual(dia, item, unid, qtd);
+            setNovoItemDia(null);
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function FormNovoItem({
+  diaIdx,
+  aoFechar,
+  aoSalvar,
+}: {
+  diaIdx: number | null;
+  aoFechar: () => void;
+  aoSalvar: (dia: number, item: string, unid: string, qtd: number) => void;
+}) {
+  const [item, setItem] = useState('');
+  const [unid, setUnid] = useState('un');
+  const [qtd, setQtd] = useState('1');
+
+  if (diaIdx === null) return null;
+  return (
+    <Modal titulo={`Item extra — ${DIAS_SEMANA[diaIdx]}`} aberto aoFechar={aoFechar}>
+      <div className="space-y-3">
+        <input
+          autoFocus
+          className={estiloInput}
+          placeholder="Nome do item"
+          value={item}
+          onChange={(e) => setItem(e.target.value)}
+          list="itens-conhecidos-lista"
+        />
+        <datalist id="itens-conhecidos-lista">
+          {DADOS.itens.slice(0, 150).map((i) => (
+            <option key={i.n} value={i.n} />
+          ))}
+        </datalist>
+        <div className="flex gap-2">
+          <input
+            type="number"
+            min={0}
+            step="0.1"
+            className={estiloInput + ' !w-28'}
+            value={qtd}
+            onChange={(e) => setQtd(e.target.value)}
+          />
+          <select className={estiloInput} value={unid} onChange={(e) => setUnid(e.target.value)}>
+            {DADOS.unidades.map((u) => (
+              <option key={u}>{u}</option>
+            ))}
+          </select>
+        </div>
+        <Botao
+          variante="sucesso"
+          className="w-full"
+          disabled={!item.trim() || !(Number(qtd) > 0)}
+          onClick={() => aoSalvar(diaIdx, item.trim(), unid, Number(qtd))}
+        >
+          Adicionar
+        </Botao>
+      </div>
+    </Modal>
   );
 }
