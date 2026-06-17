@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { toast } from '@/components/Toast';
-import { Botao, Cartao, EstadoVazio, Kpi, Pilula, Secao, estiloInput } from '@/components/ui';
+import { Botao, Cartao, EstadoVazio, Kpi, Pilula, Secao, estiloInput } from '@/components/cardapio/ui';
 import { DADOS, formatarQtd, normalizar } from '@/lib/cardapio/motor';
 import { consumoDaSemana, necessidadeDeCompra } from '@/lib/cardapio/indicadores';
 import { AbaInventario } from './AbaInventario';
@@ -91,6 +91,7 @@ export function AbaEstoque({
         <Kpi rotulo="No mínimo" valor={baixos.length} detalhe="estoque baixo" tom={baixos.length ? 'vermelho' : 'verde'} icone="⚠️" />
       </div>
 
+      {/* Inventário mensal — contagem física do estoque */}
       <button
         onClick={() => setInvAberto(true)}
         className="flex w-full items-center justify-between gap-3 rounded-2xl border border-brand-600/30 bg-brand-50 px-4 py-3 text-left transition hover:bg-brand-100 dark:bg-carvao-800 dark:hover:bg-carvao-700"
@@ -104,6 +105,7 @@ export function AbaEstoque({
         <span className="shrink-0 text-brand-600 dark:text-brand-300">→</span>
       </button>
 
+      {/* Necessidade real de compra */}
       <Secao
         titulo="🛒 Necessidade real de compra"
         acao={<Pilula tom="azul">cardápio − estoque</Pilula>}
@@ -142,6 +144,7 @@ export function AbaEstoque({
 
       {podeEditar && (
         <>
+          {/* Entrada de produtos */}
           <Secao titulo="➕ Entrada de produtos">
             <Cartao className="space-y-3">
               <div className="flex flex-col gap-2 sm:flex-row">
@@ -182,6 +185,7 @@ export function AbaEstoque({
         </>
       )}
 
+      {/* Saldo atual */}
       <Secao titulo="📦 Estoque atual">
         <input
           className={`${estiloInput} mb-1`}

@@ -10,13 +10,14 @@
 export type VotoDia = {
   prato: string;
   voto: 'bom' | 'ok' | 'ruim';
-  horaMin: number;
+  horaMin: number; // hora * 60 + minuto, ex.: 12h30 = 750
 };
 
 function chaveHoje(data?: string): string {
   return `cardapio.v1.trm.${data ?? new Date().toISOString().slice(0, 10)}`;
 }
 
+/** Registra um voto no stream do dia (chamado pela página /avaliar). */
 export function registrarVotoDia(prato: string, voto: 'bom' | 'ok' | 'ruim'): void {
   try {
     const chave = chaveHoje();
@@ -29,6 +30,7 @@ export function registrarVotoDia(prato: string, voto: 'bom' | 'ok' | 'ruim'): vo
   }
 }
 
+/** Lê todos os votos do dia (hoje por padrão). */
 export function lerVotosDia(data?: string): VotoDia[] {
   try {
     return JSON.parse(localStorage.getItem(chaveHoje(data)) ?? '[]');

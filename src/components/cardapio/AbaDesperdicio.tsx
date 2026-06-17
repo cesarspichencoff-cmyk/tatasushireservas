@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { toast } from '@/components/Toast';
-import { Botao, Cartao, EstadoVazio, Kpi, Pilula, Secao, estiloInput, estiloRotulo } from '@/components/ui';
+import { Botao, Cartao, EstadoVazio, Kpi, Pilula, Secao, estiloInput, estiloRotulo } from '@/components/cardapio/ui';
 import { DIAS_SEMANA, formatarQtd, formatarReais } from '@/lib/cardapio/motor';
 import { resumoSemana } from '@/lib/cardapio/indicadores';
 import { RadarDesperdicio } from '@/components/cardapio/RadarDesperdicio';
@@ -154,6 +154,7 @@ export function AbaDesperdicio({
         </Secao>
       )}
 
+      {/* Ranking de sobra por prato + sugestão */}
       {porPrato.length > 0 && (
         <Secao titulo="🍂 Pratos com maior sobra">
           <Cartao className="!p-0">
@@ -180,6 +181,7 @@ export function AbaDesperdicio({
         </Secao>
       )}
 
+      {/* Histórico de lançamentos */}
       <Secao titulo="📋 Lançamentos da semana">
         {registros.length === 0 ? (
           <EstadoVazio icone="♻️" titulo="Nenhuma sobra registrada" texto="Anote a sobra de cada dia para o app calcular o custo perdido e sugerir ajustes." />

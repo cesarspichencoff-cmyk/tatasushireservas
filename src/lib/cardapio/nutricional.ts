@@ -19,6 +19,7 @@ export interface InfoNutricional {
   indiceSaudavel: number; // 0–100
 }
 
+/* Tabela estimada por prato — chave = normalizado */
 const TABELA: Record<string, Omit<InfoNutricional, 'prato'>> = {
   'frango grelhado': { porcao: '200g', kcal: 290, proteinas: 38, carboidratos: 0, gorduras: 8, fibras: 0, sodio: 320, indiceSaudavel: 92 },
   'frango assado': { porcao: '200g', kcal: 310, proteinas: 36, carboidratos: 2, gorduras: 12, fibras: 0, sodio: 380, indiceSaudavel: 88 },
@@ -60,8 +61,10 @@ const TABELA: Record<string, Omit<InfoNutricional, 'prato'>> = {
 export function infoNutricional(prato: string | null | undefined): InfoNutricional | null {
   if (!prato) return null;
   const n = normalizar(prato);
+  // busca exata
   const exato = TABELA[n];
   if (exato) return { prato, ...exato };
+  // busca parcial (primeiro match)
   for (const [chave, dados] of Object.entries(TABELA)) {
     if (n.includes(chave) || chave.includes(n.split(' ')[0])) {
       return { prato, ...dados };
@@ -70,6 +73,7 @@ export function infoNutricional(prato: string | null | undefined): InfoNutricion
   return null;
 }
 
+/* Índice Nutricional da semana (0–100) */
 export function indiceNutricionalSemana(dias: DiaCardapio[]): {
   score: number;
   rotulo: string;
@@ -98,6 +102,7 @@ export function indiceNutricionalSemana(dias: DiaCardapio[]): {
   if (mediaProteina < 20) { score -= 10; detalhes.push('Proteína baixa (<20 g/prato)'); }
   else if (mediaProteina >= 30) { score += 5; detalhes.push('Boa densidade proteica (≥30 g/prato)'); }
 
+  // variedade (índices individuais)
   const mediaIndividual = pratos.reduce((a, p) => a + p.indiceSaudavel, 0) / pratos.length;
   score = Math.round((score + mediaIndividual) / 2);
   score = Math.max(0, Math.min(100, score));

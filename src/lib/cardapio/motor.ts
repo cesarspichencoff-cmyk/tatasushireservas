@@ -4,13 +4,16 @@
    ===================================================================== */
 
 import dadosJson from './dados.json';
+import { receitaDoPrato } from './receitas';
 import type {
   Aviso,
   DadosCardapio,
   DadosCombo,
   DiaCardapio,
+  EstadoSemana,
   ItemSugerido,
   Proteina,
+  StatusItem,
 } from './tipos';
 
 export const DADOS = dadosJson as unknown as DadosCardapio;
@@ -154,11 +157,68 @@ export function chaveDoDia(dia: DiaCardapio): string {
     .join('|');
 }
 
+/* --------- garantia: o que está escrito no cardápio entra na lista ---- */
+
+function tokensTexto(s: string): string[] {
+  return normalizar(s)
+    .split(/[^a-z0-9]+/)
+    .filter((t) => t.length > 2);
+}
+
+/** Encontra o item do catálogo citado num trecho de texto do cardápio. */
+function itemDoTexto(parte: string): { n: string; u: string; f: number } | null {
+  const toks = new Set(tokensTexto(parte));
+  if (toks.size === 0) return null;
+  let melhor: { n: string; u: string; f: number } | null = null;
+  let melhorNota = 0;
+  for (const it of DADOS.itens) {
+    const itoks = tokensTexto(it.n);
+    if (itoks.length === 0 || itoks.length > 3) continue;
+    if (!itoks.every((t) => toks.has(t))) continue;
+    const nota = itoks.length * 1000 + Math.min(it.f, 999);
+    if (nota > melhorNota) {
+      melhorNota = nota;
+      melhor = it;
+    }
+  }
+  return melhor;
+}
+
+/** Quantidade padrão por pessoa para item completado (heurística do histórico). */
+function qtdPadraoPorPessoa(categoria: string, unid: string, ehProteina: boolean): number {
+  if (ehProteina) return 0.16; // kg de proteína por pessoa
+  const porUnid: Record<string, number> = {
+    kg: 0.05,
+    un: 0.08,
+    mç: 0.04,
+    pct: 0.04,
+    lata: 0.04,
+    lt: 0.03,
+    bd: 0.02,
+    bag: 0.02,
+  };
+  let q = porUnid[unid] ?? 0.04;
+  if (categoria === 'sobremesa') q *= 0.5;
+  if (categoria === 'salada' && unid === 'un') q = 0.1;
+  return q;
+}
+
+/** Proteína de reserva quando o prato descreve carne e nada veio do histórico. */
+const PROTEINA_PADRAO: Partial<Record<Proteina, { item: string; unid: string }>> = {
+  bovina: { item: 'Acém', unid: 'kg' },
+  frango: { item: 'File de frango sem osso', unid: 'kg' },
+  suina: { item: 'Lombo suíno', unid: 'kg' },
+  ovo: { item: 'Ovos', unid: 'bd' },
+};
+
 /**
  * Gera a lista sugerida do dia: combinação exata do histórico quando existe;
- * senão soma os mapas de cada componente. Escala pela curva de pessoas.
+ * senão soma os mapas de cada componente. Em seguida garante que tudo que
+ * está DESCRITO no cardápio (proteína, salada, legume, verdura, sobremesa)
+ * apareça na lista, mesmo que o histórico esteja incompleto.
+ * Escala pela curva de pessoas. `fatores` é o aprendizado da casa.
  */
-export function listaDoDia(dia: DiaCardapio): ItemSugerido[] {
+export function listaDoDia(dia: DiaCardapio, fatores?: Record<string, number>): ItemSugerido[] {
   const fator = dia.pessoas > 0 ? dia.pessoas / DADOS.baseline : 1;
   const acc = new Map<string, { item: string; unid: string; qtd: number }>();
 
@@ -171,22 +231,144 @@ export function listaDoDia(dia: DiaCardapio): ItemSugerido[] {
     else acc.set(k, { item: nome, unid, qtd: q });
   };
 
-  const combo = porChave.get(normalizar(chaveDoDia(dia)));
+  // Receita do principal tem prioridade: garante ingredientes corretos e
+  // determinísticos. Sem receita no principal, segue o histórico (combo/mapa).
+  const principalComReceita = !!receitaDoPrato(dia.principal);
+  const combo = principalComReceita ? undefined : porChave.get(normalizar(chaveDoDia(dia)));
   if (combo) {
     combo.itens.forEach(({ i, q, u }) => adiciona(i, q, u));
   } else {
     for (const [tipo, campo] of TIPOS) {
       const opcao = dia[campo];
       if (!opcao || typeof opcao !== 'string') continue;
-      const itens = porTipoOpcao.get(`${tipo}|${normalizar(opcao)}`);
-      itens?.forEach(({ i, q, u }) => adiciona(i, q, u));
+      const receita = receitaDoPrato(opcao);
+      if (receita) {
+        // receita é por pessoa; o acumulador trabalha na base (baseline) e
+        // multiplica por `fator` no fim → some porPessoa * baseline.
+        receita.ingredientes.forEach((ing) => adiciona(ing.item, ing.porPessoa * DADOS.baseline, ing.unid));
+      } else {
+        const itens = porTipoOpcao.get(`${tipo}|${normalizar(opcao)}`);
+        itens?.forEach(({ i, q, u }) => adiciona(i, q, u));
+      }
+    }
+  }
+
+  // 2ª passada: completa com os ingredientes citados no texto do cardápio
+  const completa = (texto: string, categoria: string) => {
+    if (!texto) return;
+    for (const parte of texto.split(/\s+com\s+|\s+e\s+|,|\+|·|\//i)) {
+      const it = itemDoTexto(parte);
+      if (!it) continue;
+      const k = normalizar(it.n);
+      if (acc.has(k) || excluidos.has(k)) continue;
+      // já existe um item mais específico? ("Frango inteiro" cobre "Frango")
+      const toks = tokensTexto(it.n);
+      const coberto = Array.from(acc.values()).some((v) => {
+        const vt = new Set(tokensTexto(v.item));
+        return toks.every((t) => vt.has(t));
+      });
+      if (coberto) continue;
+      const ehProt = it.u === 'kg' && proteinaDoPrato(it.n) !== 'outros';
+      adiciona(it.n, qtdPadraoPorPessoa(categoria, it.u, ehProt) * DADOS.baseline, it.u);
+    }
+  };
+  completa(dia.principal, 'principal');
+  completa(dia.guarnicaoFixa, 'guarnicaoFixa');
+  completa(dia.guarnicao, 'guarnicao');
+  completa(dia.salada, 'salada');
+  completa(dia.sobremesa, 'sobremesa');
+
+  // garantia final: prato com carne descrita SEMPRE leva a proteína na lista
+  if (dia.principal) {
+    const alvo = proteinaDoPrato(dia.principal);
+    if (alvo !== 'outros') {
+      const tem = Array.from(acc.values()).some((v) => proteinaDoPrato(v.item) === alvo);
+      const padrao = PROTEINA_PADRAO[alvo];
+      if (!tem && padrao) {
+        adiciona(padrao.item, qtdPadraoPorPessoa('principal', padrao.unid, padrao.unid === 'kg') * DADOS.baseline, padrao.unid);
+      }
     }
   }
 
   return Array.from(acc.values())
-    .map(({ item, unid, qtd }) => ({ item, unid, qtd: arredondar(qtd * fator, unid) }))
+    .map(({ item, unid, qtd }) => {
+      const aprendido = fatores?.[normalizar(item)] ?? 1;
+      return { item, unid, qtd: arredondar(qtd * fator * aprendido, unid) };
+    })
     .filter((x) => x.qtd > 0)
     .sort((a, b) => a.item.localeCompare(b.item, 'pt-BR'));
+}
+
+/**
+ * De onde vêm os ingredientes do prato principal do dia — usado para alertar
+ * quando a lista é só estimada (sem receita nem histórico coerente).
+ *  - 'receita'  : tem receita explícita (ideal).
+ *  - 'combo'    : combinação exata já vista no histórico.
+ *  - 'mapa'     : opção mapeada no histórico.
+ *  - 'estimado' : sem nenhuma das anteriores → ingredientes chutados.
+ *  - 'vazio'    : sem prato principal.
+ */
+export type FonteIngredientes = 'receita' | 'combo' | 'mapa' | 'estimado' | 'vazio';
+
+export function fonteIngredientes(dia: DiaCardapio): FonteIngredientes {
+  if (!dia.principal) return 'vazio';
+  if (receitaDoPrato(dia.principal)) return 'receita';
+  if (porChave.get(normalizar(chaveDoDia(dia)))) return 'combo';
+  if (porTipoOpcao.get(`principal|${normalizar(dia.principal)}`)) return 'mapa';
+  return 'estimado';
+}
+
+/* --------------- linhas de compra do dia (auto + manuais) ------------- */
+
+export interface LinhaCompra {
+  chave: string; // item normalizado (ou manual:<idx>:nome)
+  item: string;
+  unid: string;
+  sugerida: number | null; // null = item manual
+  qtd: number;
+  manual: boolean;
+  status: StatusItem;
+}
+
+export function linhasDoDia(
+  estado: EstadoSemana,
+  diaIdx: number,
+  fatores?: Record<string, number>,
+): LinhaCompra[] {
+  const dia = estado.dias[diaIdx];
+  const ajustes = estado.ajustes[diaIdx] ?? {};
+  const status = estado.status[diaIdx] ?? {};
+  const linhas: LinhaCompra[] = [];
+
+  if (dia.principal) {
+    for (const s of listaDoDia(dia, fatores)) {
+      const k = normalizar(s.item);
+      const aj = ajustes[k];
+      if (aj?.removido) continue;
+      linhas.push({
+        chave: k,
+        item: s.item,
+        unid: s.unid,
+        sugerida: s.qtd,
+        qtd: aj?.qtd ?? s.qtd,
+        manual: false,
+        status: status[k] ?? {},
+      });
+    }
+  }
+  (estado.manuais[diaIdx] ?? []).forEach((m, mi) => {
+    const k = `manual:${mi}:` + normalizar(m.item);
+    linhas.push({
+      chave: k,
+      item: m.item,
+      unid: m.unid,
+      sugerida: null,
+      qtd: m.qtd,
+      manual: true,
+      status: status[k] ?? {},
+    });
+  });
+  return linhas;
 }
 
 /** O dia tem registro exato no histórico? (qualidade da sugestão) */
@@ -302,6 +484,128 @@ export function sugerirSemana(pessoas: number[], precos: Record<string, number>)
   return melhor;
 }
 
+/* --------------- sugestão criativa (fora do histórico) ---------------- */
+
+/** Componentes que têm mapa de distribuição próprio (lista de compra gerável). */
+function opcoesComMapa(tipo: string, lista: string[]): string[] {
+  return lista.filter((op) => porTipoOpcao.has(`${tipo}|${normalizar(op)}`));
+}
+
+/** Custo por pessoa do mapa de um componente (para ranquear o que está barato). */
+function custoComponente(tipo: string, op: string, precos: Record<string, number>): number | null {
+  const itens = porTipoOpcao.get(`${tipo}|${normalizar(op)}`);
+  if (!itens) return null;
+  let total = 0;
+  let com = 0;
+  for (const { i, q } of itens) {
+    const p = precos[normalizar(i)];
+    if (p !== undefined && p > 0) {
+      total += p * q;
+      com++;
+    }
+  }
+  return com > 0 ? total / DADOS.baseline : null;
+}
+
+function sortear<T>(arr: T[]): T[] {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
+/**
+ * Monta uma semana NOVA: recombina principais, guarnições, saladas e
+ * sobremesas que nunca apareceram juntos no histórico — culinária brasileira
+ * simples, com a distribuição de alimentos que a casa já usa. Com a cotação
+ * aplicada, puxa para as proteínas que estão baratas na semana.
+ */
+export function sugerirSemanaCriativa(
+  pessoas: number[],
+  precos: Record<string, number>,
+): DiaCardapio[] | null {
+  const principais = opcoesComMapa('principal', DADOS.listas.principais);
+  const guarnicoes = opcoesComMapa('guarnicao', DADOS.listas.guarnicoes);
+  const saladas = opcoesComMapa('salada', DADOS.listas.saladas);
+  const sobremesas = opcoesComMapa('sobremesa', DADOS.listas.sobremesas);
+  if (principais.length < 7) return null;
+
+  const temPrecos = Object.keys(precos).length > 3;
+
+  // ranking de custo dos principais: quem está barato na cotação sobe
+  const custoPrincipal = new Map<string, number>();
+  if (temPrecos) {
+    principais.forEach((p) => {
+      const c = custoComponente('principal', p, precos);
+      if (c !== null) custoPrincipal.set(normalizar(p), c);
+    });
+  }
+
+  let melhor: DiaCardapio[] | null = null;
+  let melhorNota = -Infinity;
+
+  for (let tent = 0; tent < 220; tent++) {
+    const poolP = sortear(principais);
+    const poolG = sortear(guarnicoes);
+    const poolS = sortear(saladas);
+    const poolSb = sortear(sobremesas);
+    const dias: DiaCardapio[] = [];
+    const usados = new Set<string>();
+    let suina = 0;
+    let frango = 0;
+    let anterior: Proteina | null = null;
+    let ok = true;
+
+    for (let d = 0; d < 7; d++) {
+      const faltam = 7 - d;
+      const cand = poolP.find((p) => {
+        const prot = proteinaDoPrato(p);
+        if (usados.has(normalizar(p))) return false;
+        if (prot === anterior && prot !== 'outros') return false;
+        if (prot === 'suina' && suina >= 2) return false;
+        if (prot === 'frango' && frango >= 4) return false;
+        if (prot !== 'frango' && frango + faltam - 1 < 3) return false;
+        return true;
+      });
+      if (!cand) {
+        ok = false;
+        break;
+      }
+      const prot = proteinaDoPrato(cand);
+      if (prot === 'suina') suina++;
+      if (prot === 'frango') frango++;
+      anterior = prot;
+      usados.add(normalizar(cand));
+      dias.push({
+        pessoas: pessoas[d] ?? DADOS.baseline,
+        principal: cand,
+        guarnicaoFixa: 'Arroz e Feijão',
+        guarnicao: poolG[d % Math.max(poolG.length, 1)] ?? '',
+        salada: poolS[d % Math.max(poolS.length, 1)] ?? '',
+        sobremesa: poolSb[d % Math.max(poolSb.length, 1)] ?? '',
+      });
+      poolP.splice(poolP.indexOf(cand), 1);
+    }
+    if (!ok || frango < 3) continue;
+
+    let nota = 0;
+    let novas = 0;
+    dias.forEach((dia) => {
+      if (temPrecos) {
+        const c = custoDaLista(listaDoDia(dia), precos);
+        if (c.itensComPreco > 0) nota -= (c.total / Math.max(dia.pessoas, 1)) * 10;
+        const cp = custoPrincipal.get(normalizar(dia.principal));
+        if (cp !== undefined) nota -= cp * 5; // peso extra na proteína barata
+      }
+      if (!temHistoricoExato(dia)) novas++;
+    });
+    nota += novas * 2; // criativo de verdade: combinações inéditas pontuam
+
+    if (nota > melhorNota) {
+      melhorNota = nota;
+      melhor = dias;
+    }
+  }
+  return melhor;
+}
+
 /* ------------------------------ util --------------------------------- */
 
 export function formatarQtd(qtd: number): string {
@@ -311,5 +615,3 @@ export function formatarQtd(qtd: number): string {
 export function formatarReais(v: number): string {
   return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
-/** Alias de listaDoDia — compatibilidade com imports legados */
-export const linhasDoDia = listaDoDia;

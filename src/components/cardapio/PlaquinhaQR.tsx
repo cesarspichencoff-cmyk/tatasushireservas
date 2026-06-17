@@ -1,8 +1,14 @@
 'use client';
 
+/* =====================================================================
+   Plaquinha de mesa com QR — arte pronta para imprimir (tamanho pequeno,
+   ~A6/table-tent) ou baixar como imagem. A pessoa senta, vê a plaquinha,
+   aponta a câmera e avalia o prato do dia.
+   ===================================================================== */
+
 import { useEffect } from 'react';
 import { QrCode } from '@/components/QrCode';
-import { Botao } from '@/components/ui';
+import { Botao } from '@/components/cardapio/ui';
 import { Icone } from '@/components/Icones';
 
 export function PlaquinhaQR({
@@ -79,12 +85,13 @@ export function PlaquinhaQR({
       a.download = 'plaquinha-tata-house.png';
       a.click();
     } catch {
-      alert('Não consegui baixar a imagem aqui. Use "Imprimir" e escolha "Salvar como PDF".');
+      alert('Não consegui baixar a imagem aqui. Use “Imprimir” e escolha “Salvar como PDF”.');
     }
   };
 
   return (
     <div className="min-h-screen bg-carvao-200 py-6 dark:bg-carvao-950 print:bg-white print:py-0">
+      {/* Controles (somem na impressão) */}
       <div className="mx-auto mb-4 flex max-w-[120mm] flex-wrap items-center justify-between gap-2 px-4 print:hidden">
         <button
           onClick={aoFechar}
@@ -102,6 +109,7 @@ export function PlaquinhaQR({
         </div>
       </div>
 
+      {/* A plaquinha (table-tent) */}
       <div className="poster mx-auto flex w-[92mm] flex-col items-center gap-5 overflow-hidden rounded-3xl bg-gradient-to-b from-brand-800 to-brand-900 px-7 py-9 text-center text-white shadow-flutuante print:rounded-none print:shadow-none">
         <div>
           <div className="font-display text-3xl font-black tracking-[0.12em]">TATÁ HOUSE</div>
@@ -124,7 +132,7 @@ export function PlaquinhaQR({
       </div>
 
       <p className="mx-auto mt-4 max-w-[120mm] px-4 text-center text-xs text-carvao-400 print:hidden">
-        Dica: imprima, dobre ao meio e deixe na mesa do refeitório. Para PDF, use "Imprimir → Salvar como PDF".
+        Dica: imprima, dobre ao meio e deixe na mesa do refeitório. Para PDF, use “Imprimir → Salvar como PDF”.
       </p>
     </div>
   );

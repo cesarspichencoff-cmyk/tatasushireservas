@@ -5,7 +5,7 @@ import { AlternadorTema } from '@/components/AlternadorTema';
 import { BottomNav, GRUPOS } from '@/components/BottomNav';
 import { ToastHost, toast } from '@/components/Toast';
 import { Icone } from '@/components/Icones';
-import { BottomSheet, Skeleton } from '@/components/ui';
+import { BottomSheet, Skeleton } from '@/components/cardapio/ui';
 import { AbaAceitacao } from '@/components/cardapio/AbaAceitacao';
 import { AbaCardapio } from '@/components/cardapio/AbaCardapio';
 import { AbaCompras } from '@/components/cardapio/AbaCompras';
@@ -113,6 +113,7 @@ export default function PaginaCardapios() {
 
   const irSemana = (delta: number) => setSemanaId(deslocarSemana(semanaId, delta));
 
+  // lista de semanas para o seletor: janela ao redor de hoje + as que têm cardápio
   const listaSemanas = useMemo(() => {
     const set = new Set<string>();
     for (let i = -2; i <= 8; i++) set.add(deslocarSemana(semanaAtualId, i));
@@ -148,6 +149,7 @@ export default function PaginaCardapios() {
   const podeEstoque = pode(papel, 'estoque:gerenciar');
   const podeAvaliar = pode(papel, 'cardapio:editar');
 
+  // se a aba atual não é permitida ao perfil, vai para a primeira liberada
   useEffect(() => {
     if (!abasPermitidas.includes(aba)) setAba(abasPermitidas[0] as AbaId);
   }, [abasPermitidas, aba]);
@@ -161,6 +163,7 @@ export default function PaginaCardapios() {
 
   return (
     <>
+      {/* Cabeçalho da marca */}
       <header className="sticky top-0 z-40 bg-gradient-to-r from-brand-800 via-brand-600 to-brand-800 text-white shadow-media print:hidden">
         <div className="h-1 w-full bg-gradient-to-r from-ouro-600 via-ouro-300 to-ouro-600" />
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-3 px-4">
@@ -200,6 +203,7 @@ export default function PaginaCardapios() {
       </header>
 
       <main className="mx-auto max-w-5xl space-y-4 px-4 pb-28 pt-5 lg:pb-8">
+        {/* Cabeçalho do módulo */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="font-display text-2xl font-bold text-brand-800 dark:text-brand-300 sm:text-3xl">
@@ -216,6 +220,7 @@ export default function PaginaCardapios() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            {/* Stepper de semana — navegação por polegar; toque no rótulo abre a lista */}
             <div className="flex items-center rounded-2xl border border-carvao-200 bg-white p-1 dark:border-carvao-600 dark:bg-carvao-900">
               <button
                 onClick={() => irSemana(-1)}
@@ -248,6 +253,7 @@ export default function PaginaCardapios() {
           </div>
         </div>
 
+        {/* Navegação completa — desktop */}
         <nav className="hidden gap-1 overflow-x-auto rounded-full bg-white p-1 ring-1 ring-carvao-200 lg:flex dark:bg-carvao-800 dark:ring-carvao-600 print:hidden">
           {ABAS.filter((a) => abasPermitidas.includes(a.id)).map((a) => (
             <button
@@ -276,6 +282,7 @@ export default function PaginaCardapios() {
           </div>
         ) : (
           <>
+            {/* PAINEL — visão geral + acompanhar (etapa + contagem) + auditoria resumida */}
             {aba === 'painel' && (
               <div className="space-y-6">
                 <AbaDashboard
@@ -335,6 +342,7 @@ export default function PaginaCardapios() {
               />
             )}
 
+            {/* COMPRAS — comprar/receber · estoque · preços · radar (seções) */}
             {aba === 'compras' && (
               <div className="space-y-4">
                 <div className="flex gap-1 overflow-x-auto rounded-2xl bg-carvao-100/70 p-1 dark:bg-carvao-800/70">
@@ -387,6 +395,7 @@ export default function PaginaCardapios() {
               </div>
             )}
 
+            {/* FEEDBACK — aceitação dos pratos + desperdício + QR */}
             {aba === 'feedback' && (
               <div className="space-y-6">
                 <AbaAceitacao

@@ -1,13 +1,18 @@
 'use client';
 
 /* =====================================================================
-   Sincronização localStorage ⇄ Supabase (tabela KV tata_estado).
+   Sincronização localStorage ⇄ Supabase (tabela KV tata_estado). Tudo é
+   opt-in: enquanto o Supabase estiver desligado, o hook reporta indisponível
+   e nada acontece. Quando ligado, dá para "enviar" (subir o estado local) e
+   "baixar" (trazer o remoto para o dispositivo). É a base para, num próximo
+   passo, fazer o app ler/gravar direto no remoto.
    ===================================================================== */
 
 import { useCallback, useEffect, useState } from 'react';
 import { supabaseHabilitado } from './config';
 import { armazenamentoLocal, armazenamentoSupabase } from './armazenamento';
 
+/** Sobe todas as chaves do localStorage para o Supabase. */
 export async function enviarTudo(): Promise<number> {
   if (!supabaseHabilitado()) return 0;
   const chaves = await armazenamentoLocal.listarChaves();
@@ -22,6 +27,7 @@ export async function enviarTudo(): Promise<number> {
   return n;
 }
 
+/** Traz todas as chaves do Supabase para o localStorage deste dispositivo. */
 export async function baixarTudo(): Promise<number> {
   if (!supabaseHabilitado()) return 0;
   const chaves = await armazenamentoSupabase.listarChaves();
@@ -45,6 +51,7 @@ export interface EstadoSync {
   baixar: () => Promise<void>;
 }
 
+/** Hook de sincronização — no-op seguro quando o Supabase está desligado. */
 export function useSincronizacao(): EstadoSync {
   const [disponivel, setDisponivel] = useState(false);
   const [sincronizando, setSincronizando] = useState(false);

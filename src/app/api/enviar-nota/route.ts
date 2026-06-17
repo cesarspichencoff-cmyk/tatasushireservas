@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
 
   const { fornecedor, data, responsavel, itens = [], fotoBase64 } = body;
 
+  /* Monta tabela HTML do relatório */
   const tabelaItens =
     itens.length > 0
       ? `<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-family:sans-serif;font-size:13px;">
@@ -82,6 +83,7 @@ export async function POST(req: NextRequest) {
       </div>
     </div>`;
 
+  /* Anexo: foto da nota (base64 → attachment) */
   const attachments =
     fotoBase64 && fotoBase64.startsWith('data:image/')
       ? [

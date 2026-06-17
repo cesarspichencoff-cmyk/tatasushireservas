@@ -11,7 +11,7 @@
    ===================================================================== */
 
 import { useMemo, useState } from 'react';
-import { Cartao, Pilula } from '@/components/ui';
+import { Cartao, Pilula } from '@/components/cardapio/ui';
 import {
   DADOS,
   DIAS_SEMANA,
@@ -26,6 +26,7 @@ import { useEstimativas } from '@/lib/cardapio/estimativas';
 import { useHistoricoPrecos, useAceitacao, useChefFeedback, semanasComConteudo, lerSemana } from '@/lib/cardapio/estado';
 import type { DiaCardapio, EstadoSemana } from '@/lib/cardapio/tipos';
 
+/* Pratos que nunca devem ser sugeridos como prato principal de almoço */
 const VETO_PRINCIPAL = new Set([
   'ovos mexidos', 'omelete', 'omelete de queijo', 'omelete simples',
   'panquecas', 'crepioca', 'sanduiche', 'sopa', 'caldo',
@@ -64,6 +65,7 @@ export function ChefIA({
   const [motivoAberto, setMotivoAberto] = useState<string | null>(null);
   const [motivoTexto, setMotivoTexto] = useState('');
 
+  /* ---- pratos usados nas últimas 4 semanas (frequência recente) ---- */
   const frequenciaRecente = useMemo(() => {
     const cont: Record<string, number> = {};
     const semanas = semanasComConteudo().slice(-4);
@@ -201,6 +203,7 @@ export function ChefIA({
       }
     });
 
+    // filtra sugestões vetadas pelo feedback do time
     return out
       .filter((d) => !vetados.has(hashDica(d.icone, d.texto)))
       .slice(0, expandido ? 10 : 5);
@@ -278,6 +281,7 @@ export function ChefIA({
                   <p className={`text-[11px] font-extrabold uppercase tracking-wide ${COR[d.tom]}`}>{d.titulo}</p>
                   <p className={`mt-0.5 text-sm ${COR[d.tom]}`}>{d.texto}</p>
                 </div>
+                {/* Feedback */}
                 <div className="flex shrink-0 items-center gap-1">
                   <button
                     onClick={() => darFeedback(d, 'bom')}
@@ -295,6 +299,7 @@ export function ChefIA({
                   </button>
                 </div>
               </div>
+              {/* Mini-form de motivo quando veta */}
               {motivoAberto === hash && (
                 <div className="mt-2 flex gap-2">
                   <input

@@ -1,8 +1,13 @@
 'use client';
 
+/* =====================================================================
+   Inventário mensal — tela (overlay) acessível pelo Estoque. Conta o físico,
+   compara esperado × contado, mostra divergências e guarda histórico por mês.
+   ===================================================================== */
+
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from '@/components/Toast';
-import { Botao, Cartao, EstadoVazio, Pilula, estiloInput } from '@/components/ui';
+import { Botao, Cartao, EstadoVazio, Pilula, estiloInput } from '@/components/cardapio/ui';
 import { formatarQtd, normalizar } from '@/lib/cardapio/motor';
 import {
   divergencia,
@@ -37,6 +42,7 @@ export function AbaInventario({
   const [novaQtd, setNovaQtd] = useState('');
   const [novaCat, setNovaCat] = useState('');
 
+  // (re)carrega a contagem do mês ao abrir ou trocar o mês
   useEffect(() => {
     if (!aberto) return;
     const existente = inventarios[mes];
@@ -80,6 +86,8 @@ export function AbaInventario({
   const setObs = (norm: string, v: string) =>
     setItens((a) => ({ ...a, [norm]: { ...a[norm], obs: v } }));
 
+  // Item 12: cadastrar um produto novo durante a contagem — entra no estoque
+  // (definirSaldo) e já aparece na lista do inventário do mês.
   const cadastrarProduto = () => {
     const nome = novoNome.trim();
     if (!nome) {
@@ -94,7 +102,7 @@ export function AbaInventario({
       ...a,
       [k]: { item: nome, unid, esperado: q, contado: q > 0 ? q : null, obs: novaCat.trim() ? `Categoria: ${novaCat.trim()}` : a[k]?.obs },
     }));
-    toast(`Produto "${nome}" cadastrado e adicionado ao estoque`);
+    toast(`Produto “${nome}” cadastrado e adicionado ao estoque`);
     setNovoNome('');
     setNovaQtd('');
     setNovaCat('');
@@ -136,6 +144,7 @@ export function AbaInventario({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-areia-50 pb-24 dark:bg-carvao-950">
+      {/* Cabeçalho */}
       <div className="sticky top-0 z-10 border-b border-carvao-200/70 bg-white/90 px-4 py-3 backdrop-blur-xl dark:border-carvao-700/70 dark:bg-carvao-900/90">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
           <button onClick={aoFechar} className="text-sm font-bold uppercase tracking-wide text-carvao-500 dark:text-areia-200">
@@ -152,6 +161,7 @@ export function AbaInventario({
       </div>
 
       <div className="mx-auto max-w-3xl space-y-4 px-4 py-4">
+        {/* Resumo */}
         <div className="grid grid-cols-3 gap-3">
           {[
             { r: 'Itens', v: Object.keys(itens).length, tom: 'neutro' as const },
@@ -306,6 +316,7 @@ export function AbaInventario({
           </>
         )}
 
+        {/* Histórico */}
         {mesesAnteriores.length > 0 && (
           <div className="space-y-2">
             <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-carvao-400">Inventários anteriores</h3>

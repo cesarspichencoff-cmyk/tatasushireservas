@@ -1,7 +1,14 @@
 'use client';
 
+/* =====================================================================
+   Cartão de backup na nuvem (Supabase). Aparece só quando o Supabase está
+   configurado (env vars presentes). Deixa enviar o estado do aparelho para a
+   nuvem e baixar de volta em outro dispositivo. Sem Supabase, não renderiza
+   nada — o app segue 100% local.
+   ===================================================================== */
+
 import { useSincronizacao } from '@/lib/cardapio/supabase';
-import { Botao, Cartao, Secao } from '@/components/ui';
+import { Botao, Cartao, Secao } from '@/components/cardapio/ui';
 
 export function CartaoNuvem() {
   const { disponivel, sincronizando, ultimaSync, erro, enviar, baixar } = useSincronizacao();
@@ -10,6 +17,7 @@ export function CartaoNuvem() {
 
   const baixarERecarregar = async () => {
     await baixar();
+    // recarrega para a tela refletir os dados que vieram da nuvem
     if (typeof window !== 'undefined') window.location.reload();
   };
 

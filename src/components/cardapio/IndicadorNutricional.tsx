@@ -29,6 +29,7 @@ export function IndicadorNutricional({ dias }: { dias: DiaCardapio[] }) {
         ? { texto: 'text-ouro-600 dark:text-ouro-300', bg: 'bg-ouro-400', anel: 'ring-ouro-400/30' }
         : { texto: 'text-[#b04c41]', bg: 'bg-[#b04c41]', anel: 'ring-[#b04c41]/30' };
 
+  /* Media dos macros da semana */
   const infos = pratosComInfo.map((x) => x.info!);
   const media = {
     kcal: Math.round(infos.reduce((a, p) => a + p.kcal, 0) / infos.length),
@@ -40,6 +41,7 @@ export function IndicadorNutricional({ dias }: { dias: DiaCardapio[] }) {
 
   return (
     <div className="space-y-3 rounded-2xl bg-carvao-50 p-4 ring-1 ring-carvao-200 dark:bg-carvao-900/60 dark:ring-carvao-700/60">
+      {/* Cabeçalho */}
       <div className="flex items-center justify-between gap-3">
         <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-carvao-400">
           🥗 Índice Nutricional Tata House
@@ -50,6 +52,7 @@ export function IndicadorNutricional({ dias }: { dias: DiaCardapio[] }) {
         </div>
       </div>
 
+      {/* Barra de score */}
       <div className="h-2 w-full overflow-hidden rounded-full bg-carvao-100 dark:bg-carvao-800">
         <div
           className={`h-full rounded-full ${corScore.bg} transition-all duration-700`}
@@ -57,6 +60,7 @@ export function IndicadorNutricional({ dias }: { dias: DiaCardapio[] }) {
         />
       </div>
 
+      {/* Médias nutricionais da semana */}
       <div className="grid grid-cols-5 gap-1.5 text-center">
         {[
           { rot: 'Kcal', val: `${media.kcal}` },
@@ -73,6 +77,7 @@ export function IndicadorNutricional({ dias }: { dias: DiaCardapio[] }) {
       </div>
       <p className="text-[10px] text-carvao-400">Média por prato principal · {pratosComInfo.length} dia(s) com dados</p>
 
+      {/* Alertas nutricionais */}
       {detalhes.length > 0 && (
         <ul className="space-y-1">
           {detalhes.map((d, i) => (

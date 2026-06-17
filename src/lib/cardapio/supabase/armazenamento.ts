@@ -1,7 +1,11 @@
 'use client';
 
 /* =====================================================================
-   Abstração de armazenamento (chave → valor JSON).
+   Abstração de armazenamento (chave → valor JSON). Hoje o app usa o
+   localStorage; esta camada dá um caminho único para, no futuro, ler/gravar
+   no Supabase sem reescrever as telas. A migração espelha exatamente as
+   chaves do localStorage numa tabela KV (tata_estado), o jeito mais fiel e
+   de menor risco de transpor o protótipo.
    ===================================================================== */
 
 import { ESPACO_DADOS, PREFIXO_LOCAL, supabaseHabilitado } from './config';
@@ -11,8 +15,11 @@ export interface Armazenamento {
   ler<T>(chave: string, padrao: T): Promise<T>;
   gravar(chave: string, valor: unknown): Promise<void>;
   remover(chave: string): Promise<void>;
+  /** Todas as chaves (sem o prefixo) deste espaço. */
   listarChaves(): Promise<string[]>;
 }
+
+/* ----------------------------- localStorage ----------------------------- */
 
 export const armazenamentoLocal: Armazenamento = {
   async ler<T>(chave: string, padrao: T): Promise<T> {
@@ -51,6 +58,8 @@ export const armazenamentoLocal: Armazenamento = {
   },
 };
 
+/* ------------------------------ Supabase KV ----------------------------- */
+
 const TABELA = 'tata_estado';
 
 export const armazenamentoSupabase: Armazenamento = {
@@ -78,7 +87,7 @@ export const armazenamentoSupabase: Armazenamento = {
         { onConflict: 'espaco,chave' },
       );
     } catch {
-      /* falha silenciosa */
+      /* falha silenciosa — o local continua sendo a fonte de verdade */
     }
   },
   async remover(chave: string): Promise<void> {
@@ -104,6 +113,7 @@ export const armazenamentoSupabase: Armazenamento = {
   },
 };
 
+/** Armazenamento ativo conforme a configuração (Supabase se ligado). */
 export function armazenamentoAtivo(): Armazenamento {
   return supabaseHabilitado() ? armazenamentoSupabase : armazenamentoLocal;
 }

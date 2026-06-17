@@ -15,6 +15,10 @@
 
 import { supabaseConfig, supabaseHabilitado } from './config';
 
+/**
+ * Tipo mínimo do que usamos — evita depender dos tipos do pacote em build.
+ * O builder é encadeável e "awaitável" (PromiseLike), como o do supabase-js.
+ */
 export interface ConsultaSupabase extends PromiseLike<{ data: unknown; error: unknown }> {
   select(cols?: string): ConsultaSupabase;
   upsert(linhas: unknown, opc?: unknown): ConsultaSupabase;
@@ -29,10 +33,16 @@ export interface ClienteSupabase {
 
 let cache: ClienteSupabase | null | undefined;
 
+/**
+ * Importa um módulo apenas em runtime, escondido do empacotador. Usamos a
+ * forma indireta para que o webpack/Next não tente resolver o pacote em
+ * tempo de build (ele não está instalado até o Supabase ser ligado).
+ */
 const importarRuntime: (nome: string) => Promise<Record<string, unknown>> =
   // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
   new Function('nome', 'return import(nome);') as (nome: string) => Promise<Record<string, unknown>>;
 
+/** Devolve um cliente Supabase memoizado, ou null se desligado/indisponível. */
 export async function getSupabase(): Promise<ClienteSupabase | null> {
   if (cache !== undefined) return cache;
   if (!supabaseHabilitado()) {
@@ -58,6 +68,7 @@ export async function getSupabase(): Promise<ClienteSupabase | null> {
   }
 }
 
+/** Limpa o cache do cliente (útil em testes / troca de credencial). */
 export function resetSupabase() {
   cache = undefined;
 }

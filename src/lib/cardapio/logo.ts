@@ -34,6 +34,10 @@ export function useLogo() {
   return { logo, setLogo };
 }
 
+/**
+ * Lê um arquivo de imagem e devolve um dataURL PNG reduzido (até `max` px no
+ * maior lado) — mantém transparência e evita estourar o localStorage.
+ */
 export function imagemParaDataUrl(file: File, max = 320): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

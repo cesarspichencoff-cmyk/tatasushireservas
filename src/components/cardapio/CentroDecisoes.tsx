@@ -1,7 +1,14 @@
 'use client';
 
+/* =====================================================================
+   Centro de decisões — transforma os dados do sistema em recomendações
+   práticas (não só gráficos): itens sem preço, estoque crítico, preços em
+   alta, oportunidades de economia e o prato mais bem avaliado. Aparece no
+   Painel (Gerência). Só mostra o que for acionável.
+   ===================================================================== */
+
 import { useMemo } from 'react';
-import { Cartao, Pilula, Secao } from '@/components/ui';
+import { Cartao, Pilula, Secao } from '@/components/cardapio/ui';
 import { listaDoDia, normalizar } from '@/lib/cardapio/motor';
 import { resolverPreco } from '@/lib/cardapio/precos';
 import { analisarRadar, fraseAlerta } from '@/lib/cardapio/radar';
@@ -42,6 +49,7 @@ export function CentroDecisoes({
   const decisoes = useMemo<Decisao[]>(() => {
     const out: Decisao[] = [];
 
+    // 1) itens sem preço na semana
     const sem = new Set<string>();
     estado.dias.forEach((d) => {
       if (!d.principal) return;
@@ -57,6 +65,7 @@ export function CentroDecisoes({
         tom: 'vermelho',
       });
 
+    // 2) estoque no limite
     const baixos = alertasEstoque(estoque);
     if (baixos.length > 0)
       out.push({
@@ -66,12 +75,14 @@ export function CentroDecisoes({
         tom: 'ouro',
       });
 
+    // 3 e 4) radar de preços: alta (cuidado) e baixa (oportunidade)
     const radar = analisarRadar(precos, historico).filter((r) => r.alerta);
     const alta = radar.find((r) => r.alerta === 'alta');
     const baixa = radar.find((r) => r.alerta !== 'alta');
     if (alta) out.push({ icone: '📈', titulo: 'Preço em alta', detalhe: fraseAlerta(alta), tom: 'vermelho' });
     if (baixa) out.push({ icone: '💸', titulo: 'Oportunidade de economia', detalhe: fraseAlerta(baixa), tom: 'verde' });
 
+    // 5) melhor prato avaliado (escolha recorrente segura)
     const melhor = Object.values(aceitacao)
       .filter((a) => a.n > 0)
       .map((a) => ({ prato: a.prato, media: a.somaNotas / a.n, n: a.n }))

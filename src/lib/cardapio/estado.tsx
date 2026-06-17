@@ -25,6 +25,7 @@ import type {
 const PREFIXO = 'cardapio.v1.';
 
 export function semanaVazia(): EstadoSemana {
+  // curva real aprendida com as contagens de refeições (quando existir)
   const medias = lerLocal<Record<number, RegistroAprendizado>>('mediaRefeicoes', {});
   return {
     versao: 1,
@@ -65,7 +66,8 @@ function gravarLocal(chave: string, valor: unknown) {
 }
 
 /* =====================================================================
-   Auditoria global (Módulo 9)
+   Auditoria global (Módulo 9) — qualquer parte do app registra ações
+   relevantes aqui; a aba de Auditoria escuta via assinatura simples.
    ===================================================================== */
 
 let cacheAuditoria: RegistroAuditoria[] | null = null;
@@ -76,6 +78,7 @@ function carregarAuditoria(): RegistroAuditoria[] {
   return cacheAuditoria;
 }
 
+/** Papel ativo no momento (mantido em sincronia por usePapel) p/ carimbar logs. */
 let papelAtual: Papel = 'gestor';
 
 export function registrarAuditoria(reg: Omit<RegistroAuditoria, 'em' | 'papel'> & { em?: string; papel?: Papel }) {
@@ -99,7 +102,7 @@ export function useAuditoria() {
   useEffect(() => {
     const f = () => forcar((x) => x + 1);
     ouvintesAuditoria.add(f);
-    f();
+    f(); // garante leitura no cliente
     return () => {
       ouvintesAuditoria.delete(f);
     };
@@ -116,11 +119,13 @@ function ddmm(d: Date): string {
   return `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
+/** Período da semana: "09/06 a 15/06" (sempre segunda → domingo). */
 export function periodoSemana(id: string): string {
   const datas = datasDaSemana(id);
   return `${ddmm(datas[0])} a ${ddmm(datas[6])}`;
 }
 
+/** Rótulo amigável: "Semana 1 · 09/06 a 15/06". */
 export function rotuloSemana(id: string, numero?: number): string {
   const base = numero ? `Semana ${numero} · ` : '';
   return `${base}${periodoSemana(id)}`;
@@ -129,6 +134,7 @@ export function rotuloSemana(id: string, numero?: number): string {
 export function idsSemanas(): string[] {
   const hoje = new Date();
   const ids: string[] = [];
+  // semana atual + 7 semanas à frente (planejamento sempre de seg a dom)
   for (let off = 0; off <= 7; off++) {
     const d = new Date(hoje);
     d.setDate(d.getDate() + off * 7);
@@ -137,10 +143,12 @@ export function idsSemanas(): string[] {
   return ids;
 }
 
+/** Datas (segunda → domingo) da semana ISO "2026-S24". */
 export function datasDaSemana(id: string): Date[] {
   const [anoS, semS] = id.split('-S');
   const ano = Number(anoS);
   const sem = Number(semS);
+  // 4 de janeiro está sempre na semana ISO 1
   const jan4 = new Date(Date.UTC(ano, 0, 4));
   const diaSem = jan4.getUTCDay() || 7;
   const segunda = new Date(jan4);
@@ -161,6 +169,7 @@ export function idSemanaIso(data: Date): string {
   return `${d.getUTCFullYear()}-S${String(semana).padStart(2, '0')}`;
 }
 
+/** Desloca uma semana ISO em N semanas (negativo = passado). Uso contínuo, sem limite. */
 export function deslocarSemana(id: string, deltaSemanas: number): string {
   const seg = datasDaSemana(id)[0];
   const d = new Date(seg);
@@ -168,6 +177,7 @@ export function deslocarSemana(id: string, deltaSemanas: number): string {
   return idSemanaIso(new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 }
 
+/** Semanas que já têm cardápio (algum principal preenchido) — histórico real. */
 export function semanasComConteudo(): string[] {
   if (typeof window === 'undefined') return [];
   const prefixo = PREFIXO + 'semana.';
@@ -185,10 +195,12 @@ export function semanasComConteudo(): string[] {
   return ids.sort();
 }
 
+/** Grava o documento de uma semana arbitrária (usado ao duplicar). */
 export function gravarSemana(id: string, estado: EstadoSemana) {
   gravarLocal('semana.' + id, estado);
 }
 
+/** Lê o documento de uma semana sem montar hook (para indicadores mensais). */
 export function lerSemana(semanaId: string): EstadoSemana {
   return lerLocal('semana.' + semanaId, semanaVazia());
 }
@@ -231,12 +243,15 @@ export function usePrecos() {
       else novo[itemNorm] = valor;
       gravarLocal('precos', novo);
 
+      // só registra quando o valor realmente mudou
       if (valor !== null && valor > 0 && valor !== anterior) {
+        // histórico para o radar de preços (Módulo 5)
         const hist = lerLocal<HistoricoPrecos>('historicoPrecos', {});
         const serie = hist[itemNorm] ?? [];
         serie.push({ valor, em: new Date().toISOString() });
         hist[itemNorm] = serie.slice(-40);
         gravarLocal('historicoPrecos', hist);
+        // trilha de auditoria (Módulo 9)
         registrarAuditoria({
           acao: 'alterou preço',
           alvo: nome ?? itemNorm,
@@ -251,6 +266,7 @@ export function usePrecos() {
   return { precos, definirPreco };
 }
 
+/** Série temporal de preços por item (alimenta o radar). */
 export function useHistoricoPrecos() {
   const [historico, setHistorico] = useState<HistoricoPrecos>({});
   useEffect(() => {
@@ -259,11 +275,17 @@ export function useHistoricoPrecos() {
   return historico;
 }
 
+/* ------------------- itens novos vindos da cotação -------------------- */
+
 export interface ItemExtra {
-  n: string;
-  u: string;
+  n: string; // nome como veio da cotação
+  u: string; // unidade de compra
 }
 
+/**
+ * Itens que não existiam no histórico e foram cadastrados direto da
+ * cotação — a cotação é a guia: tudo que chega cotado pode virar item.
+ */
 export function useItensExtras() {
   const [itensExtras, setItensExtras] = useState<Record<string, ItemExtra>>({});
 
@@ -282,6 +304,7 @@ export function useItensExtras() {
   return { itensExtras, cadastrarItem };
 }
 
+/** Fornecedor/marca mais barato por item (vem da cotação aplicada). */
 export function useFornecedores() {
   const [fornecedores, setFornecedores] = useState<Record<string, string>>({});
 
@@ -306,13 +329,20 @@ export function useFornecedores() {
   return { fornecedores, definirFornecedor };
 }
 
+/* ------------------- aprendizado de quantidades ----------------------- */
+
 interface RegistroAprendizado {
-  f: number;
-  n: number;
+  f: number; // fator médio (ajustado / sugerido)
+  n: number; // nº de observações (teto p/ continuar adaptando)
 }
 
 const TETO_OBSERVACOES = 8;
 
+/**
+ * O app aprende com a operação: toda vez que uma semana é concluída, os
+ * ajustes de quantidade feitos pela cozinha viram um fator por item que
+ * corrige as próximas sugestões (média móvel, limitada a ±50%).
+ */
 export function useAprendizado() {
   const [registros, setRegistros] = useState<Record<string, RegistroAprendizado>>({});
 
@@ -320,6 +350,7 @@ export function useAprendizado() {
     setRegistros(lerLocal('aprendizado', {}));
   }, []);
 
+  // fatores prontos para usar na lista (limitados para nunca distorcer demais)
   const fatores: Record<string, number> = {};
   for (const [k, r] of Object.entries(registros)) {
     fatores[k] = Math.min(1.5, Math.max(0.5, r.f));
@@ -329,6 +360,7 @@ export function useAprendizado() {
     setRegistros((atual) => {
       const novo = { ...atual };
       estado.dias.forEach((_, di) => {
+        // compara com a sugestão BASE (sem fatores) para o aprendizado não compor
         for (const l of linhasDoDia(estado, di)) {
           if (l.manual || l.sugerida === null || l.sugerida <= 0) continue;
           if (l.qtd === l.sugerida || l.qtd <= 0) continue;
@@ -342,6 +374,7 @@ export function useAprendizado() {
       return novo;
     });
 
+    // a contagem real de refeições refina a curva de pessoas das próximas semanas
     const medias = lerLocal<Record<number, RegistroAprendizado>>('mediaRefeicoes', {});
     let mudou = false;
     Object.entries(estado.refeicoes ?? {}).forEach(([diS, qtd]) => {
@@ -376,6 +409,10 @@ export function usePapel() {
   return { papel, setPapel };
 }
 
+/* =====================================================================
+   Módulo 2 — Estoque inteligente (saldo global por item + movimentos).
+   ===================================================================== */
+
 export function useEstoque() {
   const [estoque, setEstoque] = useState<Estoque>({});
   const [pronto, setPronto] = useState(false);
@@ -385,6 +422,7 @@ export function useEstoque() {
     setPronto(true);
   }, []);
 
+  /** Aplica um movimento (entrada +, baixa −, ajuste/recebimento) e audita. */
   const movimentar = useCallback((mov: Omit<MovEstoque, 'em' | 'papel'>) => {
     setEstoque((atual) => {
       const k = mov.norm;
@@ -425,6 +463,7 @@ export function useEstoque() {
     });
   }, []);
 
+  /** Define o saldo absoluto (contagem física), registrando a diferença. */
   const definirSaldo = useCallback((norm: string, item: string, unid: string, saldo: number) => {
     setEstoque((atual) => {
       const prev = atual[norm];
@@ -444,6 +483,10 @@ export function useEstoque() {
 
   return { estoque, pronto, movimentar, definirMinimo, definirSaldo };
 }
+
+/* =====================================================================
+   Módulo 3 — Controle de desperdício (registros por semana).
+   ===================================================================== */
 
 export function useDesperdicio(semanaId: string) {
   const [registros, setRegistros] = useState<RegistroDesperdicio[]>([]);
@@ -481,9 +524,14 @@ export function useDesperdicio(semanaId: string) {
   return { registros, adicionar, remover };
 }
 
+/** Lê os registros de desperdício de qualquer semana (para indicadores). */
 export function lerDesperdicio(semanaId: string): RegistroDesperdicio[] {
   return lerLocal('desperdicio.' + semanaId, []);
 }
+
+/* =====================================================================
+   Módulo 4 — Índice de aceitação dos pratos (global por prato).
+   ===================================================================== */
 
 export function useAceitacao() {
   const [aceitacao, setAceitacao] = useState<Aceitacao>({});
@@ -518,6 +566,10 @@ export function useAceitacao() {
   return { aceitacao, avaliar };
 }
 
+/* =====================================================================
+   Módulo 6 — Eventos de demanda (manuais / feriados configuráveis).
+   ===================================================================== */
+
 export function useEventos() {
   const [eventos, setEventos] = useState<EventoDemanda[]>([]);
 
@@ -548,9 +600,14 @@ export function lerEventos(): EventoDemanda[] {
   return lerLocal('eventos', []);
 }
 
+/** Média de refeições aprendida por dia da semana (0=seg … 6=dom). */
 export function lerMediaRefeicoes(): Record<number, { f: number; n: number }> {
   return lerLocal('mediaRefeicoes', {});
 }
+
+/* =====================================================================
+   Chef IA — feedback das sugestões (👍/👎) + histórico de recomendações
+   ===================================================================== */
 
 export function useChefFeedback() {
   const [feedbacks, setFeedbacks] = useState<ChefFeedback[]>([]);

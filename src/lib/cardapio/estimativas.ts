@@ -37,6 +37,7 @@ export function useEstimativas() {
     setEstimativas(ler('estimativas', {}));
   }, []);
 
+  /** Define/atualiza manualmente a estimativa de um item (0/null remove). */
   const definirEstimativa = useCallback((norm: string, valor: number | null) => {
     setEstimativas((atual) => {
       const novo = { ...atual };
@@ -47,6 +48,7 @@ export function useEstimativas() {
     });
   }, []);
 
+  /** Gera estimativa de mercado para itens sem preço real e sem estimativa. */
   const gerarEstimativas = useCallback((norms: string[], precos: Record<string, number>) => {
     const historico = ler<HistoricoPrecos>('historicoPrecos', {});
     setEstimativas((atual) => {

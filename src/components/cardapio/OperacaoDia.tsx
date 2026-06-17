@@ -1,11 +1,19 @@
 'use client';
 
+/* =====================================================================
+   Modo Operação do Dia — tela única para a cozinha: o que produzir, o que
+   receber/conferir e o que ainda comprar HOJE, como checklist vivo. Sem
+   menus, sem distrações. Itens de compra/recebimento usam o estado real
+   (sincroniza com a aba Compras); "produzir" é um checklist do dia.
+   ===================================================================== */
+
 import { useState } from 'react';
-import { Cartao } from '@/components/ui';
+import { Cartao } from '@/components/cardapio/ui';
 import { DIAS_SEMANA, formatarQtd, linhasDoDia } from '@/lib/cardapio/motor';
 import type { EstadoSemana } from '@/lib/cardapio/tipos';
 import { ComoFazer } from './ComoFazer';
 
+/** Índice do dia de hoje na semana (segunda = 0 … domingo = 6). */
 function hojeIdx(): number {
   const d = new Date().getDay();
   return d === 0 ? 6 : d - 1;
@@ -80,6 +88,7 @@ export function OperacaoDia({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-gradient-to-b from-brand-900 via-carvao-900 to-carvao-950 pb-24 text-white">
+      {/* Cabeçalho */}
       <div className="sticky top-0 z-10 bg-carvao-950/70 px-4 py-3 backdrop-blur-xl">
         <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
           <button onClick={aoFechar} className="text-sm font-bold uppercase tracking-wide text-brand-200 hover:text-white">
@@ -101,6 +110,7 @@ export function OperacaoDia({
               {tudoFeito ? '🎉 Tudo pronto por hoje!' : `Você tem ${totalTarefas} tarefa${totalTarefas === 1 ? '' : 's'} hoje`}
             </p>
 
+            {/* Produzir */}
             {produzir.length > 0 && (
               <section className="space-y-2">
                 <h3 className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-ouro-300">
@@ -138,6 +148,7 @@ export function OperacaoDia({
               </section>
             )}
 
+            {/* Receber / conferir */}
             {receber.length > 0 && (
               <section className="space-y-2">
                 <h3 className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-ouro-300">📥 Receber e conferir</h3>
@@ -157,6 +168,7 @@ export function OperacaoDia({
               </section>
             )}
 
+            {/* Ainda comprar */}
             {comprar.length > 0 && (
               <section className="space-y-2">
                 <h3 className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-ouro-300">🛒 Ainda comprar</h3>

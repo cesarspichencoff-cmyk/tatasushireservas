@@ -1,7 +1,13 @@
 'use client';
 
+/* =====================================================================
+   "Como fazer" — botão discreto que abre o modo de preparo do prato para
+   a cozinha consultar na hora da dúvida: passo a passo + ingredientes por
+   pessoa (da receita). Reaproveitável em qualquer tela. Não altera dados.
+   ===================================================================== */
+
 import { useState } from 'react';
-import { BottomSheet, Pilula } from '@/components/ui';
+import { BottomSheet, Pilula } from '@/components/cardapio/ui';
 import { formatarQtd } from '@/lib/cardapio/motor';
 import { receitaDoPrato } from '@/lib/cardapio/receitas';
 import { preparoDoPrato } from '@/lib/cardapio/preparos';

@@ -23,6 +23,7 @@ function media(ns: number[]): number {
   return ns.reduce((a, b) => a + b, 0) / Math.max(ns.length, 1);
 }
 
+/** Resolve o preço de um item priorizando o real; depois o estimado; senão "sem". */
 export function resolverPreco(
   norm: string,
   precos: Record<string, number>,
@@ -35,6 +36,11 @@ export function resolverPreco(
   return { valor: 0, tipo: 'sem' };
 }
 
+/**
+ * Estimativa de mercado interna: média do histórico do próprio item; na
+ * ausência, média dos preços reais de itens com a mesma unidade. É a base
+ * "manual/histórica" — o ponto de troca para IA real é `estimarPrecoIA`.
+ */
 export function estimarPreco(
   norm: string,
   precos: Record<string, number>,
@@ -53,21 +59,27 @@ export function estimarPreco(
   return null;
 }
 
+/**
+ * Estimativa por IA/API externa — seam para a fase futura. Hoje retorna null
+ * (cai na estimativa interna); quando houver chave/endpoint, é só implementar
+ * aqui sem mudar quem consome.
+ */
 export async function estimarPrecoIA(_norm: string): Promise<number | null> {
   void _norm;
   return null;
 }
 
 export interface CustoTipado {
-  total: number;
+  total: number; // real + estimado
   real: number;
   estimado: number;
   itensReais: number;
   itensEstimados: number;
   itensSemPreco: number;
-  semPreco: string[];
+  semPreco: string[]; // norms sem preço (real nem estimado)
 }
 
+/** Soma o custo separando o que é real, estimado e o que falta precificar. */
 export function custoTipado(
   itens: { norm: string; qtd: number }[],
   precos: Record<string, number>,

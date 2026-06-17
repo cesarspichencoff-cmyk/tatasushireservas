@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { toast } from '@/components/Toast';
 import { QrCode } from '@/components/QrCode';
 import { PlaquinhaQR } from './PlaquinhaQR';
-import { BarraMini, Botao, Cartao, EstadoVazio, Pilula, Secao, estiloInput, estiloRotulo } from '@/components/ui';
+import { BarraMini, Botao, Cartao, EstadoVazio, Pilula, Secao, estiloInput, estiloRotulo } from '@/components/cardapio/ui';
 import { DIAS_SEMANA, formatarQtd, normalizar } from '@/lib/cardapio/motor';
 import type { Aceitacao, EstadoSemana, EventoDemanda, RegistroDesperdicio } from '@/lib/cardapio/tipos';
 

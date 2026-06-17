@@ -19,7 +19,7 @@ type AlertaPreco = {
   unid: string;
   atual: number;
   medio: number;
-  variacao: number;
+  variacao: number; // 0.12 = +12%
 };
 
 type AlertaQtd = {
@@ -41,9 +41,10 @@ export function ConciliacaoSemana({
   const historico = useHistoricoPrecos();
 
   const { alertasPreco, alertasQtd, custoExcessoTotal } = useMemo(() => {
+    /* ---- acumula por chave (item normalizado) ---- */
     const necessario: Record<string, { item: string; unid: string; qtd: number }> = {};
     const comprado: Record<string, number> = {};
-    const vistos = new Set<string>();
+    const vistos = new Set<string>(); // para itens usados na semana (preço)
 
     for (let di = 0; di < 7; di++) {
       const linhas = linhasDoDia(estado, di);
@@ -51,20 +52,23 @@ export function ConciliacaoSemana({
         if (l.manual) continue;
         const k = l.chave;
         vistos.add(k);
+        // acumula necessário
         if (!necessario[k]) necessario[k] = { item: l.item, unid: l.unid, qtd: 0 };
         necessario[k].qtd += l.qtd;
+        // acumula comprado (só onde há registro de compra)
         if (l.status.compradoQtd !== undefined) {
           comprado[k] = (comprado[k] ?? 0) + l.status.compradoQtd;
         }
       }
     }
 
+    /* ---- 1. Preço acima do histórico ---- */
     const alertasPreco: AlertaPreco[] = [];
     for (const k of Array.from(vistos)) {
       const precoAtual = precos[k];
       if (!precoAtual) continue;
       const hist = historico[k] ?? [];
-      if (hist.length < 3) continue;
+      if (hist.length < 3) continue; // sem histórico suficiente
       const recentes = hist.slice(-4);
       const medio = recentes.reduce((a, p) => a + p.valor, 0) / recentes.length;
       const variacao = (precoAtual - medio) / medio;
@@ -80,12 +84,13 @@ export function ConciliacaoSemana({
     }
     alertasPreco.sort((a, b) => b.variacao - a.variacao);
 
+    /* ---- 2. Quantidade comprada acima do necessário ---- */
     const alertasQtd: AlertaQtd[] = [];
     let custoExcessoTotal = 0;
     for (const [k, comp] of Object.entries(comprado)) {
       const nec = necessario[k];
       if (!nec || nec.qtd === 0) continue;
-      if (comp <= nec.qtd * 1.15) continue;
+      if (comp <= nec.qtd * 1.15) continue; // dentro da margem de 15%
       const excesso = comp - nec.qtd;
       const custo = excesso * (precos[k] ?? 0);
       custoExcessoTotal += custo;
@@ -111,6 +116,7 @@ export function ConciliacaoSemana({
         🔍 Conciliação automática
       </p>
 
+      {/* Preço acima do histórico */}
       {alertasPreco.length > 0 && (
         <section className="space-y-2">
           <h4 className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.15em] text-ouro-600 dark:text-ouro-300">
@@ -133,6 +139,7 @@ export function ConciliacaoSemana({
         </section>
       )}
 
+      {/* Quantidade comprada acima do necessário */}
       {alertasQtd.length > 0 && (
         <section className="space-y-2">
           <h4 className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.15em] text-[#b04c41]">

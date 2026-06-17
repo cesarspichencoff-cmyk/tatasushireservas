@@ -22,6 +22,7 @@ export const ROTULO_PAPEL: Record<Papel, string> = {
   administrador: 'Administrador',
 };
 
+/** Matriz de permissões por papel (fonte única de verdade do acesso). */
 const MATRIZ: Record<Papel, Permissao[]> = {
   administrador: [
     'cardapio:editar',

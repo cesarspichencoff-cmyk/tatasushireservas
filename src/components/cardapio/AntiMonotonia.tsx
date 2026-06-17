@@ -1,5 +1,12 @@
 'use client';
 
+/* =====================================================================
+   Radar de Monotonia — detecta padrões repetitivos no cardápio da semana:
+   mesma textura no prato principal 3× ou mais, mesma guarnição variável
+   3× ou mais, mesma salada 3× ou mais. Alertas visuais para o planejador
+   variar antes de publicar. Retorna null se a semana está variada.
+   ===================================================================== */
+
 import { useMemo } from 'react';
 import type { EstadoSemana } from '@/lib/cardapio/tipos';
 import { DIAS_SEMANA } from '@/lib/cardapio/motor';
@@ -20,6 +27,7 @@ export function AntiMonotonia({ estado }: { estado: EstadoSemana }) {
     const { dias } = estado;
     const resultado: Alerta[] = [];
 
+    /* Textura dos pratos principais */
     const texturaCont: Record<string, string[]> = {};
     dias.forEach((d, i) => {
       const tags = tagsDoPrato(d.principal);
@@ -36,6 +44,7 @@ export function AntiMonotonia({ estado }: { estado: EstadoSemana }) {
       }
     });
 
+    /* Guarnição variável repetida */
     const guaCont: Record<string, string[]> = {};
     dias.forEach((d, i) => {
       if (!d.guarnicao) return;
@@ -50,6 +59,7 @@ export function AntiMonotonia({ estado }: { estado: EstadoSemana }) {
         });
     });
 
+    /* Salada repetida */
     const salCont: Record<string, string[]> = {};
     dias.forEach((d, i) => {
       if (!d.salada) return;

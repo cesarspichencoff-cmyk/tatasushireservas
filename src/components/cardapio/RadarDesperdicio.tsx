@@ -1,18 +1,25 @@
 'use client';
 
+/* =====================================================================
+   Radar de desperdício preditivo — aprende, semana a semana, quanto cada
+   prato costuma sobrar e antecipa o desperdício dos pratos planejados para
+   esta semana. Não é um relatório do passado: é uma previsão acionável
+   ("produza ~X% a menos") antes de cozinhar. Tudo local e determinístico.
+   ===================================================================== */
+
 import { useEffect, useMemo, useState } from 'react';
-import { Cartao, Pilula, Secao } from '@/components/ui';
+import { Cartao, Pilula, Secao } from '@/components/cardapio/ui';
 import { DIAS_SEMANA, formatarReais, normalizar } from '@/lib/cardapio/motor';
 import { resumoSemana } from '@/lib/cardapio/indicadores';
 import { lerDesperdicio, semanasComConteudo } from '@/lib/cardapio/estado';
 import type { EstadoSemana, RegistroDesperdicio } from '@/lib/cardapio/tipos';
 
 interface Padrao {
-  prato: string;
-  ocasioes: number;
+  prato: string; // rótulo original (último visto)
+  ocasioes: number; // quantas vezes foi servido/registrado
   produzido: number;
   sobra: number;
-  taxa: number;
+  taxa: number; // sobra / produzido (0..1)
 }
 
 interface Previsao {
@@ -20,8 +27,8 @@ interface Previsao {
   prato: string;
   taxa: number;
   ocasioes: number;
-  cortePct: number;
-  custoEvitado: number;
+  cortePct: number; // quanto produzir a menos (%)
+  custoEvitado: number; // por refeição × pessoas × taxa
 }
 
 export function RadarDesperdicio({
@@ -37,6 +44,7 @@ export function RadarDesperdicio({
 }) {
   const [padroes, setPadroes] = useState<Map<string, Padrao>>(new Map());
 
+  // Aprende com todo o histórico de sobras (todas as semanas com cardápio).
   useEffect(() => {
     const m = new Map<string, Padrao>();
     const semanas = semanasComConteudo();
@@ -56,17 +64,19 @@ export function RadarDesperdicio({
       p.taxa = p.produzido > 0 ? p.sobra / p.produzido : 0;
     });
     setPadroes(m);
+    // recomputa quando as sobras da semana atual mudam (cobre o fluxo de edição)
   }, [registros]);
 
   const resumo = useMemo(() => resumoSemana(estado, precos, fatores), [estado, precos, fatores]);
   const custoRef = resumo.custoRefReal ?? resumo.custoRefEstimado ?? 0;
 
+  // Previsões para os pratos planejados nesta semana.
   const previsoes = useMemo<Previsao[]>(() => {
     const out: Previsao[] = [];
     estado.dias.forEach((d, dia) => {
       if (!d.principal) return;
       const p = padroes.get(normalizar(d.principal));
-      if (!p || p.ocasioes < 2 || p.taxa < 0.08) return;
+      if (!p || p.ocasioes < 2 || p.taxa < 0.08) return; // só prevê com histórico e sobra relevante
       const cortePct = Math.min(40, Math.round(p.taxa * 100));
       out.push({
         dia,
@@ -80,6 +90,7 @@ export function RadarDesperdicio({
     return out.sort((a, b) => b.taxa - a.taxa);
   }, [estado.dias, padroes, custoRef]);
 
+  // Lista de observação: pratos historicamente perdulários fora desta semana.
   const naSemana = new Set(estado.dias.map((d) => normalizar(d.principal)).filter(Boolean));
   const observar = useMemo(
     () =>
@@ -93,7 +104,7 @@ export function RadarDesperdicio({
 
   const custoEvitavel = previsoes.reduce((a, p) => a + p.custoEvitado, 0);
 
-  if (padroes.size === 0) return null;
+  if (padroes.size === 0) return null; // sem histórico ainda
 
   const confianca = (n: number) => (n >= 5 ? 'alta' : n >= 3 ? 'média' : 'baixa');
 
@@ -136,7 +147,7 @@ export function RadarDesperdicio({
                   confiança {confianca(p.ocasioes)} · {p.ocasioes} registro(s)
                 </p>
               </div>
-              <Pilula tom={p.taxa >= 0.2 ? 'vermelho' : 'ouro'}>-{p.cortePct}%</Pilula>
+              <Pilula tom={p.taxa >= 0.2 ? 'vermelho' : 'ouro'}>−{p.cortePct}%</Pilula>
             </Cartao>
           ))}
         </div>

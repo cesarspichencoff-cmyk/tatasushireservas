@@ -19,6 +19,7 @@ export type TagPrato = {
 };
 
 const LISTA: Record<string, TagPrato> = {
+  /* ----------------------------- Principais ---------------------------- */
   'Frango grelhado':                { textura: 'seco' },
   'Frango ao molho':                { textura: 'ensopado' },
   'Frango xadrez':                  { textura: 'crocante' },
@@ -49,6 +50,7 @@ export const TAGS: Record<string, TagPrato> = Object.fromEntries(
   Object.entries(LISTA).map(([nome, tags]) => [norm(nome), tags]),
 );
 
+/** Tags de textura/perfil do prato (por nome), ou null se não catalogado. */
 export function tagsDoPrato(prato: string | null | undefined): TagPrato | null {
   if (!prato) return null;
   return TAGS[norm(prato)] ?? null;

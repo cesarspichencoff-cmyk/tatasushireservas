@@ -1,7 +1,20 @@
 'use client';
 
+/* =====================================================================
+   Previsão de presença — o "gêmeo digital" do refeitório.
+
+   Nenhum ERP de refeitório faz isto: em vez de o gestor chutar "65 pessoas"
+   todo dia, o app aprende a presença REAL (refeições servidas) por dia da
+   semana ao longo do histórico, ajusta pela aceitação do prato planejado
+   (prato campeão atrai mais gente; prato fraco atrai menos) e prevê quantas
+   pessoas vão almoçar em cada dia desta semana — para produzir e comprar na
+   medida certa. É a raiz do combate ao desperdício e à falta.
+
+   Tudo local e determinístico. Não chama serviço externo.
+   ===================================================================== */
+
 import { useEffect, useMemo, useState } from 'react';
-import { Botao, Cartao, Pilula, Secao } from '@/components/ui';
+import { Botao, Cartao, Pilula, Secao } from '@/components/cardapio/ui';
 import { DIAS_SEMANA, normalizar } from '@/lib/cardapio/motor';
 import { lerSemana, semanasComConteudo } from '@/lib/cardapio/estado';
 import { useAceitacao } from '@/lib/cardapio/estado';
@@ -9,14 +22,14 @@ import type { EstadoSemana } from '@/lib/cardapio/tipos';
 
 interface Amostra {
   peso: number;
-  total: number;
+  total: number; // soma ponderada de presença
 }
 
 interface Previsao {
   dia: number;
   prato: string;
-  base: number;
-  prevista: number;
+  base: number; // média ponderada da presença real
+  prevista: number; // base ajustada pela aceitação, arredondada
   planejada: number;
   amostras: number;
 }
@@ -33,12 +46,14 @@ export function PrevisaoPresenca({
   podeEditar: boolean;
 }) {
   const { aceitacao } = useAceitacao();
+  // Presença real por dia da semana (0=seg … 6=dom), ponderada por recência.
   const [perfil, setPerfil] = useState<Amostra[]>([]);
 
   useEffect(() => {
-    const ids = semanasComConteudo();
+    const ids = semanasComConteudo(); // ordenados (antigo → recente)
     const acc: Amostra[] = Array.from({ length: 7 }, () => ({ peso: 0, total: 0 }));
     ids.forEach((id, idx) => {
+      // recência: semanas mais recentes pesam mais (decaimento suave)
       const peso = 1 / (1 + (ids.length - 1 - idx) * 0.15);
       const sem = lerSemana(id);
       const ref = sem.refeicoes ?? {};
@@ -58,8 +73,9 @@ export function PrevisaoPresenca({
       .map((d, dia): Previsao | null => {
         if (!d.principal) return null;
         const a = perfil[dia];
-        if (!a || a.peso === 0) return null;
+        if (!a || a.peso === 0) return null; // sem histórico para este dia
         const base = a.total / a.peso;
+        // Ajuste pela aceitação do prato (campeão atrai, fraco afasta).
         const ac = aceitacao[normalizar(d.principal)];
         let fator = 1;
         if (ac && ac.n >= 3) {
@@ -79,13 +95,14 @@ export function PrevisaoPresenca({
       .filter((p): p is Previsao => p !== null);
   }, [estado.dias, perfil, aceitacao]);
 
+  // Só sugere ajuste quando o desvio é material (≥5 pessoas e ≥8%).
   const ajustes = previsoes.filter(
     (p) => Math.abs(p.prevista - p.planejada) >= 5 && Math.abs(p.prevista - p.planejada) / Math.max(1, p.planejada) >= 0.08,
   );
 
   const totalPrev = previsoes.reduce((a, p) => a + p.prevista, 0);
   const totalPlan = previsoes.reduce((a, p) => a + p.planejada, 0);
-  const excesso = totalPlan - totalPrev;
+  const excesso = totalPlan - totalPrev; // + = planejando demais (risco de sobra)
 
   const aplicarUm = (p: Previsao) =>
     atualizar((e) => ({ ...e, dias: e.dias.map((d, i) => (i === p.dia ? { ...d, pessoas: p.prevista } : d)) }));
@@ -99,7 +116,7 @@ export function PrevisaoPresenca({
       }),
     }));
 
-  if (previsoes.length === 0) return null;
+  if (previsoes.length === 0) return null; // sem histórico suficiente ainda
 
   const confianca = previsoes.reduce((m, p) => Math.min(m, p.amostras), 99);
   const rotuloConf = confianca >= 4 ? 'alta' : confianca >= 2 ? 'média' : 'baixa';

@@ -7,7 +7,7 @@
    ===================================================================== */
 
 import { useMemo, useState } from 'react';
-import { Cartao } from '@/components/ui';
+import { Cartao } from '@/components/cardapio/ui';
 import { Icone } from '@/components/Icones';
 import {
   DIAS_SEMANA,
@@ -27,7 +27,7 @@ import { indiceNutricionalSemana } from '@/lib/cardapio/nutricional';
 import type { EstadoSemana, HistoricoPrecos, Aceitacao } from '@/lib/cardapio/tipos';
 
 function baixarCsv(nome: string, linhas: string[][]) {
-  const bom = '﻿';
+  const bom = '﻿'; // BOM para Excel reconhecer UTF-8
   const conteudo = bom + linhas.map((l) => l.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\r\n');
   const blob = new Blob([conteudo], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -58,6 +58,7 @@ export function CentralGerencial({
   const { registros: auditoria } = useAuditoria();
   const [periodo, setPeriodo] = useState<'semana' | 'mes' | 'tudo'>('semana');
 
+  /* Semanas do período selecionado */
   const semanaIds = useMemo(() => {
     const todas = semanasComConteudo();
     if (periodo === 'semana') return [semanaId];
@@ -65,6 +66,7 @@ export function CentralGerencial({
     return todas;
   }, [periodo, semanaId]);
 
+  /* KPIs agregados */
   const kpis = useMemo(() => {
     let custoTotal = 0;
     let itensComprados = 0;
@@ -90,7 +92,10 @@ export function CentralGerencial({
     return { custoTotal, itensComprados, itensRecebidos, totalRefeicoes, semanas: semanaIds.length };
   }, [semanaIds, precos, fatores]);
 
+  /* Índice nutricional da semana atual */
   const nutri = useMemo(() => indiceNutricionalSemana(estado.dias), [estado.dias]);
+
+  /* ---- Funções de exportação ---- */
 
   const exportarCompras = () => {
     const rows: string[][] = [['Semana', 'Dia', 'Item', 'Qtd Sugerida', 'Unid', 'Qtd Comprada', 'Preço Pago', 'Qtd Recebida', 'OK', 'Observação']];
@@ -203,6 +208,7 @@ export function CentralGerencial({
 
   return (
     <div className="space-y-6">
+      {/* Cabeçalho */}
       <div className="rounded-2xl bg-gradient-to-r from-carvao-800 to-carvao-600 p-5 text-white dark:from-carvao-900 dark:to-carvao-700">
         <div className="flex items-center gap-3">
           <span className="text-3xl">📈</span>
@@ -213,6 +219,7 @@ export function CentralGerencial({
         </div>
       </div>
 
+      {/* Seletor de período */}
       <div className="flex gap-1 rounded-2xl bg-carvao-100/70 p-1 dark:bg-carvao-800/70">
         {([['semana', 'Esta semana'], ['mes', 'Último mês (4 sem.)'], ['tudo', 'Todo o histórico']] as const).map(([id, rot]) => (
           <button
@@ -225,6 +232,7 @@ export function CentralGerencial({
         ))}
       </div>
 
+      {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           { rot: 'Semanas', val: String(kpis.semanas), desc: 'analisadas' },
@@ -240,6 +248,7 @@ export function CentralGerencial({
         ))}
       </div>
 
+      {/* Índice nutricional resumido */}
       <Cartao className="flex items-center justify-between gap-4">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-wide text-carvao-400">🥗 Índice Nutricional — semana atual</p>
@@ -250,6 +259,7 @@ export function CentralGerencial({
         </div>
       </Cartao>
 
+      {/* Relatórios exportáveis */}
       <div className="space-y-2">
         <h3 className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-carvao-400">📥 Exportar relatórios (CSV)</h3>
         <div className="grid gap-2 sm:grid-cols-2">
@@ -270,6 +280,7 @@ export function CentralGerencial({
         </div>
       </div>
 
+      {/* Últimas ações (auditoria resumida) */}
       {auditoria.length > 0 && (
         <Cartao className="space-y-2">
           <h3 className="font-display text-sm font-bold">🔍 Últimas ações registradas</h3>

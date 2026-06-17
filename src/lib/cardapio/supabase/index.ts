@@ -1,5 +1,7 @@
 /* =====================================================================
    Camada Supabase (opcional, desacoplada). Ponto único de import.
+   Enquanto as variáveis de ambiente não estiverem definidas, tudo aqui é
+   inerte e o app segue em localStorage.
    ===================================================================== */
 
 export { supabaseConfig, supabaseHabilitado, ESPACO_DADOS } from './config';

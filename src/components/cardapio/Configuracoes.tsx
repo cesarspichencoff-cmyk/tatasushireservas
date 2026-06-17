@@ -1,8 +1,13 @@
 'use client';
 
+/* =====================================================================
+   Configurações — troca dos PINs de acesso por perfil. Aparece no Painel
+   (visível só para a Gerência). Substitui o uso dos PINs padrão.
+   ===================================================================== */
+
 import { useState } from 'react';
 import { toast } from '@/components/Toast';
-import { Botao, Cartao, Secao } from '@/components/ui';
+import { Botao, Cartao, Secao } from '@/components/cardapio/ui';
 import { PERFIS, useLogin } from '@/lib/cardapio/login';
 
 export function Configuracoes() {

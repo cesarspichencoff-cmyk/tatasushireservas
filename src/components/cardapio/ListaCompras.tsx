@@ -1,7 +1,14 @@
 'use client';
 
+/* =====================================================================
+   Lista de compras — modo compacto (item 15) + conferência cardápio ×
+   compras (item 16). Agrupada por dia, com checkbox de conferência,
+   cabeçalho mostrando o que será servido e o status do dia. Limpa no
+   celular e fácil de imprimir.
+   ===================================================================== */
+
 import { useMemo, useState } from 'react';
-import { Cartao, Pilula, estiloInput } from '@/components/ui';
+import { Cartao, Pilula, estiloInput } from '@/components/cardapio/ui';
 import { DIAS_SEMANA, formatarQtd, linhasDoDia, normalizar } from '@/lib/cardapio/motor';
 import type { EstadoSemana } from '@/lib/cardapio/tipos';
 
@@ -67,6 +74,7 @@ export function ListaCompras({
         const status = total === 0 ? 'vazio' : comprados === total ? 'completo' : comprados > 0 ? 'parcial' : 'pendente';
         return (
           <Cartao key={di} className="overflow-hidden !p-0">
+            {/* Cabeçalho do dia — conferência (servido × status) */}
             <div className="bg-areia-100/70 px-4 py-2.5 dark:bg-carvao-800/60">
               <div className="flex items-center justify-between gap-2">
                 <h3 className="font-display text-base font-bold">{DIAS_SEMANA[di]}</h3>
@@ -85,6 +93,7 @@ export function ListaCompras({
               )}
             </div>
 
+            {/* Checklist compacto */}
             {linhas.length === 0 ? (
               <p className="px-4 py-3 text-sm text-carvao-400">
                 {total === 0 ? 'Sem itens de compra.' : 'Nenhum item encontrado na busca.'}

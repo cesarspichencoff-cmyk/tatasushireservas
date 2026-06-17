@@ -6,7 +6,7 @@
    ===================================================================== */
 
 import { useMemo } from 'react';
-import { Cartao } from '@/components/ui';
+import { Cartao } from '@/components/cardapio/ui';
 import { useChefFeedback, semanasComConteudo, lerSemana } from '@/lib/cardapio/estado';
 import { DIAS_SEMANA, normalizar, proteinaDoPrato } from '@/lib/cardapio/motor';
 import { ChefIA } from './ChefIA';
@@ -23,6 +23,7 @@ export function ChefIATab({
 }) {
   const { feedbacks } = useChefFeedback();
 
+  /* Resumo proteínas das últimas 4 semanas */
   const resumoProteinasRecentes = useMemo(() => {
     const cont: Record<string, number> = { frango: 0, bovina: 0, suina: 0, peixe: 0, ovo: 0, outros: 0 };
     const semanas = semanasComConteudo().slice(-4);
@@ -40,6 +41,7 @@ export function ChefIATab({
     return { cont, total };
   }, []);
 
+  /* Feedback recente (últimos 20) */
   const feedbackRecente = feedbacks.slice(0, 20);
   const vetados = feedbacks.filter((f) => f.voto === 'ruim');
 
@@ -50,6 +52,7 @@ export function ChefIATab({
 
   return (
     <div className="space-y-6">
+      {/* Cabeçalho */}
       <div className="rounded-2xl bg-gradient-to-r from-brand-800 to-brand-600 p-5 text-white">
         <div className="flex items-center gap-3">
           <span className="text-3xl">🤖</span>
@@ -62,8 +65,10 @@ export function ChefIATab({
         </div>
       </div>
 
+      {/* Recomendações da semana atual (versão expandida) */}
       <ChefIA estado={estado} precos={precos} expandido />
 
+      {/* Distribuição de proteínas (últimas 4 semanas) */}
       {resumoProteinasRecentes.total > 0 && (
         <Cartao className="space-y-3">
           <h3 className="font-display text-sm font-bold">📊 Distribuição de proteínas — últimas 4 semanas</h3>
@@ -87,6 +92,7 @@ export function ChefIATab({
         </Cartao>
       )}
 
+      {/* Aprendizados do time */}
       {vetados.length > 0 && (
         <Cartao className="space-y-3">
           <h3 className="font-display text-sm font-bold">🧠 O que o time descartou</h3>
@@ -107,6 +113,7 @@ export function ChefIATab({
         </Cartao>
       )}
 
+      {/* Cardápio desta semana em resumo */}
       {estado.dias.some((d) => d.principal) && (
         <Cartao className="space-y-3">
           <h3 className="font-display text-sm font-bold">🍽️ Semana atual — visão do Chef</h3>

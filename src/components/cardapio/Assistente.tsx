@@ -91,6 +91,7 @@ export function Assistente({ contexto }: { contexto: ContextoAssistente }) {
             ))}
           </div>
 
+          {/* sugestões rápidas */}
           <div className="flex gap-1.5 overflow-x-auto border-t border-carvao-100 px-3 py-2 dark:border-carvao-700">
             {PERGUNTAS_SUGERIDAS.slice(0, 4).map((p) => (
               <button

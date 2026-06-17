@@ -216,6 +216,8 @@ const LISTA: Receita[] = [
       { item: 'Batata Palha', unid: 'pct', porPessoa: 0.02, opcional: true },
     ],
   },
+
+  /* ------------------------ Econômicos / criativos --------------------- */
   {
     nome: 'Arroz carreteiro',
     categoria: 'principal',
@@ -305,6 +307,8 @@ const LISTA: Receita[] = [
       { item: 'Molho de tomate', unid: 'un', porPessoa: 0.04 },
     ],
   },
+
+  /* ----------------------- Guarnições / acompanhamentos ---------------- */
   {
     nome: 'Arroz branco',
     categoria: 'guarnicao',
@@ -447,6 +451,8 @@ const LISTA: Receita[] = [
       { item: 'Leite', unid: 'lt', porPessoa: 0.02 },
     ],
   },
+
+  /* ------------------------------- Saladas ----------------------------- */
   {
     nome: 'Alface com tomate',
     categoria: 'salada',
@@ -507,6 +513,8 @@ const LISTA: Receita[] = [
       { item: 'Ovos', unid: 'bd', porPessoa: 0.01 },
     ],
   },
+
+  /* ------------------------------ Sobremesas --------------------------- */
   {
     nome: 'Arroz doce',
     categoria: 'sobremesa',
@@ -533,14 +541,19 @@ const LISTA: Receita[] = [
   },
 ];
 
+/* ---------------------------------------------------------------------
+   Índices e helpers de acesso
+   --------------------------------------------------------------------- */
 export const RECEITAS: Record<string, Receita> = Object.fromEntries(
   LISTA.map((r) => [norm(r.nome), r]),
 );
 
+/** Receita do prato (por nome), ou null. */
 export function receitaDoPrato(prato: string | null | undefined): Receita | null {
   return RECEITAS[norm(prato)] ?? null;
 }
 
+/** Itens de compra de uma receita, escalados pelo nº de pessoas. */
 export function itensDaReceita(prato: string, pessoas: number): ItemSugerido[] | null {
   const r = receitaDoPrato(prato);
   if (!r) return null;
@@ -551,6 +564,7 @@ export function itensDaReceita(prato: string, pessoas: number): ItemSugerido[] |
   }));
 }
 
+/** Nomes de pratos com receita, agrupados por categoria (para os seletores). */
 export const RECEITAS_POR_CATEGORIA: Record<CategoriaReceita, string[]> = {
   principal: LISTA.filter((r) => r.categoria === 'principal').map((r) => r.nome),
   guarnicao: LISTA.filter((r) => r.categoria === 'guarnicao').map((r) => r.nome),

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { BarraMini, Cartao, Contador, EstadoVazio, Kpi, Pilula, Secao } from '@/components/ui';
+import { BarraMini, Cartao, Contador, EstadoVazio, Kpi, Pilula, Secao } from '@/components/cardapio/ui';
 import { DIAS_SEMANA, formatarQtd, formatarReais } from '@/lib/cardapio/motor';
 import {
   alertasEstoque,
@@ -63,6 +63,7 @@ export function AbaDashboard({
 
   return (
     <div className="space-y-5">
+      {/* KPIs principais */}
       <div className="grid animate-subir grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi
           rotulo="Refeições previstas"
@@ -132,6 +133,7 @@ export function AbaDashboard({
         aceitacao={aceitacao}
       />
 
+      {/* ROI do mês */}
       <Cartao className="overflow-hidden !p-0">
         <div className="bg-gradient-to-r from-brand-800 via-brand-700 to-brand-600 px-5 py-4 text-white">
           <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-brand-200">Valor gerado no mês</p>
@@ -158,6 +160,7 @@ export function AbaDashboard({
         </div>
       </Cartao>
 
+      {/* Alertas */}
       <Secao titulo="🔔 Alertas">
         {alertas.length === 0 ? (
           <Cartao>
@@ -175,6 +178,7 @@ export function AbaDashboard({
         )}
       </Secao>
 
+      {/* Previsão de demanda */}
       <Secao
         titulo="📈 Previsão de demanda"
         acao={<Pilula tom="azul">{totalPrevisto} refeições/semana</Pilula>}
@@ -205,6 +209,7 @@ export function AbaDashboard({
         </Cartao>
       </Secao>
 
+      {/* Atalhos de leitura rápida */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Cartao className="space-y-2">
           <p className="text-[11px] font-extrabold uppercase tracking-wider text-carvao-400">🏆 Melhor prato</p>
@@ -228,6 +233,7 @@ export function AbaDashboard({
         </Cartao>
       </div>
 
+      {/* Auditoria resumida — últimos eventos */}
       {registros.length > 0 && (
         <Secao titulo="🛡️ Últimos eventos">
           <Cartao className="!p-0">

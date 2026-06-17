@@ -1,8 +1,10 @@
 'use client';
 
-import { Botao, Cartao } from '@/components/ui';
+import { Botao, Cartao } from '@/components/cardapio/ui';
+import { DIAS_SEMANA, formatarReais, linhasDoDia } from '@/lib/cardapio/motor';
+import { resolverPreco } from '@/lib/cardapio/precos';
+import { useEstimativas } from '@/lib/cardapio/estimativas';
 import type { EstadoSemana, Etapa, Papel } from '@/lib/cardapio/tipos';
-import { linhasDoDia } from './AbaCompras';
 
 const ETAPAS: { id: Etapa; rotulo: string; quem: string }[] = [
   { id: 'rascunho', rotulo: 'Montagem do cardápio', quem: 'Gestor' },
@@ -25,18 +27,38 @@ export function AbaFluxo({
   estado,
   atualizar,
   papel,
+  precos = {},
+  fatores,
+  aprenderDeSemana,
 }: {
   estado: EstadoSemana;
   atualizar: (fn: (e: EstadoSemana) => EstadoSemana) => void;
   papel: Papel;
+  precos?: Record<string, number>;
+  fatores?: Record<string, number>;
+  aprenderDeSemana?: (estado: EstadoSemana) => void;
 }) {
+  const { estimativas } = useEstimativas();
   const idxAtual = ETAPAS.findIndex((e) => e.id === estado.etapa);
   const acao = ACAO_POR_ETAPA[estado.etapa];
   const podeAgir = acao ? acao.papeis.includes(papel) : false;
 
+  // itens da semana ainda sem preço (nem real, nem estimado) — exigem revisão
+  // antes de fechar o cardápio / finalizar as compras
+  const itensSemPreco = (() => {
+    const s = new Set<string>();
+    estado.dias.forEach((_, di) =>
+      linhasDoDia(estado, di, fatores).forEach((l) => {
+        if (resolverPreco(l.chave, precos, estimativas).tipo === 'sem') s.add(l.chave);
+      }),
+    );
+    return s.size;
+  })();
+  const exigePrecoAntes = estado.etapa === 'rascunho' || estado.etapa === 'cozinha';
+
   const totais = estado.dias.reduce(
     (acc, _, di) => {
-      const linhas = linhasDoDia(estado, di);
+      const linhas = linhasDoDia(estado, di, fatores);
       acc.itens += linhas.length;
       acc.comprados += linhas.filter((l) => l.status.compradoEm).length;
       acc.recebidos += linhas.filter((l) => l.status.recebidoOk).length;
@@ -46,8 +68,34 @@ export function AbaFluxo({
   );
   const diasMontados = estado.dias.filter((d) => d.principal).length;
 
+  // custo real da semana: usa o preço pago quando existir, senão o cotado
+  const custoSemana = estado.dias.reduce(
+    (t, _, di) =>
+      t +
+      linhasDoDia(estado, di, fatores).reduce((s, l) => {
+        const p = l.status.precoPago ?? precos[l.chave];
+        return p > 0 ? s + p * (l.status.compradoQtd ?? l.qtd) : s;
+      }, 0),
+    0,
+  );
+  const refeicoes = estado.refeicoes ?? {};
+  const totalRefeicoes = Object.values(refeicoes).reduce((a, b) => a + (b || 0), 0);
+  const custoPorRefeicao = totalRefeicoes > 0 && custoSemana > 0 ? custoSemana / totalRefeicoes : null;
+  const podeContar = papel === 'cozinha' || papel === 'gestor';
+
   const avancar = () => {
     if (!acao) return;
+    // bloqueio leve: confirma antes de fechar se há itens sem preço
+    if (exigePrecoAntes && itensSemPreco > 0) {
+      const ok = window.confirm(
+        `${itensSemPreco} item(ns) ainda estão sem preço (nem real, nem estimado).\n\n` +
+          'O ideal é lançar o preço real ou gerar uma estimativa antes de avançar, ' +
+          'para o custo da semana cobrir tudo.\n\nAvançar mesmo assim?',
+      );
+      if (!ok) return;
+    }
+    // semana concluída: o app aprende com os ajustes de quantidade feitos
+    if (acao.proxima === 'concluido') aprenderDeSemana?.(estado);
     atualizar((e) => ({
       ...e,
       etapa: acao.proxima,
@@ -80,6 +128,54 @@ export function AbaFluxo({
           </Cartao>
         ))}
       </div>
+
+      {/* Contagem de refeições — feita pela cozinha no fim de cada dia */}
+      <Cartao className="space-y-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h3 className="font-display text-lg font-semibold">🍽️ Contagem de refeições</h3>
+          {custoPorRefeicao !== null && (
+            <span className="rounded-full bg-brand-500/10 px-3 py-1 text-sm font-extrabold text-brand-700 ring-1 ring-brand-500/30 dark:text-brand-300">
+              {formatarReais(custoPorRefeicao)} / refeição
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-carvao-400">
+          Anote no fim de cada dia quantas refeições saíram. Isso vira o <strong>custo real por
+          refeição</strong> e ensina o app a prever o movimento das próximas semanas.
+        </p>
+        <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+          {estado.dias.map((_, i) => (
+            <label key={i} className="text-center">
+              <span className="block text-[10px] font-extrabold uppercase tracking-wide text-carvao-400">
+                {DIAS_SEMANA[i].slice(0, 3)}
+              </span>
+              <input
+                type="number"
+                min={0}
+                disabled={!podeContar}
+                value={refeicoes[i] ?? ''}
+                placeholder="—"
+                onChange={(e) =>
+                  atualizar((s) => ({
+                    ...s,
+                    refeicoes: {
+                      ...(s.refeicoes ?? {}),
+                      [i]: e.target.value ? Number(e.target.value) : 0,
+                    },
+                  }))
+                }
+                className="mt-0.5 w-full rounded-xl border border-carvao-200 bg-white px-1 py-2 text-center text-sm font-bold disabled:opacity-50 dark:border-carvao-600 dark:bg-carvao-900"
+              />
+            </label>
+          ))}
+        </div>
+        {totalRefeicoes > 0 && (
+          <p className="text-xs font-semibold text-carvao-400">
+            {totalRefeicoes} refeições na semana
+            {custoSemana > 0 && <> · custo da semana ≈ {formatarReais(custoSemana)}</>}
+          </p>
+        )}
+      </Cartao>
 
       {/* Linha do tempo */}
       <Cartao className="space-y-0">
@@ -130,6 +226,19 @@ export function AbaFluxo({
           );
         })}
       </Cartao>
+
+      {/* Aviso de preço pendente antes de fechar */}
+      {exigePrecoAntes && itensSemPreco > 0 && (
+        <Cartao className="!py-3 ring-1 ring-[#b04c41]/30">
+          <p className="text-sm font-semibold text-[#b04c41]">
+            ⛔ {itensSemPreco} {itensSemPreco === 1 ? 'item' : 'itens'} sem preço.
+          </p>
+          <p className="mt-0.5 text-xs text-carvao-500 dark:text-areia-200">
+            Lance o preço real na aba <strong>Cotação/Compras</strong> ou gere uma estimativa na aba{' '}
+            <strong>Cardápio</strong> antes de fechar — assim o custo da semana fica completo.
+          </p>
+        </Cartao>
+      )}
 
       {/* Ações */}
       {acao && (

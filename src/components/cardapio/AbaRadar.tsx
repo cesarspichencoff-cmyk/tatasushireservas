@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Cartao, EstadoVazio, Kpi, Pilula, Secao } from '@/components/ui';
+import { Cartao, EstadoVazio, Kpi, Pilula, Secao } from '@/components/cardapio/ui';
 import { formatarReais } from '@/lib/cardapio/motor';
 import { analisarRadar, fraseAlerta } from '@/lib/cardapio/radar';
 import type { HistoricoPrecos } from '@/lib/cardapio/tipos';
@@ -47,6 +47,7 @@ export function AbaRadar({
         <Kpi rotulo="Fornecedores" valor={fornecedoresUsados.length} tom="neutro" icone="🏬" />
       </div>
 
+      {/* Alertas com frase pronta */}
       {alertas.length > 0 && (
         <Secao titulo="🚨 Alertas de preço">
           <div className="space-y-2">
@@ -60,6 +61,7 @@ export function AbaRadar({
         </Secao>
       )}
 
+      {/* Tendência por item */}
       <Secao titulo="📈 Tendência de preços">
         <Cartao className="!p-0">
           <ul className="divide-y divide-carvao-100 dark:divide-carvao-700/60">
@@ -90,6 +92,7 @@ export function AbaRadar({
         </Cartao>
       </Secao>
 
+      {/* Fornecedores mais usados */}
       {fornecedoresUsados.length > 0 && (
         <Secao titulo="🏬 Fornecedores mais usados">
           <Cartao className="flex flex-wrap gap-2">
