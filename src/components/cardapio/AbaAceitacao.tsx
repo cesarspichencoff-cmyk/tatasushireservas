@@ -45,6 +45,7 @@ export function AbaAceitacao({
     [aceitacao],
   );
 
+  // cruzamento aceitação × desperdício
   const cruzamento = useMemo(() => {
     const sobraPorPrato = new Map<string, number>();
     desperdicio.forEach((r) => {
@@ -80,6 +81,7 @@ export function AbaAceitacao({
   return (
     <div className="space-y-5">
       <PlaquinhaQR aberto={plaquinhaAberta} aoFechar={() => setPlaquinhaAberta(false)} url={urlAvaliar} />
+      {/* Pesquisa por QR — funcionários avaliam o prato do dia */}
       <Secao titulo="📱 Pesquisa por QR">
         <Cartao className="flex flex-col items-center gap-4 sm:flex-row">
           <QrCode url={urlAvaliar} size={132} className="shrink-0 ring-1 ring-carvao-200" />
@@ -103,6 +105,7 @@ export function AbaAceitacao({
         </Cartao>
       </Secao>
 
+      {/* Avaliação dos pratos da semana */}
       <Secao titulo="🗳️ Avaliar pratos da semana">
         {pratosSemana.length === 0 ? (
           <EstadoVazio icone="🍽️" titulo="Sem pratos para avaliar" texto="Monte o cardápio para registrar a aceitação de cada prato." />
@@ -144,6 +147,7 @@ export function AbaAceitacao({
         )}
       </Secao>
 
+      {/* Rankings */}
       {ranking.length > 0 && (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
           <Secao titulo="🏆 Mais aceitos">
@@ -179,6 +183,7 @@ export function AbaAceitacao({
         </div>
       )}
 
+      {/* Cruzamento aceitação × desperdício */}
       {cruzamento.length > 0 && (
         <Secao titulo="🔎 Baixa aceitação + sobra">
           <Cartao className="!p-0">
@@ -202,6 +207,7 @@ export function AbaAceitacao({
         </Secao>
       )}
 
+      {/* Eventos de demanda (M6) */}
       <Secao titulo="📅 Eventos e feriados (previsão)">
         {podeEditar && (
           <Cartao className="space-y-3">
