@@ -46,13 +46,13 @@ export function normalizar(s: string | null | undefined): string {
 const REGRAS_PROTEINA: [Proteina, RegExp][] = [
   [
     'frango',
-    /\bfrango|coxa|sobrecoxa|sobre coxa|galinha|asinha|\basa\b|chester|passarinho/,
+    /\bfrango|coxa|sobrecoxa|sobre coxa|galinha|asinha|\basa\b|chester|passarinho|filezinho|sassami|file de peito|xadrez/,
   ],
   [
     'suina',
     /suin|porco|bisteca|lombo|pernil|costelinha|calabresa|toscana|feijoada|panceta|barriga|joelho/,
   ],
-  ['peixe', /peixe|tilapia|merluza|sardinha|bacalhau|pescad|file de panga/],
+  ['peixe', /peixe|tilapia|merluza|sardinha|bacalhau|pescad|file de panga|moqueca|ca[cç][aã]o/],
   ['ovo', /\bovo\b|\bovos\b|omelete/],
   [
     'bovina',
@@ -90,12 +90,23 @@ export function validarSemana(dias: DiaCardapio[]): Aviso[] {
 
   const suina = cont['suina'] ?? 0;
   const frango = cont['frango'] ?? 0;
+  const bovina = cont['bovina'] ?? 0;
   const preenchidos = prots.filter(Boolean).length;
 
-  if (suina > 2) avisos.push({ nivel: 'erro', msg: `Carne suína ${suina}× — a regra é no máximo 2× na semana.` });
+  // Verifica dias sem prato principal
+  dias.forEach((d, i) => {
+    if (!d.principal)
+      avisos.push({ nivel: 'alerta', msg: `${DIAS_SEMANA[i]} sem prato principal definido.` });
+  });
+
+  if (suina > 2) avisos.push({ nivel: 'erro', msg: `Carne suína ${suina}× — máximo 2× na semana.` });
   if (frango > 4) avisos.push({ nivel: 'erro', msg: `Frango ${frango}× — a regra é de 3 a 4× na semana.` });
-  if (preenchidos === 7 && frango < 3)
-    avisos.push({ nivel: 'alerta', msg: `Frango só ${frango}× — o ideal é de 3 a 4× na semana.` });
+  if (bovina > 3) avisos.push({ nivel: 'erro', msg: `Carne bovina ${bovina}× — máximo 3× na semana.` });
+
+  if (preenchidos === 7) {
+    if (frango < 3) avisos.push({ nivel: 'alerta', msg: `Frango só ${frango}× — o ideal é de 3 a 4× na semana.` });
+    if (bovina < 2) avisos.push({ nivel: 'alerta', msg: `Bovina só ${bovina}× — o ideal é de 2 a 3× na semana.` });
+  }
 
   for (let i = 1; i < 7; i++) {
     if (prots[i] && prots[i] === prots[i - 1] && prots[i] !== 'outros') {
@@ -113,7 +124,7 @@ export function validarSemana(dias: DiaCardapio[]): Aviso[] {
     if (vistos.has(k)) {
       avisos.push({
         nivel: 'alerta',
-        msg: `“${d.principal}” repetido na semana (${DIAS_SEMANA[vistos.get(k)!]} e ${DIAS_SEMANA[i]}).`,
+        msg: `”${d.principal}” repetido na semana (${DIAS_SEMANA[vistos.get(k)!]} e ${DIAS_SEMANA[i]}).`,
       });
     } else vistos.set(k, i);
   });
@@ -186,7 +197,7 @@ function itemDoTexto(parte: string): { n: string; u: string; f: number } | null 
 
 /** Quantidade padrão por pessoa para item completado (heurística do histórico). */
 function qtdPadraoPorPessoa(categoria: string, unid: string, ehProteina: boolean): number {
-  if (ehProteina) return 0.16; // kg de proteína por pessoa
+  if (ehProteina) return 0.16; // kg de proteína por pessoa (genérico; proteínas usam QTDE_PROTEINA_HISTORICA)
   const porUnid: Record<string, number> = {
     kg: 0.05,
     un: 0.08,
@@ -203,12 +214,22 @@ function qtdPadraoPorPessoa(categoria: string, unid: string, ehProteina: boolean
   return q;
 }
 
+/** Quantidade histórica por pessoa por tipo de proteína (mediana do histórico real). */
+const QTDE_PROTEINA_HISTORICA: Partial<Record<Proteina, number>> = {
+  bovina: 0.25,   // ~16kg para 65 pessoas (mediana dos combos históricos)
+  frango: 0.31,   // ~20kg para 65 pessoas
+  suina: 0.26,    // ~17kg para 65 pessoas
+  peixe: 0.15,    // ~10kg para 65 pessoas
+  ovo: 0.08,      // ~5 dúzias para 65 pessoas (bd)
+};
+
 /** Proteína de reserva quando o prato descreve carne e nada veio do histórico. */
 const PROTEINA_PADRAO: Partial<Record<Proteina, { item: string; unid: string }>> = {
   bovina: { item: 'Acém', unid: 'kg' },
   frango: { item: 'File de frango sem osso', unid: 'kg' },
   suina: { item: 'Lombo suíno', unid: 'kg' },
   ovo: { item: 'Ovos', unid: 'bd' },
+  peixe: { item: 'File de Panga', unid: 'kg' },
 };
 
 /**
@@ -231,10 +252,9 @@ export function listaDoDia(dia: DiaCardapio, fatores?: Record<string, number>): 
     else acc.set(k, { item: nome, unid, qtd: q });
   };
 
-  // Receita do principal tem prioridade: garante ingredientes corretos e
-  // determinísticos. Sem receita no principal, segue o histórico (combo/mapa).
-  const principalComReceita = !!receitaDoPrato(dia.principal);
-  const combo = principalComReceita ? undefined : porChave.get(normalizar(chaveDoDia(dia)));
+  // Combo exato do histórico tem prioridade máxima — são os valores reais da operação.
+  // Receita (derivada do histórico) é o segundo recurso; mapa, o terceiro.
+  const combo = porChave.get(normalizar(chaveDoDia(dia)));
   if (combo) {
     combo.itens.forEach(({ i, q, u }) => adiciona(i, q, u));
   } else {
@@ -243,9 +263,9 @@ export function listaDoDia(dia: DiaCardapio, fatores?: Record<string, number>): 
       if (!opcao || typeof opcao !== 'string') continue;
       const receita = receitaDoPrato(opcao);
       if (receita) {
-        // receita é por pessoa; o acumulador trabalha na base (baseline) e
-        // multiplica por `fator` no fim → some porPessoa * baseline.
-        receita.ingredientes.forEach((ing) => adiciona(ing.item, ing.porPessoa * DADOS.baseline, ing.unid));
+        receita.ingredientes.forEach((ing) =>
+          adiciona(ing.item, ing.porPessoa * DADOS.baseline, ing.unid),
+        );
       } else {
         const itens = porTipoOpcao.get(`${tipo}|${normalizar(opcao)}`);
         itens?.forEach(({ i, q, u }) => adiciona(i, q, u));
@@ -269,7 +289,12 @@ export function listaDoDia(dia: DiaCardapio, fatores?: Record<string, number>): 
       });
       if (coberto) continue;
       const ehProt = it.u === 'kg' && proteinaDoPrato(it.n) !== 'outros';
-      adiciona(it.n, qtdPadraoPorPessoa(categoria, it.u, ehProt) * DADOS.baseline, it.u);
+      const protTipo = ehProt ? proteinaDoPrato(it.n) : null;
+      const qtdBase =
+        ehProt && protTipo !== null && protTipo !== 'outros'
+          ? (QTDE_PROTEINA_HISTORICA[protTipo as Proteina] ?? 0.25)
+          : qtdPadraoPorPessoa(categoria, it.u, false);
+      adiciona(it.n, qtdBase * DADOS.baseline, it.u);
     }
   };
   completa(dia.principal, 'principal');
@@ -285,7 +310,8 @@ export function listaDoDia(dia: DiaCardapio, fatores?: Record<string, number>): 
       const tem = Array.from(acc.values()).some((v) => proteinaDoPrato(v.item) === alvo);
       const padrao = PROTEINA_PADRAO[alvo];
       if (!tem && padrao) {
-        adiciona(padrao.item, qtdPadraoPorPessoa('principal', padrao.unid, padrao.unid === 'kg') * DADOS.baseline, padrao.unid);
+        const qtdProt = QTDE_PROTEINA_HISTORICA[alvo] ?? 0.25;
+        adiciona(padrao.item, qtdProt * DADOS.baseline, padrao.unid);
       }
     }
   }
@@ -312,8 +338,8 @@ export type FonteIngredientes = 'receita' | 'combo' | 'mapa' | 'estimado' | 'vaz
 
 export function fonteIngredientes(dia: DiaCardapio): FonteIngredientes {
   if (!dia.principal) return 'vazio';
-  if (receitaDoPrato(dia.principal)) return 'receita';
   if (porChave.get(normalizar(chaveDoDia(dia)))) return 'combo';
+  if (receitaDoPrato(dia.principal)) return 'receita';
   if (porTipoOpcao.get(`principal|${normalizar(dia.principal)}`)) return 'mapa';
   return 'estimado';
 }
@@ -421,6 +447,14 @@ function comboParaDia(c: DadosCombo, pessoas: number): DiaCardapio {
  * proteínas (suína ≤2, frango 3–4, sem repetir proteína em dias seguidos,
  * sem repetir prato). Busca aleatória com pontuação — melhor de N tentativas.
  */
+/** Custo total estimado da semana com os preços disponíveis. */
+function custoSemanaEstimado(dias: DiaCardapio[], precos: Record<string, number>): number {
+  return dias.reduce((acc, dia) => {
+    const c = custoDaLista(listaDoDia(dia), precos);
+    return acc + c.total;
+  }, 0);
+}
+
 export function sugerirSemana(pessoas: number[], precos: Record<string, number>): DiaCardapio[] | null {
   if (COMBOS_COMPLETOS.length < 7) return null;
   const temPrecos = Object.keys(precos).length > 3;
@@ -434,6 +468,7 @@ export function sugerirSemana(pessoas: number[], precos: Record<string, number>)
     const usados = new Set<string>();
     let suina = 0;
     let frango = 0;
+    let bovina = 0;
     let anterior: Proteina | null = null;
     let ok = true;
 
@@ -445,43 +480,111 @@ export function sugerirSemana(pessoas: number[], precos: Record<string, number>)
         if (prot === anterior && prot !== 'outros') return false;
         if (prot === 'suina' && suina >= 2) return false;
         if (prot === 'frango' && frango >= 4) return false;
-        // garante espaço para fechar frango 3×
+        if (prot === 'bovina' && bovina >= 3) return false;
         if (prot !== 'frango' && frango + faltam - 1 < 3) return false;
+        if (prot !== 'bovina' && bovina + faltam - 1 < 2) return false;
         return true;
       });
-      if (!cand) {
-        ok = false;
-        break;
-      }
+      if (!cand) { ok = false; break; }
       const prot = proteinaDoPrato(cand.p);
       if (prot === 'suina') suina++;
       if (prot === 'frango') frango++;
+      if (prot === 'bovina') bovina++;
       anterior = prot;
       usados.add(normalizar(cand.p ?? ''));
       dias.push(comboParaDia(cand, pessoas[d] ?? DADOS.baseline));
       pool.splice(pool.indexOf(cand), 1);
     }
-    if (!ok || frango < 3) continue;
+    if (!ok || frango < 3 || bovina < 2) continue;
 
     let nota = 0;
-    dias.forEach((dia, d) => {
-      const lista = listaDoDia(dia);
+    if (temPrecos) {
+      const custoTotal = custoSemanaEstimado(dias, precos);
+      // Bônus forte quando dentro do alvo R$3.000–4.000/semana
+      if (custoTotal >= 3000 && custoTotal <= 4000) nota += 50;
+      else nota -= Math.abs(custoTotal - 3500) / 100;
+    }
+    dias.forEach((dia) => {
       if (temPrecos) {
-        const c = custoDaLista(lista, precos);
-        // custo por pessoa: quanto menor, melhor (peso principal)
-        if (c.itensComPreco > 0) nota -= (c.total / Math.max(dia.pessoas, 1)) * 10;
+        const c = custoDaLista(listaDoDia(dia), precos);
+        if (c.itensComPreco > 0) nota -= (c.total / Math.max(dia.pessoas, 1)) * 5;
       }
-      // confiabilidade: combos mais usados no histórico pontuam mais
       const combo = porChave.get(normalizar(chaveDoDia(dia)));
       nota += Math.min(combo?.occ ?? 0, 5);
-      void d;
     });
-    if (nota > melhorNota) {
-      melhorNota = nota;
-      melhor = dias;
-    }
+    if (nota > melhorNota) { melhorNota = nota; melhor = dias; }
   }
   return melhor;
+}
+
+/**
+ * Cardápio Antigo: gera uma semana usando APENAS combos do histórico real
+ * com frequência comprovada (occ ≥ 2). Favorece os combos mais repetidos.
+ * Fallback para sugerirSemana() se não houver combos suficientes.
+ */
+export function sugerirSemanaHistorica(
+  pessoas: number[],
+  precos: Record<string, number>,
+): DiaCardapio[] | null {
+  const pool = COMBOS_COMPLETOS.filter((c) => c.occ >= 2);
+  if (pool.length < 7) return sugerirSemana(pessoas, precos);
+
+  const temPrecos = Object.keys(precos).length > 3;
+  let melhor: DiaCardapio[] | null = null;
+  let melhorNota = -Infinity;
+
+  for (let tent = 0; tent < 220; tent++) {
+    const tentPool = [...pool].sort(() => Math.random() - 0.5);
+    const dias: DiaCardapio[] = [];
+    const usados = new Set<string>();
+    let suina = 0;
+    let frango = 0;
+    let bovina = 0;
+    let anterior: Proteina | null = null;
+    let ok = true;
+
+    for (let d = 0; d < 7; d++) {
+      const faltam = 7 - d;
+      const cand = tentPool.find((c) => {
+        const prot = proteinaDoPrato(c.p);
+        if (usados.has(normalizar(c.p ?? ''))) return false;
+        if (prot === anterior && prot !== 'outros') return false;
+        if (prot === 'suina' && suina >= 2) return false;
+        if (prot === 'frango' && frango >= 4) return false;
+        if (prot === 'bovina' && bovina >= 3) return false;
+        if (prot !== 'frango' && frango + faltam - 1 < 3) return false;
+        if (prot !== 'bovina' && bovina + faltam - 1 < 2) return false;
+        return true;
+      });
+      if (!cand) { ok = false; break; }
+      const prot = proteinaDoPrato(cand.p);
+      if (prot === 'suina') suina++;
+      if (prot === 'frango') frango++;
+      if (prot === 'bovina') bovina++;
+      anterior = prot;
+      usados.add(normalizar(cand.p ?? ''));
+      dias.push(comboParaDia(cand, pessoas[d] ?? DADOS.baseline));
+      tentPool.splice(tentPool.indexOf(cand), 1);
+    }
+    if (!ok || frango < 3 || bovina < 2) continue;
+
+    let nota = 0;
+    if (temPrecos) {
+      const custoTotal = custoSemanaEstimado(dias, precos);
+      if (custoTotal >= 3000 && custoTotal <= 4000) nota += 50;
+      else nota -= Math.abs(custoTotal - 3500) / 100;
+    }
+    dias.forEach((dia) => {
+      if (temPrecos) {
+        const c = custoDaLista(listaDoDia(dia), precos);
+        if (c.itensComPreco > 0) nota -= (c.total / Math.max(dia.pessoas, 1)) * 5;
+      }
+      const combo = porChave.get(normalizar(chaveDoDia(dia)));
+      nota += Math.min((combo?.occ ?? 0) * 2, 20);
+    });
+    if (nota > melhorNota) { melhorNota = nota; melhor = dias; }
+  }
+  return melhor ?? sugerirSemana(pessoas, precos);
 }
 
 /* --------------- sugestão criativa (fora do histórico) ---------------- */
@@ -550,6 +653,7 @@ export function sugerirSemanaCriativa(
     const usados = new Set<string>();
     let suina = 0;
     let frango = 0;
+    let bovina = 0;
     let anterior: Proteina | null = null;
     let ok = true;
 
@@ -561,16 +665,16 @@ export function sugerirSemanaCriativa(
         if (prot === anterior && prot !== 'outros') return false;
         if (prot === 'suina' && suina >= 2) return false;
         if (prot === 'frango' && frango >= 4) return false;
+        if (prot === 'bovina' && bovina >= 3) return false;
         if (prot !== 'frango' && frango + faltam - 1 < 3) return false;
+        if (prot !== 'bovina' && bovina + faltam - 1 < 2) return false;
         return true;
       });
-      if (!cand) {
-        ok = false;
-        break;
-      }
+      if (!cand) { ok = false; break; }
       const prot = proteinaDoPrato(cand);
       if (prot === 'suina') suina++;
       if (prot === 'frango') frango++;
+      if (prot === 'bovina') bovina++;
       anterior = prot;
       usados.add(normalizar(cand));
       dias.push({
@@ -583,20 +687,25 @@ export function sugerirSemanaCriativa(
       });
       poolP.splice(poolP.indexOf(cand), 1);
     }
-    if (!ok || frango < 3) continue;
+    if (!ok || frango < 3 || bovina < 2) continue;
 
     let nota = 0;
     let novas = 0;
+    if (temPrecos) {
+      const custoTotal = custoSemanaEstimado(dias, precos);
+      if (custoTotal >= 3000 && custoTotal <= 4000) nota += 50;
+      else nota -= Math.abs(custoTotal - 3500) / 100;
+    }
     dias.forEach((dia) => {
       if (temPrecos) {
         const c = custoDaLista(listaDoDia(dia), precos);
-        if (c.itensComPreco > 0) nota -= (c.total / Math.max(dia.pessoas, 1)) * 10;
+        if (c.itensComPreco > 0) nota -= (c.total / Math.max(dia.pessoas, 1)) * 5;
         const cp = custoPrincipal.get(normalizar(dia.principal));
-        if (cp !== undefined) nota -= cp * 5; // peso extra na proteína barata
+        if (cp !== undefined) nota -= cp * 5;
       }
       if (!temHistoricoExato(dia)) novas++;
     });
-    nota += novas * 2; // criativo de verdade: combinações inéditas pontuam
+    nota += novas * 2;
 
     if (nota > melhorNota) {
       melhorNota = nota;
