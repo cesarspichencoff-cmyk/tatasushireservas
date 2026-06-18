@@ -83,7 +83,7 @@ export const ROTULO_PROTEINA: Record<Proteina, string> = {
 
 /* --------------------------- validação ------------------------------- */
 
-export function validarSemana(dias: DiaCardapio[]): Aviso[] {
+export function validarSemana(dias: DiaCardapio[], precos?: Record<string, number>): Aviso[] {
   const avisos: Aviso[] = [];
   const prots = dias.map((d) => (d.principal ? proteinaDoPrato(d.principal) : null));
   const cont: Record<string, number> = {};
@@ -130,6 +130,29 @@ export function validarSemana(dias: DiaCardapio[]): Aviso[] {
     } else vistos.set(k, i);
   });
 
+  // Validação de custo por pessoa: valores acima do padrão histórico indicam
+  // erro de unidade ou ingrediente duplicado na lista de compras.
+  if (precos && Object.keys(precos).length > 3) {
+    dias.forEach((d, i) => {
+      if (!d.principal) return;
+      const lista = listaDoDia(d);
+      const custo = custoDaLista(lista, precos);
+      if (custo.itensComPreco < 3) return; // poucos preços = não há base para validar
+      const porPessoa = custo.total / (d.pessoas > 0 ? d.pessoas : DADOS.baseline);
+      if (porPessoa > 25) {
+        avisos.push({
+          nivel: 'erro',
+          msg: `${DIAS_SEMANA[i]}: custo estimado R$${porPessoa.toFixed(0)}/pessoa — verifique unidades ou ingredientes duplicados.`,
+        });
+      } else if (porPessoa > 15) {
+        avisos.push({
+          nivel: 'alerta',
+          msg: `${DIAS_SEMANA[i]}: custo estimado R$${porPessoa.toFixed(0)}/pessoa — acima do padrão histórico (≤ R$12).`,
+        });
+      }
+    });
+  }
+
   if (avisos.length === 0 && preenchidos === 7)
     avisos.push({ nivel: 'ok', msg: 'Semana fechada: rotação de proteínas dentro das regras.' });
   return avisos;
@@ -137,10 +160,23 @@ export function validarSemana(dias: DiaCardapio[]): Aviso[] {
 
 /* ----------------------- lista de compras ---------------------------- */
 
-const UNIDADES_DECIMAIS = new Set(['kg', 'lt', 'g', 'ml']);
-
+/**
+ * Arredonda para tamanhos práticos de compra (pensa como a cozinha, não
+ * como uma calculadora):
+ *  kg   ≤ 3 kg  → múltiplo de 0,5 kg  (ex: 1,7 → 2,0)
+ *  kg   3–20 kg → kg inteiro           (ex: 7,3 → 8)
+ *  kg   > 20 kg → múltiplo de 2 kg     (ex: 21,3 → 22)
+ *  lt / g / ml  → 1 decimal (sem alteração)
+ *  unidades discretas (un, pct, lata…) → sempre arredonda para cima
+ */
 export function arredondar(qtd: number, unid: string): number {
-  if (UNIDADES_DECIMAIS.has(unid)) return Math.round(qtd * 10) / 10;
+  if (unid === 'g' || unid === 'ml') return Math.round(qtd * 10) / 10;
+  if (unid === 'lt') return Math.round(qtd * 10) / 10;
+  if (unid === 'kg') {
+    if (qtd <= 3) return Math.ceil(qtd * 2) / 2;
+    if (qtd <= 20) return Math.ceil(qtd);
+    return Math.ceil(qtd / 2) * 2;
+  }
   return Math.ceil(qtd - 1e-9);
 }
 
@@ -244,7 +280,11 @@ export function listaDoDia(dia: DiaCardapio, fatores?: Record<string, number>, o
 
   const adiciona = (nome: string, q: number, u: string | null, fonte: FonteItem) => {
     const k = normalizar(nome);
-    if (!k || (!opts?.mostrarBasicos && excluidos.has(k))) return;
+    if (!k) return;
+    // Pantry/insumos contínuos: só entram na lista quando vêm do histórico
+    // operacional (combo exato ou mapa). Receita ou fallback os omite.
+    const fonteOperacional = fonte === 'operacional_combo' || fonte === 'operacional_mapa';
+    if (!opts?.mostrarBasicos && excluidos.has(k) && !fonteOperacional) return;
     const unid = u || unidadePadrao.get(k) || 'un';
     const atual = acc.get(k);
     if (atual) {
@@ -286,9 +326,13 @@ export function listaDoDia(dia: DiaCardapio, fatores?: Record<string, number>, o
         receita.ingredientes.forEach((ing) => {
           const k = normalizar(ing.item);
           // só adiciona se ainda não está coberto pelo histórico operacional
-          if (!acc.has(k)) {
-            adiciona(ing.item, ing.porPessoa * DADOS.baseline, ing.unid, 'receita');
-          }
+          if (acc.has(k)) return;
+          // Quantidade ínfima por pessoa = tempero/condimento = pantry item
+          // (< 8g/pessoa ou < 8ml/pessoa). A cozinha gerencia esses itens em
+          // estoque contínuo sem precisar vê-los na lista semanal.
+          if (['kg', 'g'].includes(ing.unid) && ing.porPessoa < 0.008) return;
+          if (['lt', 'ml'].includes(ing.unid) && ing.porPessoa < 0.008) return;
+          adiciona(ing.item, ing.porPessoa * DADOS.baseline, ing.unid, 'receita');
         });
         // se não havia nenhum mapa E não havia combo, a receita é a fonte primária
         if (!algumMapa) {

@@ -92,7 +92,7 @@ export function AbaCardapio({
   const { estimativas, gerarEstimativas } = useEstimativas();
   const { aceitacao } = useAceitacao();
   const [opDia, setOpDia] = useState(false);
-  const avisos = validarSemana(estado.dias);
+  const avisos = validarSemana(estado.dias, precos);
   const temPrecos = Object.keys(precos).length > 0;
 
   // Frequência de uso dos pratos nas últimas 4 semanas — alimenta a IA para
