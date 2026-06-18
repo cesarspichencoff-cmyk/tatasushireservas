@@ -232,9 +232,42 @@ function itemDoTexto(parte: string): { n: string; u: string; f: number } | null 
   return melhor;
 }
 
-/** Quantidade padrão por pessoa para item completado (heurística do histórico). */
-function qtdPadraoPorPessoa(categoria: string, unid: string, ehProteina: boolean): number {
-  if (ehProteina) return 0.16; // kg de proteína por pessoa
+/**
+ * Mediana histórica de proteína por pessoa, derivada dos 115 mapas de
+ * principal com quantidade real registrada. Ex: frango ≈ 0.30 kg/pessoa
+ * (20 kg para 65 pessoas), bovina ≈ 0.29 kg/pessoa.
+ * É o principal mecanismo que evita que receitas subestimem proteínas.
+ */
+const qtdHistoricaProteinaPorPessoa = new Map<Proteina, number>();
+{
+  const acc: Record<string, number[]> = {};
+  DADOS.mapas
+    .filter((m) => m.tipo === 'principal')
+    .forEach((m) => {
+      m.itens.forEach(({ i, q, u }: { i: string; q: number; u: string | null }) => {
+        if (u === 'kg' && q > 0) {
+          const prot = proteinaDoPrato(i);
+          if (prot !== 'outros') {
+            if (!acc[prot]) acc[prot] = [];
+            acc[prot].push(q / DADOS.baseline);
+          }
+        }
+      });
+    });
+  for (const [prot, qtds] of Object.entries(acc)) {
+    if (qtds.length > 2) {
+      qtds.sort((a, b) => a - b);
+      qtdHistoricaProteinaPorPessoa.set(prot as Proteina, qtds[Math.floor(qtds.length / 2)]);
+    }
+  }
+}
+
+/** Quantidade padrão por pessoa — usa mediana histórica para proteínas. */
+function qtdPadraoPorPessoa(categoria: string, unid: string, prot: Proteina | null): number {
+  if (prot && prot !== 'outros' && unid === 'kg') {
+    // Mediana histórica (dos mapas reais) prevalece sobre qualquer heurística
+    return qtdHistoricaProteinaPorPessoa.get(prot) ?? 0.30;
+  }
   const porUnid: Record<string, number> = {
     kg: 0.05,
     un: 0.08,
@@ -332,7 +365,17 @@ export function listaDoDia(dia: DiaCardapio, fatores?: Record<string, number>, o
           // estoque contínuo sem precisar vê-los na lista semanal.
           if (['kg', 'g'].includes(ing.unid) && ing.porPessoa < 0.008) return;
           if (['lt', 'ml'].includes(ing.unid) && ing.porPessoa < 0.008) return;
-          adiciona(ing.item, ing.porPessoa * DADOS.baseline, ing.unid, 'receita');
+          // Proteínas: receita não pode subestimar abaixo de 80% da mediana
+          // histórica real. Ex: receita diz 0,16 kg → histórico diz 0,30 kg → usa 0,30.
+          let qtdPP = ing.porPessoa;
+          if (ing.unid === 'kg') {
+            const p = proteinaDoPrato(ing.item);
+            if (p !== 'outros') {
+              const mediana = qtdHistoricaProteinaPorPessoa.get(p) ?? 0.30;
+              if (qtdPP < mediana * 0.8) qtdPP = mediana;
+            }
+          }
+          adiciona(ing.item, qtdPP * DADOS.baseline, ing.unid, 'receita');
         });
         // se não havia nenhum mapa E não havia combo, a receita é a fonte primária
         if (!algumMapa) {
@@ -356,8 +399,8 @@ export function listaDoDia(dia: DiaCardapio, fatores?: Record<string, number>, o
         return toks.every((t) => vt.has(t));
       });
       if (coberto) continue;
-      const ehProt = it.u === 'kg' && proteinaDoPrato(it.n) !== 'outros';
-      adiciona(it.n, qtdPadraoPorPessoa(categoria, it.u, ehProt) * DADOS.baseline, it.u, 'fallback');
+      const prot = proteinaDoPrato(it.n);
+      adiciona(it.n, qtdPadraoPorPessoa(categoria, it.u, prot !== 'outros' ? prot : null) * DADOS.baseline, it.u, 'fallback');
     }
   };
   completa(dia.principal, 'principal');
@@ -373,7 +416,7 @@ export function listaDoDia(dia: DiaCardapio, fatores?: Record<string, number>, o
       const tem = Array.from(acc.values()).some((v) => proteinaDoPrato(v.item) === alvo);
       const padrao = PROTEINA_PADRAO[alvo];
       if (!tem && padrao) {
-        adiciona(padrao.item, qtdPadraoPorPessoa('principal', padrao.unid, padrao.unid === 'kg') * DADOS.baseline, padrao.unid, 'fallback');
+        adiciona(padrao.item, qtdPadraoPorPessoa('principal', padrao.unid, alvo) * DADOS.baseline, padrao.unid, 'fallback');
       }
     }
   }
