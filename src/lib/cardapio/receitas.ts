@@ -27,6 +27,7 @@ export interface Receita {
   categoria: CategoriaReceita;
   proteina?: Proteina;
   ingredientes: IngredienteReceita[];
+  rendimento?: number; // número de pessoas para o qual a receita foi calibrada
   obs?: string;
 }
 
@@ -542,10 +543,23 @@ const LISTA: Receita[] = [
 ];
 
 /* ---------------------------------------------------------------------
+   Merge com receitas operacionais (histórico real do Tatá House).
+   Receitas manuais (LISTA) têm prioridade — auto-geradas preenchem lacunas.
+   --------------------------------------------------------------------- */
+import { RECEITAS_OPERACIONAIS } from './receitas-operacionais';
+
+const listaManualKeys = new Set(LISTA.map((r) => norm(r.nome)));
+const operacionaisExtras = RECEITAS_OPERACIONAIS.filter(
+  (r) => !listaManualKeys.has(norm(r.nome)),
+);
+
+const LISTA_COMPLETA: Receita[] = [...LISTA, ...operacionaisExtras];
+
+/* ---------------------------------------------------------------------
    Índices e helpers de acesso
    --------------------------------------------------------------------- */
 export const RECEITAS: Record<string, Receita> = Object.fromEntries(
-  LISTA.map((r) => [norm(r.nome), r]),
+  LISTA_COMPLETA.map((r) => [norm(r.nome), r]),
 );
 
 /** Receita do prato (por nome), ou null. */
@@ -566,8 +580,8 @@ export function itensDaReceita(prato: string, pessoas: number): ItemSugerido[] |
 
 /** Nomes de pratos com receita, agrupados por categoria (para os seletores). */
 export const RECEITAS_POR_CATEGORIA: Record<CategoriaReceita, string[]> = {
-  principal: LISTA.filter((r) => r.categoria === 'principal').map((r) => r.nome),
-  guarnicao: LISTA.filter((r) => r.categoria === 'guarnicao').map((r) => r.nome),
-  salada: LISTA.filter((r) => r.categoria === 'salada').map((r) => r.nome),
-  sobremesa: LISTA.filter((r) => r.categoria === 'sobremesa').map((r) => r.nome),
+  principal: LISTA_COMPLETA.filter((r) => r.categoria === 'principal').map((r) => r.nome),
+  guarnicao: LISTA_COMPLETA.filter((r) => r.categoria === 'guarnicao').map((r) => r.nome),
+  salada: LISTA_COMPLETA.filter((r) => r.categoria === 'salada').map((r) => r.nome),
+  sobremesa: LISTA_COMPLETA.filter((r) => r.categoria === 'sobremesa').map((r) => r.nome),
 };
