@@ -2269,8 +2269,8 @@
       ]
     },
     {
-      "chave": "Feijoada Completa com Costelinha|Arroz|Farofa|Couve refogada|Abacaxi",
-      "p": "Feijoada Completa com Costelinha",
+      "chave": "Feijoada com Costelinha|Arroz|Farofa|Couve refogada|Abacaxi",
+      "p": "Feijoada com Costelinha",
       "gf": "Arroz",
       "g": "Farofa",
       "s": "Couve refogada",
@@ -2310,8 +2310,8 @@
       ]
     },
     {
-      "chave": "Carne de panela Com Batata|Arroz e Feijão|Farofa Simples|Repolho + Cenoura Ralada|Gelatina",
-      "p": "Carne de panela Com Batata",
+      "chave": "Carne de Panela com Batata|Arroz e Feijão|Farofa Simples|Repolho + Cenoura Ralada|Gelatina",
+      "p": "Carne de Panela com Batata",
       "gf": "Arroz e Feijão",
       "g": "Farofa Simples",
       "s": "Repolho + Cenoura Ralada",
@@ -2883,8 +2883,8 @@
       ]
     },
     {
-      "chave": "Carne de panela Com Batata|Arroz e Feijão|Farofa Completa|Repolho + Cenoura|Melancia",
-      "p": "Carne de panela Com Batata",
+      "chave": "Carne de Panela com Batata|Arroz e Feijão|Farofa Completa|Repolho + Cenoura|Melancia",
+      "p": "Carne de Panela com Batata",
       "gf": "Arroz e Feijão",
       "g": "Farofa Completa",
       "s": "Repolho + Cenoura",
@@ -3912,8 +3912,8 @@
       ]
     },
     {
-      "chave": "Frango Xadrez com Brocolis e cenoura|Arroz e Feijão|Macarrão alho e oleo|Alface Americano com Tomate|Melão",
-      "p": "Frango Xadrez com Brocolis e cenoura",
+      "chave": "Frango Xadrez com Brocolis e Cenoura|Arroz e Feijão|Macarrão alho e oleo|Alface Americano com Tomate|Melão",
+      "p": "Frango Xadrez com Brocolis e Cenoura",
       "gf": "Arroz e Feijão",
       "g": "Macarrão alho e oleo",
       "s": "Alface Americano com Tomate",
@@ -3989,8 +3989,8 @@
       ]
     },
     {
-      "chave": "Carne de panela Com Batata|Arroz e Feijão|Arroz á Grega|Acelga com Tomate|Curau",
-      "p": "Carne de panela Com Batata",
+      "chave": "Carne de Panela com Batata|Arroz e Feijão|Arroz á Grega|Acelga com Tomate|Curau",
+      "p": "Carne de Panela com Batata",
       "gf": "Arroz e Feijão",
       "g": "Arroz á Grega",
       "s": "Acelga com Tomate",
@@ -4117,8 +4117,8 @@
       ]
     },
     {
-      "chave": "ssê de frango|Arroz e Feijão|Batata Rustica|Repolho com maça|Mexerica",
-      "p": "ssê de frango",
+      "chave": "Fricassê de Frango|Arroz e Feijão|Batata Rustica|Repolho com maça|Mexerica",
+      "p": "Fricassê de Frango",
       "gf": "Arroz e Feijão",
       "g": "Batata Rustica",
       "s": "Repolho com maça",
@@ -5180,8 +5180,8 @@
       ]
     },
     {
-      "chave": "Frango Xadrez com Brocolis e cenoura|Arroz e Feijão|Macarrão|Beterraba Cozida|Mousse Morango",
-      "p": "Frango Xadrez com Brocolis e cenoura",
+      "chave": "Frango Xadrez com Brocolis e Cenoura|Arroz e Feijão|Macarrão|Beterraba Cozida|Mousse Morango",
+      "p": "Frango Xadrez com Brocolis e Cenoura",
       "gf": "Arroz e Feijão",
       "g": "Macarrão",
       "s": "Beterraba Cozida",
@@ -5932,8 +5932,8 @@
       ]
     },
     {
-      "chave": "Bisteca com Barbecue|Arroz e Feijão|Arroz com Milho|Repolho Roxo com cenoura|Abacaxi",
-      "p": "Bisteca com Barbecue",
+      "chave": "Bisteca com Molho Barbecue|Arroz e Feijão|Arroz com Milho|Repolho Roxo com cenoura|Abacaxi",
+      "p": "Bisteca com Molho Barbecue",
       "gf": "Arroz e Feijão",
       "g": "Arroz com Milho",
       "s": "Repolho Roxo com cenoura",
@@ -6331,8 +6331,8 @@
       ]
     },
     {
-      "chave": "Lombo suíno|Arroz e Feijão|Farofa Temperada|Salada de Chuchu|Mousse de Limão",
-      "p": "Lombo suíno",
+      "chave": "Lombo Suíno|Arroz e Feijão|Farofa Temperada|Salada de Chuchu|Mousse de Limão",
+      "p": "Lombo Suíno",
       "gf": "Arroz e Feijão",
       "g": "Farofa Temperada",
       "s": "Salada de Chuchu",
@@ -7176,8 +7176,8 @@
       ]
     },
     {
-      "chave": "ssê de frango|Arroz e Feijão|Batata Rustica|Couve com Tomate|Creme de Abacaxi",
-      "p": "ssê de frango",
+      "chave": "Fricassê de Frango|Arroz e Feijão|Batata Rustica|Couve com Tomate|Creme de Abacaxi",
+      "p": "Fricassê de Frango",
       "gf": "Arroz e Feijão",
       "g": "Batata Rustica",
       "s": "Couve com Tomate",
@@ -7217,8 +7217,8 @@
       ]
     },
     {
-      "chave": "Lombo Suino com Abacaxi|Arroz e Feijão|Farofa de Cenoura|Legumes ( Cenoura, batata e chuchu)|Napolitano ( Pudim morango e chocolate)",
-      "p": "Lombo Suino com Abacaxi",
+      "chave": "Lombo Suíno com Abacaxi|Arroz e Feijão|Farofa de Cenoura|Legumes ( Cenoura, batata e chuchu)|Napolitano ( Pudim morango e chocolate)",
+      "p": "Lombo Suíno com Abacaxi",
       "gf": "Arroz e Feijão",
       "g": "Farofa de Cenoura",
       "s": "Legumes ( Cenoura, batata e chuchu)",
@@ -7975,8 +7975,8 @@
       ]
     },
     {
-      "chave": "Frango Xadrez com Brocolis e cenoura|Arroz e Feijão|Macarrão alho e oleo|Beterraba Ralada|Mousse de Morango",
-      "p": "Frango Xadrez com Brocolis e cenoura",
+      "chave": "Frango Xadrez com Brocolis e Cenoura|Arroz e Feijão|Macarrão alho e oleo|Beterraba Ralada|Mousse de Morango",
+      "p": "Frango Xadrez com Brocolis e Cenoura",
       "gf": "Arroz e Feijão",
       "g": "Macarrão alho e oleo",
       "s": "Beterraba Ralada",
@@ -8698,8 +8698,8 @@
       ]
     },
     {
-      "chave": "Frango Xadrez com Brocolis e cenoura||Macarrão|Pepino com Tomate|Mousse de chocolate",
-      "p": "Frango Xadrez com Brocolis e cenoura",
+      "chave": "Frango Xadrez com Brocolis e Cenoura||Macarrão|Pepino com Tomate|Mousse de chocolate",
+      "p": "Frango Xadrez com Brocolis e Cenoura",
       "gf": null,
       "g": "Macarrão",
       "s": "Pepino com Tomate",
@@ -8883,8 +8883,8 @@
       ]
     },
     {
-      "chave": "ssê de frango||Batata Rustica com Alecrim|Espinafre com Cenoura Ralada|Mousse de Limão",
-      "p": "ssê de frango",
+      "chave": "Fricassê de Frango||Batata Rustica com Alecrim|Espinafre com Cenoura Ralada|Mousse de Limão",
+      "p": "Fricassê de Frango",
       "gf": null,
       "g": "Batata Rustica com Alecrim",
       "s": "Espinafre com Cenoura Ralada",
@@ -9583,8 +9583,8 @@
       ]
     },
     {
-      "chave": "Feijoada com Costelinha de Porco||Farofa Temperada|Couve com Tomate|Abacaxi",
-      "p": "Feijoada com Costelinha de Porco",
+      "chave": "Feijoada com Costelinha||Farofa Temperada|Couve com Tomate|Abacaxi",
+      "p": "Feijoada com Costelinha",
       "gf": null,
       "g": "Farofa Temperada",
       "s": "Couve com Tomate",
@@ -9895,8 +9895,8 @@
       ]
     },
     {
-      "chave": ": Frango Xadrez com Brocolis e Cenoura||Macarrão|Legumes (Chuchu, Cenoura e Batata)|Mousse de chocolate",
-      "p": ": Frango Xadrez com Brocolis e Cenoura",
+      "chave": "Frango Xadrez com Brocolis e Cenoura||Macarrão|Legumes (Chuchu, Cenoura e Batata)|Mousse de chocolate",
+      "p": "Frango Xadrez com Brocolis e Cenoura",
       "gf": null,
       "g": "Macarrão",
       "s": "Legumes (Chuchu, Cenoura e Batata)",
@@ -10315,8 +10315,8 @@
       ]
     },
     {
-      "chave": "ssê de frango||Batata Palha|Alface lisa com Tomate e cebola a parte|Gelatina",
-      "p": "ssê de frango",
+      "chave": "Fricassê de Frango||Batata Palha|Alface lisa com Tomate e cebola a parte|Gelatina",
+      "p": "Fricassê de Frango",
       "gf": null,
       "g": "Batata Palha",
       "s": "Alface lisa com Tomate e cebola a parte",
@@ -10351,8 +10351,8 @@
       ]
     },
     {
-      "chave": "Feijoada com costelinha suína||Farofa Temperada|Couve com Tomate|Abacaxi",
-      "p": "Feijoada com costelinha suína",
+      "chave": "Feijoada com Costelinha||Farofa Temperada|Couve com Tomate|Abacaxi",
+      "p": "Feijoada com Costelinha",
       "gf": null,
       "g": "Farofa Temperada",
       "s": "Couve com Tomate",
@@ -11288,8 +11288,8 @@
       ]
     },
     {
-      "chave": "ssê de frango||Mandioca Frita|Brócolis com couve-flor|Melancia",
-      "p": "ssê de frango",
+      "chave": "Fricassê de Frango||Mandioca Frita|Brócolis com couve-flor|Melancia",
+      "p": "Fricassê de Frango",
       "gf": null,
       "g": "Mandioca Frita",
       "s": "Brócolis com couve-flor",
@@ -12406,8 +12406,8 @@
       ]
     },
     {
-      "chave": "Lombo suino ao molho Barbecue||Farofa de Cenoura|Vinagrete( Tomate/ cebola e pimentão verde)|Mousse de chocolate",
-      "p": "Lombo suino ao molho Barbecue",
+      "chave": "Lombo Suíno ao Molho Barbecue||Farofa de Cenoura|Vinagrete( Tomate/ cebola e pimentão verde)|Mousse de chocolate",
+      "p": "Lombo Suíno ao Molho Barbecue",
       "gf": null,
       "g": "Farofa de Cenoura",
       "s": "Vinagrete( Tomate/ cebola e pimentão verde)",
@@ -12560,8 +12560,8 @@
       ]
     },
     {
-      "chave": "Lombo Suino com Abacaxi||Arroz á Grega- Milho|Repolho Roxo com cenoura|Arroz Doce",
-      "p": "Lombo Suino com Abacaxi",
+      "chave": "Lombo Suíno com Abacaxi||Arroz á Grega- Milho|Repolho Roxo com cenoura|Arroz Doce",
+      "p": "Lombo Suíno com Abacaxi",
       "gf": null,
       "g": "Arroz á Grega- Milho",
       "s": "Repolho Roxo com cenoura",
@@ -12637,8 +12637,8 @@
       ]
     },
     {
-      "chave": "Frango a xadrez com Brocolis e Cenoura||Macarrão|Pepino com Tomate|Melancia",
-      "p": "Frango a xadrez com Brocolis e Cenoura",
+      "chave": "Frango Xadrez com Brocolis e Cenoura||Macarrão|Pepino com Tomate|Melancia",
+      "p": "Frango Xadrez com Brocolis e Cenoura",
       "gf": null,
       "g": "Macarrão",
       "s": "Pepino com Tomate",
@@ -12984,8 +12984,8 @@
       ]
     },
     {
-      "chave": "ssê de frango||Batata Palha|Alface Lisa com Tomate|Arroz Doce",
-      "p": "ssê de frango",
+      "chave": "Fricassê de Frango||Batata Palha|Alface Lisa com Tomate|Arroz Doce",
+      "p": "Fricassê de Frango",
       "gf": null,
       "g": "Batata Palha",
       "s": "Alface Lisa com Tomate",
@@ -13235,8 +13235,8 @@
       ]
     },
     {
-      "chave": "Lombo suino Assado com abacaxi||Arroz á grega ( Milho e Salsa)|Pepino com Tomate|Creme de Abacate",
-      "p": "Lombo suino Assado com abacaxi",
+      "chave": "Lombo Suíno com Abacaxi||Arroz á grega ( Milho e Salsa)|Pepino com Tomate|Creme de Abacate",
+      "p": "Lombo Suíno com Abacaxi",
       "gf": null,
       "g": "Arroz á grega ( Milho e Salsa)",
       "s": "Pepino com Tomate",
@@ -14020,8 +14020,8 @@
       ]
     },
     {
-      "chave": "Frango Xadrez com Brocolis e cenoura||Macarrão Bolonhesa|Pepino com Tomate|Pudim de coco",
-      "p": "Frango Xadrez com Brocolis e cenoura",
+      "chave": "Frango Xadrez com Brocolis e Cenoura||Macarrão Bolonhesa|Pepino com Tomate|Pudim de coco",
+      "p": "Frango Xadrez com Brocolis e Cenoura",
       "gf": null,
       "g": "Macarrão Bolonhesa",
       "s": "Pepino com Tomate",
@@ -14317,8 +14317,8 @@
       ]
     },
     {
-      "chave": "Lombo Suino com Abacaxi||Arroz a Grega - Milho e salsa|Repolho roxo com Cenoura ralada|Mousse de Maracujá",
-      "p": "Lombo Suino com Abacaxi",
+      "chave": "Lombo Suíno com Abacaxi||Arroz a Grega - Milho e salsa|Repolho roxo com Cenoura ralada|Mousse de Maracujá",
+      "p": "Lombo Suíno com Abacaxi",
       "gf": null,
       "g": "Arroz a Grega - Milho e salsa",
       "s": "Repolho roxo com Cenoura ralada",
@@ -15054,8 +15054,8 @@
       ]
     },
     {
-      "chave": "Lombo suíno|Arroz e Feijão|Cenoura com Beterraba Cozida||Melancia",
-      "p": "Lombo suíno",
+      "chave": "Lombo Suíno|Arroz e Feijão|Cenoura com Beterraba Cozida||Melancia",
+      "p": "Lombo Suíno",
       "gf": "Arroz branco; feijão",
       "g": "Cenoura com Beterraba Cozida",
       "s": null,
@@ -15177,8 +15177,8 @@
       ]
     },
     {
-      "chave": "Carne de panela Com Batata|Arroz e Feijão||Alface e cenoura ralada|Gelatina de Morango",
-      "p": "Carne de panela Com Batata",
+      "chave": "Carne de Panela com Batata|Arroz e Feijão||Alface e cenoura ralada|Gelatina de Morango",
+      "p": "Carne de Panela com Batata",
       "gf": "Arroz, Feijão",
       "g": null,
       "s": "Alface e cenoura ralada",
@@ -15479,8 +15479,8 @@
       ]
     },
     {
-      "chave": "Frango Xadrez com Brocolis e cenoura|Arroz e Feijão|polenta|Beterraba e Cenoura Cozida|Cocada Cremosa",
-      "p": "Frango Xadrez com Brocolis e cenoura",
+      "chave": "Frango Xadrez com Brocolis e Cenoura|Arroz e Feijão|polenta|Beterraba e Cenoura Cozida|Cocada Cremosa",
+      "p": "Frango Xadrez com Brocolis e Cenoura",
       "gf": "Arroz branco; feijão",
       "g": "polenta",
       "s": "Beterraba e Cenoura Cozida",
@@ -16167,8 +16167,8 @@
       ]
     },
     {
-      "chave": "Lombo Suino com Abacaxi|Arroz e Feijão|Farofa Completa|Couve com Tomate|Melão",
-      "p": "Lombo Suino com Abacaxi",
+      "chave": "Lombo Suíno com Abacaxi|Arroz e Feijão|Farofa Completa|Couve com Tomate|Melão",
+      "p": "Lombo Suíno com Abacaxi",
       "gf": "Arroz branco; feijão",
       "g": "Farofa Completa",
       "s": "Couve com Tomate",
