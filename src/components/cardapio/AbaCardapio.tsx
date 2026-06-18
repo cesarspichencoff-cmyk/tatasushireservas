@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { Botao, Cartao, Pilula, Stepper } from '@/components/ui';
 import { Icone } from '@/components/Icones';
 import {
+  DADOS,
   DIAS_SEMANA,
   PESSOAS_PADRAO,
   proteinaDoPrato,
@@ -33,10 +34,16 @@ import { AntiMonotonia } from './AntiMonotonia';
 import { TermometroAlmoco } from './TermometroAlmoco';
 import { IndicadorNutricional } from './IndicadorNutricional';
 
-const OPC_PRINCIPAIS = RECEITAS_POR_CATEGORIA.principal;
-const OPC_GUARNICOES = RECEITAS_POR_CATEGORIA.guarnicao;
-const OPC_SALADAS = RECEITAS_POR_CATEGORIA.salada;
-const OPC_SOBREMESAS = RECEITAS_POR_CATEGORIA.sobremesa;
+/** Mescla receitas da biblioteca com histórico do dados.json, sem duplicatas. */
+function mesclarOpcoes(receitas: string[], historico: string[]): string[] {
+  const vistos = new Set(receitas.map(normalizar));
+  return [...receitas, ...historico.filter((o) => !vistos.has(normalizar(o)))];
+}
+
+const OPC_PRINCIPAIS = mesclarOpcoes(RECEITAS_POR_CATEGORIA.principal, DADOS.listas.principais);
+const OPC_GUARNICOES = mesclarOpcoes(RECEITAS_POR_CATEGORIA.guarnicao, DADOS.listas.guarnicoes);
+const OPC_SALADAS = mesclarOpcoes(RECEITAS_POR_CATEGORIA.salada, DADOS.listas.saladas);
+const OPC_SOBREMESAS = mesclarOpcoes(RECEITAS_POR_CATEGORIA.sobremesa, DADOS.listas.sobremesas);
 
 const COR_PROTEINA: Record<string, string> = {
   bovina: 'bg-[#8a3b34]/10 text-[#8a3b34] ring-[#8a3b34]/25 dark:text-[#e0867c]',

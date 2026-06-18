@@ -552,12 +552,15 @@ export interface OpcoesSugestao {
   criativo?: boolean;
 }
 
-/* Principais aptos: têm receita completa e são adequados a refeitório. */
+/* Principais aptos: receitas completas + todos os pratos do histórico. */
 function principaisAptos(): string[] {
-  return RECEITAS_POR_CATEGORIA.principal.filter((nome) => {
+  const daBiblioteca = RECEITAS_POR_CATEGORIA.principal.filter((nome) => {
     const r = receitaDoPrato(nome);
     return !!r && r.adequacaoRefeitorio >= 60;
   });
+  const vistos = new Set(daBiblioteca.map(normalizar));
+  const doHistorico = DADOS.listas.principais.filter((n) => !vistos.has(normalizar(n)));
+  return [...daBiblioteca, ...doHistorico];
 }
 
 /**
@@ -579,9 +582,13 @@ function montarSemana(
 ): DiaCardapio[] | null {
   const principais = principaisAptos();
   if (principais.length < 7) return null;
-  const guarnicoes = RECEITAS_POR_CATEGORIA.guarnicao;
-  const saladas = RECEITAS_POR_CATEGORIA.salada;
-  const sobremesas = RECEITAS_POR_CATEGORIA.sobremesa;
+  const _mergeList = (receitas: string[], historico: string[]): string[] => {
+    const vistos = new Set(receitas.map(normalizar));
+    return [...receitas, ...historico.filter((n) => !vistos.has(normalizar(n)))];
+  };
+  const guarnicoes = _mergeList(RECEITAS_POR_CATEGORIA.guarnicao, DADOS.listas.guarnicoes);
+  const saladas = _mergeList(RECEITAS_POR_CATEGORIA.salada, DADOS.listas.saladas);
+  const sobremesas = _mergeList(RECEITAS_POR_CATEGORIA.sobremesa, DADOS.listas.sobremesas);
 
   const temPrecos = Object.keys(precos).length > 3;
   const aceit = opts.aceitacao ?? {};
