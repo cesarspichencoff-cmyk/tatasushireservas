@@ -89,12 +89,21 @@ export function validarSemana(dias: DiaCardapio[]): Aviso[] {
 
   const suina = cont['suina'] ?? 0;
   const frango = cont['frango'] ?? 0;
+  const bovina = cont['bovina'] ?? 0;
   const preenchidos = prots.filter(Boolean).length;
+
+  dias.forEach((d, i) => {
+    if (!d.principal)
+      avisos.push({ nivel: 'alerta', msg: `${DIAS_SEMANA[i]} sem prato principal definido.` });
+  });
 
   if (suina > 2) avisos.push({ nivel: 'erro', msg: `Carne suína ${suina}× — a regra é no máximo 2× na semana.` });
   if (frango > 4) avisos.push({ nivel: 'erro', msg: `Frango ${frango}× — a regra é de 3 a 4× na semana.` });
-  if (preenchidos === 7 && frango < 3)
-    avisos.push({ nivel: 'alerta', msg: `Frango só ${frango}× — o ideal é de 3 a 4× na semana.` });
+  if (bovina > 3) avisos.push({ nivel: 'erro', msg: `Carne bovina ${bovina}× — máximo 3× na semana.` });
+  if (preenchidos === 7) {
+    if (frango < 3) avisos.push({ nivel: 'alerta', msg: `Frango só ${frango}× — o ideal é de 3 a 4× na semana.` });
+    if (bovina < 2) avisos.push({ nivel: 'alerta', msg: `Bovina só ${bovina}× — o ideal é de 2 a 3× na semana.` });
+  }
 
   for (let i = 1; i < 7; i++) {
     if (prots[i] && prots[i] === prots[i - 1] && prots[i] !== 'outros') {
@@ -404,6 +413,7 @@ export function sugerirSemana(pessoas: number[], precos: Record<string, number>)
     const usados = new Set<string>();
     let suina = 0;
     let frango = 0;
+    let bovina = 0;
     let anterior: Proteina | null = null;
     let ok = true;
 
@@ -415,8 +425,9 @@ export function sugerirSemana(pessoas: number[], precos: Record<string, number>)
         if (prot === anterior && prot !== 'outros') return false;
         if (prot === 'suina' && suina >= 2) return false;
         if (prot === 'frango' && frango >= 4) return false;
-        // garante espaço para fechar frango 3×
+        if (prot === 'bovina' && bovina >= 3) return false;
         if (prot !== 'frango' && frango + faltam - 1 < 3) return false;
+        if (prot !== 'bovina' && bovina + faltam - 1 < 2) return false;
         return true;
       });
       if (!cand) {
@@ -426,26 +437,30 @@ export function sugerirSemana(pessoas: number[], precos: Record<string, number>)
       const prot = proteinaDoPrato(cand.p);
       if (prot === 'suina') suina++;
       if (prot === 'frango') frango++;
+      if (prot === 'bovina') bovina++;
       anterior = prot;
       usados.add(normalizar(cand.p ?? ''));
       dias.push(comboParaDia(cand, pessoas[d] ?? DADOS.baseline));
       pool.splice(pool.indexOf(cand), 1);
     }
-    if (!ok || frango < 3) continue;
+    if (!ok || frango < 3 || bovina < 2) continue;
 
     let nota = 0;
     dias.forEach((dia, d) => {
       const lista = listaDoDia(dia);
       if (temPrecos) {
         const c = custoDaLista(lista, precos);
-        // custo por pessoa: quanto menor, melhor (peso principal)
         if (c.itensComPreco > 0) nota -= (c.total / Math.max(dia.pessoas, 1)) * 10;
       }
-      // confiabilidade: combos mais usados no histórico pontuam mais
       const combo = porChave.get(normalizar(chaveDoDia(dia)));
       nota += Math.min(combo?.occ ?? 0, 5);
       void d;
     });
+    if (temPrecos) {
+      const custoTotal = dias.reduce((acc, dia) => acc + custoDaLista(listaDoDia(dia), precos).total, 0);
+      if (custoTotal >= 3000 && custoTotal <= 4000) nota += 50;
+      else nota -= Math.abs(custoTotal - 3500) / 100;
+    }
     if (nota > melhorNota) {
       melhorNota = nota;
       melhor = dias;
@@ -520,6 +535,7 @@ export function sugerirSemanaCriativa(
     const usados = new Set<string>();
     let suina = 0;
     let frango = 0;
+    let bovina = 0;
     let anterior: Proteina | null = null;
     let ok = true;
 
@@ -531,7 +547,9 @@ export function sugerirSemanaCriativa(
         if (prot === anterior && prot !== 'outros') return false;
         if (prot === 'suina' && suina >= 2) return false;
         if (prot === 'frango' && frango >= 4) return false;
+        if (prot === 'bovina' && bovina >= 3) return false;
         if (prot !== 'frango' && frango + faltam - 1 < 3) return false;
+        if (prot !== 'bovina' && bovina + faltam - 1 < 2) return false;
         return true;
       });
       if (!cand) {
@@ -541,6 +559,7 @@ export function sugerirSemanaCriativa(
       const prot = proteinaDoPrato(cand);
       if (prot === 'suina') suina++;
       if (prot === 'frango') frango++;
+      if (prot === 'bovina') bovina++;
       anterior = prot;
       usados.add(normalizar(cand));
       dias.push({
@@ -553,7 +572,7 @@ export function sugerirSemanaCriativa(
       });
       poolP.splice(poolP.indexOf(cand), 1);
     }
-    if (!ok || frango < 3) continue;
+    if (!ok || frango < 3 || bovina < 2) continue;
 
     let nota = 0;
     let novas = 0;
@@ -566,7 +585,12 @@ export function sugerirSemanaCriativa(
       }
       if (!temHistoricoExato(dia)) novas++;
     });
-    nota += novas * 2; // criativo de verdade: combinações inéditas pontuam
+    nota += novas * 2;
+    if (temPrecos) {
+      const custoTotal = dias.reduce((acc, dia) => acc + custoDaLista(listaDoDia(dia), precos).total, 0);
+      if (custoTotal >= 3000 && custoTotal <= 4000) nota += 50;
+      else nota -= Math.abs(custoTotal - 3500) / 100;
+    }
 
     if (nota > melhorNota) {
       melhorNota = nota;
@@ -574,6 +598,80 @@ export function sugerirSemanaCriativa(
     }
   }
   return melhor;
+}
+
+/* ----------- sugestão baseada no histórico real (occ ≥ 2) ------------ */
+
+/**
+ * Gera semana usando apenas combos que já saíram pelo menos 2× no histórico.
+ * Prioriza os mais repetidos e respeita todas as regras de proteína e orçamento.
+ */
+export function sugerirSemanaHistorica(
+  pessoas: number[],
+  precos: Record<string, number>,
+): DiaCardapio[] | null {
+  const pool_base = DADOS.combos.filter((c) => c.p && c.gf && c.s && c.sb && (c.occ ?? 1) >= 2);
+  if (pool_base.length < 7) return sugerirSemana(pessoas, precos);
+
+  const temPrecos = Object.keys(precos).length > 3;
+  let melhor: DiaCardapio[] | null = null;
+  let melhorNota = -Infinity;
+
+  for (let tent = 0; tent < 300; tent++) {
+    const pool = [...pool_base].sort(() => Math.random() - 0.5);
+    const dias: DiaCardapio[] = [];
+    const usados = new Set<string>();
+    let suina = 0;
+    let frango = 0;
+    let bovina = 0;
+    let anterior: Proteina | null = null;
+    let ok = true;
+
+    for (let d = 0; d < 7; d++) {
+      const faltam = 7 - d;
+      const cand = pool.find((c) => {
+        const prot = proteinaDoPrato(c.p);
+        if (usados.has(normalizar(c.p ?? ''))) return false;
+        if (prot === anterior && prot !== 'outros') return false;
+        if (prot === 'suina' && suina >= 2) return false;
+        if (prot === 'frango' && frango >= 4) return false;
+        if (prot === 'bovina' && bovina >= 3) return false;
+        if (prot !== 'frango' && frango + faltam - 1 < 3) return false;
+        if (prot !== 'bovina' && bovina + faltam - 1 < 2) return false;
+        return true;
+      });
+      if (!cand) { ok = false; break; }
+      const prot = proteinaDoPrato(cand.p);
+      if (prot === 'suina') suina++;
+      if (prot === 'frango') frango++;
+      if (prot === 'bovina') bovina++;
+      anterior = prot;
+      usados.add(normalizar(cand.p ?? ''));
+      dias.push(comboParaDia(cand, pessoas[d] ?? DADOS.baseline));
+      pool.splice(pool.indexOf(cand), 1);
+    }
+    if (!ok || frango < 3 || bovina < 2) continue;
+
+    let nota = 0;
+    dias.forEach((dia) => {
+      const combo = porChave.get(normalizar(chaveDoDia(dia)));
+      nota += Math.min((combo?.occ ?? 0) * 2, 20);
+      if (temPrecos) {
+        const c = custoDaLista(listaDoDia(dia), precos);
+        if (c.itensComPreco > 0) nota -= (c.total / Math.max(dia.pessoas, 1)) * 10;
+      }
+    });
+    if (temPrecos) {
+      const custoTotal = dias.reduce((acc, dia) => acc + custoDaLista(listaDoDia(dia), precos).total, 0);
+      if (custoTotal >= 3000 && custoTotal <= 4000) nota += 50;
+      else nota -= Math.abs(custoTotal - 3500) / 100;
+    }
+    if (nota > melhorNota) {
+      melhorNota = nota;
+      melhor = dias;
+    }
+  }
+  return melhor ?? sugerirSemana(pessoas, precos);
 }
 
 /* ------------------------------ util --------------------------------- */

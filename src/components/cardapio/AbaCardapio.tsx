@@ -9,6 +9,7 @@ import {
   ROTULO_PROTEINA,
   sugerirSemana,
   sugerirSemanaCriativa,
+  sugerirSemanaHistorica,
   temHistoricoExato,
   validarSemana,
   listaDoDia,
@@ -62,12 +63,12 @@ export function AbaCardapio({
       dias: e.dias.map((d, j) => (j === i ? { ...d, ...patch } : d)),
     }));
 
-  const gerar = (criativo: boolean) => {
-    const fn = criativo ? sugerirSemanaCriativa : sugerirSemana;
-    const sugestao = fn(
-      estado.dias.map((d) => d.pessoas),
-      precos,
-    );
+  const gerar = (modo: 'historica' | 'economica' | 'criativa') => {
+    const fn =
+      modo === 'criativa' ? sugerirSemanaCriativa
+      : modo === 'historica' ? sugerirSemanaHistorica
+      : sugerirSemana;
+    const sugestao = fn(estado.dias.map((d) => d.pessoas), precos);
     if (sugestao) atualizar((e) => ({ ...e, dias: sugestao }));
   };
 
@@ -116,16 +117,19 @@ export function AbaCardapio({
             />
           </label>
           <div className="flex shrink-0 flex-wrap gap-2">
-            <Botao variante="sucesso" disabled={!podeEditar} onClick={() => gerar(false)}>
+            <Botao variante="secundario" disabled={!podeEditar} onClick={() => gerar('historica')}>
+              📅 Cardápio Antigo
+            </Botao>
+            <Botao variante="sucesso" disabled={!podeEditar} onClick={() => gerar('economica')}>
               ✨ Sugerir pelo histórico
             </Botao>
-            <Botao variante="secundario" disabled={!podeEditar} onClick={() => gerar(true)}>
+            <Botao variante="secundario" disabled={!podeEditar} onClick={() => gerar('criativa')}>
               🧪 Criar semana nova
             </Botao>
           </div>
         </div>
         <p className="text-xs text-carvao-400">
-          <strong>✨ Histórico</strong>: combinações que a equipe já aprovou. <strong>🧪 Criar nova</strong>:
+          <strong>📅 Cardápio Antigo</strong>: combos mais repetidos do histórico real (apareceram 2× ou mais). <strong>✨ Histórico</strong>: combinações que a equipe já aprovou. <strong>🧪 Criar nova</strong>:
           inventa pratos e combinações inéditas com a distribuição de alimentos da casa — e, com a cotação
           aplicada, puxa para as proteínas mais baratas da semana.
         </p>
@@ -192,6 +196,24 @@ export function AbaCardapio({
           </div>
         )}
       </Cartao>
+
+      {/* Contador de proteínas */}
+      {(() => {
+        const prots = estado.dias.map((d) => d.principal ? proteinaDoPrato(d.principal) : null);
+        const frango = prots.filter((p) => p === 'frango').length;
+        const bovina = prots.filter((p) => p === 'bovina').length;
+        const suina = prots.filter((p) => p === 'suina').length;
+        const pill = (label: string, cor: string) => (
+          <span key={label} className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ${cor}`}>{label}</span>
+        );
+        return (
+          <div className="flex flex-wrap gap-1.5">
+            {pill(`Frango ${frango}/4`, frango >= 3 && frango <= 4 ? 'bg-brand-500/10 text-brand-600 ring-brand-500/25' : frango > 4 ? 'bg-[#b04c41]/10 text-[#b04c41] ring-[#b04c41]/25' : 'bg-ouro-400/10 text-ouro-600 ring-ouro-400/25')}
+            {pill(`Bovina ${bovina}/3`, bovina >= 2 && bovina <= 3 ? 'bg-brand-500/10 text-brand-600 ring-brand-500/25' : bovina > 3 ? 'bg-[#b04c41]/10 text-[#b04c41] ring-[#b04c41]/25' : 'bg-ouro-400/10 text-ouro-600 ring-ouro-400/25')}
+            {pill(`Suína ${suina}/2`, suina <= 2 ? 'bg-brand-500/10 text-brand-600 ring-brand-500/25' : 'bg-[#b04c41]/10 text-[#b04c41] ring-[#b04c41]/25')}
+          </div>
+        );
+      })()}
 
       {/* Validador de regras */}
       {avisos.length > 0 && (
