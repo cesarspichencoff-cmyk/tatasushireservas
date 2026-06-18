@@ -130,6 +130,7 @@ export function AbaCardapio({
   // medidor de regras (rotação de proteínas)
   const prots = estado.dias.map((d) => (d.principal ? proteinaDoPrato(d.principal) : null));
   const frango = prots.filter((p) => p === 'frango').length;
+  const bovina = prots.filter((p) => p === 'bovina').length;
   const suina = prots.filter((p) => p === 'suina').length;
   const diasMontados = prots.filter(Boolean).length;
   const erros = avisos.filter((a) => a.nivel === 'erro').length;
@@ -212,7 +213,8 @@ export function AbaCardapio({
           </div>
           {/* medidor de regras */}
           <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-            <Pilula tom={frango >= 3 && frango <= 4 ? 'verde' : 'ouro'}>Frango {frango}/4</Pilula>
+            <Pilula tom={frango >= 3 && frango <= 4 ? 'verde' : frango > 4 ? 'vermelho' : 'ouro'}>Frango {frango}/4</Pilula>
+            <Pilula tom={bovina >= 2 && bovina <= 3 ? 'verde' : bovina > 3 ? 'vermelho' : 'ouro'}>Bovina {bovina}/3</Pilula>
             <Pilula tom={suina <= 2 ? 'verde' : 'vermelho'}>Suína {suina}/2</Pilula>
             {diasMontados > 0 &&
               (semPreco.length > 0 ? (

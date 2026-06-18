@@ -5656,10 +5656,10 @@
       ]
     },
     {
-      "chave": "Carne Desfiada|Arroz e Feijão|Berinjela Empanada Frita|De legumes|Mousse Limão",
+      "chave": "Carne Desfiada|Arroz e Feijão|Berinjela Empanada|De legumes|Mousse Limão",
       "p": "Carne Desfiada",
       "gf": "Arroz e Feijão",
-      "g": "Berinjela Empanada Frita",
+      "g": "Berinjela Empanada",
       "s": "De legumes",
       "sb": "Mousse Limão",
       "occ": 1,
@@ -7800,10 +7800,10 @@
       ]
     },
     {
-      "chave": "File de Frango á Pizzaiolo com manjerição|Arroz e Feijão|Berinjela Empanada Frita|Alface americano com manga|Gelatina",
+      "chave": "File de Frango á Pizzaiolo com manjerição|Arroz e Feijão|Berinjela Empanada|Alface americano com manga|Gelatina",
       "p": "File de Frango á Pizzaiolo com manjerição",
       "gf": "Arroz e Feijão",
-      "g": "Berinjela Empanada Frita",
+      "g": "Berinjela Empanada",
       "s": "Alface americano com manga",
       "sb": "Gelatina",
       "occ": 1,
@@ -12098,10 +12098,10 @@
       ]
     },
     {
-      "chave": "Carne de panela||Berinjela Empanada Frita|Repolho roxo com Tomate|Arroz Doce",
+      "chave": "Carne de panela||Berinjela Empanada|Repolho roxo com Tomate|Arroz Doce",
       "p": "Carne de panela",
       "gf": null,
-      "g": "Berinjela Empanada Frita",
+      "g": "Berinjela Empanada",
       "s": "Repolho roxo com Tomate",
       "sb": "Arroz Doce",
       "occ": 1,
@@ -12560,10 +12560,10 @@
       ]
     },
     {
-      "chave": "Lombo Suíno com Abacaxi||Arroz á Grega- Milho|Repolho Roxo com cenoura|Arroz Doce",
+      "chave": "Lombo Suíno com Abacaxi||Arroz á Grega|Repolho Roxo com cenoura|Arroz Doce",
       "p": "Lombo Suíno com Abacaxi",
       "gf": null,
-      "g": "Arroz á Grega- Milho",
+      "g": "Arroz á Grega",
       "s": "Repolho Roxo com cenoura",
       "sb": "Arroz Doce",
       "occ": 1,
@@ -13235,10 +13235,10 @@
       ]
     },
     {
-      "chave": "Lombo Suíno com Abacaxi||Arroz á grega ( Milho e Salsa)|Pepino com Tomate|Creme de Abacate",
+      "chave": "Lombo Suíno com Abacaxi||Arroz á Grega|Pepino com Tomate|Creme de Abacate",
       "p": "Lombo Suíno com Abacaxi",
       "gf": null,
-      "g": "Arroz á grega ( Milho e Salsa)",
+      "g": "Arroz á Grega",
       "s": "Pepino com Tomate",
       "sb": "Creme de Abacate",
       "occ": 1,
@@ -13492,10 +13492,10 @@
       ]
     },
     {
-      "chave": "Isca de Peixe com molho de Limão||Arroz á Grega (Cenoura, Milho e salsa)|Vinagrete ( Tomate, pimentão verde e cebola roxa)|Pudim leite condensado",
+      "chave": "Isca de Peixe com molho de Limão||Arroz á Grega|Vinagrete ( Tomate, pimentão verde e cebola roxa)|Pudim leite condensado",
       "p": "Isca de Peixe com molho de Limão",
       "gf": null,
-      "g": "Arroz á Grega (Cenoura, Milho e salsa)",
+      "g": "Arroz á Grega",
       "s": "Vinagrete ( Tomate, pimentão verde e cebola roxa)",
       "sb": "Pudim leite condensado",
       "occ": 1,
@@ -13779,10 +13779,10 @@
       ]
     },
     {
-      "chave": "Carne de Panela ( Aranha)||Berinjela Empanada Frita|Beterraba com Cenoura Ralado|Mousse de Morango",
+      "chave": "Carne de Panela ( Aranha)||Berinjela Empanada|Beterraba com Cenoura Ralado|Mousse de Morango",
       "p": "Carne de Panela ( Aranha)",
       "gf": null,
-      "g": "Berinjela Empanada Frita",
+      "g": "Berinjela Empanada",
       "s": "Beterraba com Cenoura Ralado",
       "sb": "Mousse de Morango",
       "occ": 1,
@@ -14317,10 +14317,10 @@
       ]
     },
     {
-      "chave": "Lombo Suíno com Abacaxi||Arroz a Grega - Milho e salsa|Repolho roxo com Cenoura ralada|Mousse de Maracujá",
+      "chave": "Lombo Suíno com Abacaxi||Arroz á Grega|Repolho roxo com Cenoura ralada|Mousse de Maracujá",
       "p": "Lombo Suíno com Abacaxi",
       "gf": null,
-      "g": "Arroz a Grega - Milho e salsa",
+      "g": "Arroz á Grega",
       "s": "Repolho roxo com Cenoura ralada",
       "sb": "Mousse de Maracujá",
       "occ": 1,
@@ -15834,10 +15834,10 @@
       ]
     },
     {
-      "chave": "Frango Cozido com legumes|Arroz e Feijão|Abobrinha Refofada|Acelga com Tomate|Melancia",
+      "chave": "Frango Cozido com legumes|Arroz e Feijão|Abobrinha Refogada|Acelga com Tomate|Melancia",
       "p": "Frango Cozido com legumes",
       "gf": "Arroz branco; feijão",
-      "g": "Abobrinha Refofada",
+      "g": "Abobrinha Refogada",
       "s": "Acelga com Tomate",
       "sb": "Melancia",
       "occ": 1,
@@ -22082,13 +22082,9 @@
     "guarnicoes": [
       "Abacaxi",
       "Abóbora Refogada",
-      "Abobrinha Refofada",
+      "Abobrinha Refogada",
       "Alface e Tomate",
       "Arroz á Grega",
-      "Arroz á grega ( Milho e Salsa)",
-      "Arroz á Grega (Cenoura, Milho e salsa)",
-      "Arroz a Grega - Milho e salsa",
-      "Arroz á Grega- Milho",
       "Arroz Branco",
       "Arroz branco e repolho refogado",
       "Arroz com Brocolis",
@@ -22109,7 +22105,6 @@
       "Batata Rustica",
       "Batata Rustica com Alecrim",
       "Berinjela Empanada",
-      "Berinjela Empanada Frita",
       "Berinjela empanada frita / Farofa temperada",
       "Bolinho de Arroz",
       "Brocolis",
@@ -22340,13 +22335,11 @@
     ],
     "sobremesas": [
       "Abacaxi",
-      "Acelga com Tomate",
       "Arroz Doce",
       "Banana",
       "Canjica",
       "Cocada",
       "Cocada Cremosa",
-      "Couve com Tomate",
       "Creme de Abacate",
       "Creme de Abacaxi",
       "Creme de Framboesa",
