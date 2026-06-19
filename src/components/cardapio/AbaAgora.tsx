@@ -160,7 +160,7 @@ export function AbaAgora({ estado, precos, aceitacao, fatores, papel, irPara }: 
           </p>
           {podeEditar && (
             <button
-              onClick={() => irPara('semana')}
+              onClick={() => irPara('cardapio')}
               className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-700 py-3.5 text-sm font-bold text-white transition hover:bg-brand-800 active:scale-[0.98] dark:bg-brand-600 dark:hover:bg-brand-700"
             >
               Montar cardápio
@@ -196,7 +196,7 @@ export function AbaAgora({ estado, precos, aceitacao, fatores, papel, irPara }: 
             ))}
           </div>
           <button
-            onClick={() => irPara('semana')}
+            onClick={() => irPara('cardapio')}
             className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-700 py-3.5 text-sm font-bold text-white transition hover:bg-brand-800 active:scale-[0.98] dark:bg-brand-600 dark:hover:bg-brand-700"
           >
             {papel === 'cozinha' ? 'Revisar cardápio' : 'Ver cardápio'}
@@ -282,6 +282,13 @@ export function AbaAgora({ estado, precos, aceitacao, fatores, papel, irPara }: 
               rotulo="aceitação"
             />
           </div>
+          <button
+            onClick={() => irPara('cardapio')}
+            className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border border-brand-200 bg-brand-50 py-3 text-sm font-bold text-brand-700 transition hover:bg-brand-100 active:scale-[0.98] dark:border-brand-700 dark:bg-brand-900/30 dark:text-brand-300"
+          >
+            Avaliar pratos e registrar sobras
+            <Icone nome="proximo" tam={16} />
+          </button>
         </div>
       )}
 
