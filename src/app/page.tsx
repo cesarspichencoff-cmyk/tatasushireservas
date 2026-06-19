@@ -65,12 +65,20 @@ const ROTULO_ETAPA: Record<Etapa, string> = {
   concluido:   'Concluída',
 };
 
-const COR_ETAPA: Record<Etapa, string> = {
-  rascunho:    'bg-carvao-400/10    text-carvao-500  ring-carvao-400/25',
-  cozinha:     'bg-ouro-400/10      text-ouro-700    ring-ouro-400/25   dark:text-ouro-300',
-  compras:     'bg-[#2d6f8e]/10    text-[#2d6f8e]   ring-[#2d6f8e]/25  dark:text-[#7cb8d4]',
-  recebimento: 'bg-ouro-400/10      text-ouro-600    ring-ouro-400/25   dark:text-ouro-300',
-  concluido:   'bg-brand-500/10     text-brand-600   ring-brand-500/25',
+const COR_ETAPA_TEXTO: Record<Etapa, string> = {
+  rascunho:    'text-carvao-400',
+  cozinha:     'text-ouro-600 dark:text-ouro-400',
+  compras:     'text-[#2d6f8e] dark:text-[#7cb8d4]',
+  recebimento: 'text-ouro-600 dark:text-ouro-400',
+  concluido:   'text-brand-600 dark:text-brand-400',
+};
+
+const COR_ETAPA_PONTO: Record<Etapa, string> = {
+  rascunho:    'bg-carvao-300',
+  cozinha:     'bg-ouro-400 animate-pulse',
+  compras:     'bg-[#2d6f8e]',
+  recebimento: 'bg-ouro-400 animate-pulse',
+  concluido:   'bg-brand-500',
 };
 
 /* ── busca global ────────────────────────────────────────── */
@@ -337,55 +345,54 @@ export default function PaginaCardapios() {
       )}
 
       {/* ── Cabeçalho ────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 bg-gradient-to-r from-brand-800 via-brand-600 to-brand-800 text-white shadow-media print:hidden">
-        <div className="h-1 w-full bg-gradient-to-r from-ouro-600 via-ouro-300 to-ouro-600" />
-        <div className="mx-auto flex h-16 max-w-5xl items-center gap-3 px-4">
+      <header className="sticky top-0 z-40 border-b border-carvao-100 bg-white print:hidden dark:border-carvao-800 dark:bg-carvao-950">
+        <div className="h-[3px] w-full bg-brand-600" />
+        <div className="mx-auto flex h-14 max-w-5xl items-center gap-3 px-4">
 
           {/* Marca */}
           <div className="flex min-w-0 items-center gap-3">
             {logo ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={logo} alt="" className="h-10 w-auto max-w-[120px] shrink-0 object-contain" />
+              <img src={logo} alt="" className="h-8 w-auto max-w-[110px] shrink-0 object-contain" />
             ) : (
-              <span className="h-9 w-1.5 shrink-0 rounded-full bg-gradient-to-b from-ouro-300 to-ouro-500" aria-hidden />
+              <span className="h-7 w-0.5 shrink-0 rounded-full bg-brand-600" aria-hidden />
             )}
             <div className="min-w-0 leading-tight">
-              <div className="truncate font-display text-[17px] font-bold tracking-[0.18em] sm:text-[19px] sm:tracking-[0.26em]">
+              <div className="truncate font-display text-[16px] font-bold tracking-[0.18em] text-carvao-900 dark:text-white sm:text-[18px]">
                 TATÁ&nbsp;HOUSE
               </div>
-              <div className="truncate text-[10px] font-extrabold uppercase tracking-[0.3em] text-brand-200">
+              <div className="truncate text-[10px] font-semibold uppercase tracking-[0.28em] text-carvao-400">
                 Refeitório do Tatá Sushi
               </div>
             </div>
           </div>
 
-          {/* Busca — pill central */}
+          {/* Busca — barra central */}
           <button
             onClick={() => setBuscaAberta(true)}
-            className="mx-auto hidden max-w-xs flex-1 items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm text-white/70 ring-1 ring-white/25 transition hover:bg-white/25 sm:flex"
+            className="mx-auto hidden max-w-sm flex-1 items-center gap-2 rounded-xl border border-carvao-200 bg-carvao-50 px-4 py-2 text-sm text-carvao-400 transition hover:border-carvao-300 hover:bg-carvao-100 sm:flex dark:border-carvao-700 dark:bg-carvao-900 dark:text-carvao-500"
           >
             <Icone nome="busca" tam={14} />
             <span>Buscar…</span>
-            <kbd className="ml-auto text-[11px] font-semibold text-white/40">⌘K</kbd>
+            <kbd className="ml-auto text-[11px] font-semibold text-carvao-300 dark:text-carvao-600">⌘K</kbd>
           </button>
 
           {/* Ações do header */}
           <div className="ml-auto flex shrink-0 items-center gap-2 sm:ml-0">
-            {/* Busca — ícone mobile */}
             <button
               onClick={() => setBuscaAberta(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-white ring-1 ring-white/25 transition hover:bg-white/25 sm:hidden"
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-carvao-500 transition hover:bg-carvao-100 sm:hidden dark:text-carvao-400 dark:hover:bg-carvao-800"
               aria-label="Buscar"
             >
-              <Icone nome="busca" tam={16} />
+              <Icone nome="busca" tam={17} />
             </button>
-            <span className="hidden items-center gap-1.5 rounded-full bg-white/15 py-1.5 pl-3 pr-3 text-xs font-semibold text-white ring-1 ring-white/25 sm:flex">
-              <Icone nome="usuario" tam={14} className="text-white/70" />
+            <span className="hidden items-center gap-1.5 text-xs font-semibold text-carvao-500 sm:flex dark:text-carvao-400">
+              <Icone nome="usuario" tam={13} />
               {perfil?.rotulo ?? 'Perfil'}
             </span>
             <button
               onClick={() => { sair(); if (typeof window !== 'undefined') window.location.reload(); }}
-              className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/25 transition hover:bg-white/25"
+              className="rounded-lg border border-carvao-200 px-3 py-1.5 text-xs font-semibold text-carvao-500 transition hover:border-carvao-300 hover:text-carvao-700 dark:border-carvao-700 dark:text-carvao-400"
             >
               Sair
             </button>
@@ -397,65 +404,62 @@ export default function PaginaCardapios() {
       <main className="mx-auto max-w-5xl space-y-4 px-4 pb-28 pt-5 lg:pb-8">
 
         {/* ── Barra de semana ─────────────────────────────── */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-carvao-100 pb-5 dark:border-carvao-800">
           <div>
-            <h1 className="font-display text-2xl font-bold text-carvao-800 dark:text-areia-100 sm:text-3xl">
+            <h1 className="font-display text-2xl font-bold text-carvao-900 dark:text-white sm:text-3xl">
               {periodoSemana(semanaId)}
-              <span
-                className={`ml-2.5 inline-flex translate-y-[-2px] items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ring-1 ${COR_ETAPA[estado.etapa]}`}
-              >
-                {ROTULO_ETAPA[estado.etapa]}
-              </span>
             </h1>
-            <p className="text-sm font-semibold text-carvao-500 dark:text-carvao-300">
-              {semanaId === semanaAtualId ? 'Semana atual' : 'Semana planejada'}{' '}
-              <span className="font-normal text-carvao-400">· segunda a domingo</span>
+            <p className={`mt-1 flex items-center gap-2 text-sm font-semibold ${COR_ETAPA_TEXTO[estado.etapa]}`}>
+              <span className={`h-2 w-2 rounded-full ${COR_ETAPA_PONTO[estado.etapa]}`} />
+              {ROTULO_ETAPA[estado.etapa]}
+              <span className="font-normal text-carvao-400">
+                · {semanaId === semanaAtualId ? 'semana atual' : 'semana planejada'}
+              </span>
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center rounded-2xl border border-carvao-200 bg-white p-1 dark:border-carvao-600 dark:bg-carvao-900">
-              <button
-                onClick={() => irSemana(-1)}
-                aria-label="Semana anterior"
-                className="flex h-9 w-9 items-center justify-center rounded-xl text-carvao-500 transition hover:bg-carvao-100 dark:hover:bg-carvao-800"
-              >
-                <Icone nome="anterior" tam={18} />
-              </button>
-              <button
-                onClick={() => setSemanaSheet(true)}
-                className="flex min-w-[104px] items-center justify-center gap-1.5 rounded-xl px-1 py-1 text-sm font-bold tabular-nums transition hover:bg-carvao-100 dark:hover:bg-carvao-800"
-              >
-                <Icone nome="calendario" tam={15} className="text-carvao-400" />
-                {periodoSemana(semanaId)}
-              </button>
-              <button
-                onClick={() => irSemana(1)}
-                aria-label="Próxima semana"
-                className="flex h-9 w-9 items-center justify-center rounded-xl text-carvao-500 transition hover:bg-carvao-100 dark:hover:bg-carvao-800"
-              >
-                <Icone nome="proximo" tam={18} />
-              </button>
-            </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => irSemana(-1)}
+              aria-label="Semana anterior"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-carvao-400 transition hover:bg-carvao-100 hover:text-carvao-700 dark:hover:bg-carvao-800"
+            >
+              <Icone nome="anterior" tam={17} />
+            </button>
+            <button
+              onClick={() => setSemanaSheet(true)}
+              className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-carvao-700 tabular-nums transition hover:bg-carvao-100 dark:text-areia-200 dark:hover:bg-carvao-800"
+            >
+              <Icone nome="calendario" tam={14} className="text-carvao-400" />
+              {periodoSemana(semanaId)}
+            </button>
+            <button
+              onClick={() => irSemana(1)}
+              aria-label="Próxima semana"
+              className="flex h-9 w-9 items-center justify-center rounded-lg text-carvao-400 transition hover:bg-carvao-100 hover:text-carvao-700 dark:hover:bg-carvao-800"
+            >
+              <Icone nome="proximo" tam={17} />
+            </button>
+            <div className="mx-2 h-5 w-px bg-carvao-200 dark:bg-carvao-700" />
             <button
               onClick={() => setPosterAberto(true)}
-              className="flex h-11 min-h-11 items-center gap-1.5 whitespace-nowrap rounded-2xl bg-gradient-to-r from-brand-700 to-brand-600 px-4 text-sm font-bold text-white shadow-suave ring-1 ring-ouro-400/50 transition hover:from-brand-800 hover:to-brand-700"
+              className="flex h-9 items-center gap-1.5 whitespace-nowrap rounded-lg border border-carvao-200 bg-white px-3 text-sm font-semibold text-carvao-600 transition hover:bg-carvao-50 dark:border-carvao-700 dark:bg-carvao-900 dark:text-areia-200"
             >
-              <Icone nome="imagem" tam={18} />
+              <Icone nome="imagem" tam={16} />
               <span className="hidden sm:inline">Pôster</span>
             </button>
           </div>
         </div>
 
         {/* ── Navegação desktop ────────────────────────────── */}
-        <nav className="hidden gap-1 overflow-x-auto rounded-full bg-white p-1 ring-1 ring-carvao-200 lg:flex dark:bg-carvao-800 dark:ring-carvao-600 print:hidden">
+        <nav className="hidden border-b border-carvao-100 lg:flex dark:border-carvao-800 print:hidden">
           {ABAS.filter((a) => abasPermitidas.includes(a.id)).map((a) => (
             <button
               key={a.id}
               onClick={() => setAba(a.id)}
-              className={`min-h-10 shrink-0 whitespace-nowrap rounded-full px-5 text-[13px] font-semibold tracking-tight transition ${
+              className={`relative shrink-0 whitespace-nowrap px-5 pb-3.5 pt-1 text-[13px] font-semibold transition ${
                 aba === a.id
-                  ? 'bg-gradient-to-r from-brand-700 to-brand-600 text-white shadow-suave'
-                  : 'text-carvao-500 hover:bg-brand-50 hover:text-brand-700 dark:text-areia-200 dark:hover:bg-carvao-700'
+                  ? 'text-brand-600 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-brand-600 dark:text-brand-400 dark:after:bg-brand-400'
+                  : 'text-carvao-400 hover:text-carvao-700 dark:text-carvao-500 dark:hover:text-carvao-200'
               }`}
             >
               {a.rotulo}
@@ -540,15 +544,15 @@ export default function PaginaCardapios() {
             {aba === 'compras' && (
               <div className="space-y-4">
                 {/* segmento Lista / Estoque */}
-                <div className="flex rounded-2xl border border-carvao-200 bg-white p-1 dark:border-carvao-600 dark:bg-carvao-900">
+                <div className="flex gap-4 border-b border-carvao-100 dark:border-carvao-800">
                   {(['lista', 'estoque'] as const).map((seg) => (
                     <button
                       key={seg}
                       onClick={() => setAbaCompras(seg)}
-                      className={`flex-1 rounded-xl py-2 text-[13px] font-semibold transition ${
+                      className={`relative pb-3 text-sm font-semibold transition ${
                         abaCompras === seg
-                          ? 'bg-brand-600 text-white shadow-sm'
-                          : 'text-carvao-500 hover:text-carvao-700 dark:text-carvao-400'
+                          ? 'text-brand-600 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-brand-600 dark:text-brand-400'
+                          : 'text-carvao-400 hover:text-carvao-600 dark:text-carvao-500'
                       }`}
                     >
                       {seg === 'lista' ? 'Lista de compras' : 'Estoque'}
@@ -583,15 +587,10 @@ export default function PaginaCardapios() {
 
             {/* ── RELATÓRIOS ────────────────────────────────── */}
             {aba === 'relatorios' && (
-              <div className="space-y-4">
-                {/* cabeçalho da seção com exportar sempre visível */}
-                <div className="flex items-center justify-between">
-                  <h2 className="font-display text-xl font-bold text-carvao-800 dark:text-areia-100">
-                    Relatórios
-                  </h2>
-                  <div className="flex items-center gap-2">
-                    <AbaRadar precos={precos} historico={historico} fornecedores={fornecedores} />
-                  </div>
+              <div className="space-y-6">
+                <div className="border-b border-carvao-100 pb-4 dark:border-carvao-800">
+                  <h2 className="font-display text-2xl font-bold text-carvao-900 dark:text-white">Relatórios</h2>
+                  <p className="mt-1 text-sm text-carvao-400">Análise e exportação de dados da semana</p>
                 </div>
                 <CentralGerencial
                   estado={estado}
@@ -602,12 +601,17 @@ export default function PaginaCardapios() {
                   fornecedores={fornecedores}
                   fatores={fatores}
                 />
+                <AbaRadar precos={precos} historico={historico} fornecedores={fornecedores} />
               </div>
             )}
 
             {/* ── AJUSTES ───────────────────────────────────── */}
             {aba === 'ajustes' && (
-              <div className="space-y-6">
+              <div className="space-y-8">
+                <div className="border-b border-carvao-100 pb-4 dark:border-carvao-800">
+                  <h2 className="font-display text-2xl font-bold text-carvao-900 dark:text-white">Ajustes</h2>
+                  <p className="mt-1 text-sm text-carvao-400">Preços, fornecedores e configurações de acesso</p>
+                </div>
                 {/* Catálogo de preços */}
                 <SecaoAjuste titulo="Catálogo de preços e fornecedores">
                   <AbaCotacaoInline
@@ -638,13 +642,13 @@ export default function PaginaCardapios() {
             <button
               onClick={duplicarSemanaAnterior}
               disabled={!podeEditarCardapio}
-              className="flex items-center justify-center gap-1.5 rounded-2xl bg-brand-50 px-3 py-2.5 text-[13px] font-bold text-brand-700 ring-1 ring-brand-500/30 transition hover:bg-brand-100 disabled:opacity-40 dark:bg-carvao-700 dark:text-brand-300"
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-carvao-200 px-3 py-2.5 text-[13px] font-semibold text-carvao-700 transition hover:bg-carvao-50 disabled:opacity-40 dark:border-carvao-600 dark:text-areia-200"
             >
               <Icone nome="somar" tam={16} /> Duplicar anterior
             </button>
             <button
               onClick={() => { setSemanaId(deslocarSemana(semanaId, 1)); setSemanaSheet(false); }}
-              className="flex items-center justify-center gap-1.5 rounded-2xl bg-carvao-100 px-3 py-2.5 text-[13px] font-bold text-carvao-600 transition hover:bg-carvao-200 dark:bg-carvao-700 dark:text-areia-200"
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-carvao-200 px-3 py-2.5 text-[13px] font-semibold text-carvao-700 transition hover:bg-carvao-50 dark:border-carvao-600 dark:text-areia-200"
             >
               <Icone nome="proximo" tam={16} /> Próxima semana
             </button>
@@ -702,11 +706,9 @@ export default function PaginaCardapios() {
 
 function SecaoAjuste({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-3xl bg-white shadow-sm ring-1 ring-carvao-100 dark:bg-carvao-850 dark:ring-carvao-700">
-      <div className="border-b border-carvao-100 px-6 py-4 dark:border-carvao-700">
-        <h2 className="font-display text-base font-bold text-carvao-700 dark:text-areia-200">{titulo}</h2>
-      </div>
-      <div className="px-6 py-5">{children}</div>
+    <div className="space-y-4">
+      <h2 className="text-xs font-bold uppercase tracking-widest text-carvao-400">{titulo}</h2>
+      <div className="border-t border-carvao-100 pt-4 dark:border-carvao-800">{children}</div>
     </div>
   );
 }

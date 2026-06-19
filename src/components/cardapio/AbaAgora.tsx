@@ -7,111 +7,82 @@ import { formatarReais } from '@/lib/cardapio/motor';
 import type { EstadoSemana, Aceitacao, Etapa } from '@/lib/cardapio/tipos';
 import type { Papel } from '@/lib/cardapio/tipos';
 
-/* ── constantes ─────────────────────────────────────────── */
-
 const ETAPAS = [
-  { id: 'rascunho',    rotulo: 'Rascunho'     },
-  { id: 'cozinha',     rotulo: 'Cozinha'       },
-  { id: 'compras',     rotulo: 'Compras'       },
-  { id: 'recebimento', rotulo: 'Recebimento'   },
-  { id: 'concluido',   rotulo: 'Concluída'     },
+  { id: 'rascunho',    rotulo: 'Rascunho'   },
+  { id: 'cozinha',     rotulo: 'Cozinha'     },
+  { id: 'compras',     rotulo: 'Compras'     },
+  { id: 'recebimento', rotulo: 'Recebimento' },
+  { id: 'concluido',   rotulo: 'Concluída'   },
 ] as const;
 
-const DIAS_PT = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
-
-/* ── helpers ─────────────────────────────────────────────── */
+const DIAS_PT = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
 
 function idxEtapa(e: Etapa) {
   return ETAPAS.findIndex((x) => x.id === e);
 }
 
 function mediaAceitacaoGlobal(aceitacao: Aceitacao): number | null {
-  let soma = 0;
-  let n = 0;
+  let soma = 0, n = 0;
   Object.values(aceitacao).forEach((r) => {
-    if (r.n > 0) {
-      soma += r.somaNotas;
-      n += r.n;
-    }
+    if (r.n > 0) { soma += r.somaNotas; n += r.n; }
   });
   return n > 0 ? soma / n : null;
 }
 
-/* ── sub-componente: barra de progresso de etapa ─────────── */
+/* ── Progresso de etapa — linha simples ─────────────────── */
 
 function EtapaProgress({ etapa }: { etapa: Etapa }) {
   const ativo = idxEtapa(etapa);
   return (
-    <div className="space-y-2">
-      <div className="flex items-center">
+    <div className="space-y-3">
+      <div className="flex items-center gap-1">
         {ETAPAS.map((e, i) => (
-          <div key={e.id} className="flex flex-1 items-center">
+          <div key={e.id} className="flex flex-1 items-center gap-1">
             <div
-              className={`relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-all ${
+              className={`h-1.5 flex-1 rounded-full transition-all ${
                 i < ativo
-                  ? 'bg-brand-600 text-white'
+                  ? 'bg-brand-600'
                   : i === ativo
-                  ? 'bg-brand-700 text-white shadow-md ring-4 ring-brand-200/60 dark:ring-brand-900/60'
-                  : 'bg-carvao-100 text-carvao-400 dark:bg-carvao-700 dark:text-carvao-500'
+                  ? 'bg-brand-600'
+                  : 'bg-carvao-100 dark:bg-carvao-800'
               }`}
-            >
-              {i < ativo ? <Icone nome="check" tam={12} /> : <span>{i + 1}</span>}
-            </div>
-            {i < ETAPAS.length - 1 && (
-              <div
-                className={`h-0.5 flex-1 transition-all ${
-                  i < ativo ? 'bg-brand-500' : 'bg-carvao-200 dark:bg-carvao-600'
-                }`}
-              />
-            )}
+            />
           </div>
         ))}
       </div>
-      <div className="flex">
+      <div className="flex justify-between">
         {ETAPAS.map((e, i) => (
-          <div key={e.id} className="flex-1">
-            <span
-              className={`block text-[9px] font-semibold leading-tight ${
-                i === 0 ? 'text-left' : i === ETAPAS.length - 1 ? 'text-right' : 'text-center'
-              } ${
-                i === ativo
-                  ? 'text-brand-700 dark:text-brand-300'
-                  : 'text-carvao-400 dark:text-carvao-500'
-              }`}
-            >
-              {e.rotulo}
-            </span>
-          </div>
+          <span
+            key={e.id}
+            className={`text-[10px] font-semibold ${
+              i === ativo
+                ? 'text-brand-600 dark:text-brand-400'
+                : i < ativo
+                ? 'text-carvao-400'
+                : 'text-carvao-300 dark:text-carvao-700'
+            }`}
+          >
+            {e.rotulo}
+          </span>
         ))}
       </div>
     </div>
   );
 }
 
-/* ── sub-componente: número de destaque ─────────────────── */
-
-function NumeroDestaque({ valor, rotulo }: { valor: string; rotulo: string }) {
-  return (
-    <div className="rounded-2xl bg-carvao-50 p-4 text-center dark:bg-carvao-800">
-      <p className="font-display text-xl font-bold text-carvao-800 dark:text-areia-100">{valor}</p>
-      <p className="mt-0.5 text-[11px] text-carvao-400">{rotulo}</p>
-    </div>
-  );
-}
-
-/* ── sub-componente: barra de progresso linear ───────────── */
+/* ── Barra de progresso linear ───────────────────────────── */
 
 function BarraProgresso({ valor, total, rotulo }: { valor: number; total: number; rotulo: string }) {
   const pct = total > 0 ? Math.round((valor / total) * 100) : 0;
   return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between text-sm">
-        <span className="text-carvao-500 dark:text-carvao-400">{rotulo}</span>
-        <span className="font-semibold text-brand-700 dark:text-brand-300">{pct}%</span>
+    <div className="space-y-2">
+      <div className="flex items-baseline justify-between">
+        <span className="text-sm text-carvao-500 dark:text-carvao-400">{rotulo}</span>
+        <span className="font-display text-lg font-bold text-carvao-900 dark:text-white">{pct}%</span>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-carvao-100 dark:bg-carvao-700">
+      <div className="h-1.5 overflow-hidden rounded-full bg-carvao-100 dark:bg-carvao-800">
         <div
-          className="h-full rounded-full bg-brand-600 transition-all duration-500"
+          className="h-full rounded-full bg-brand-600 transition-all duration-700"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -122,7 +93,31 @@ function BarraProgresso({ valor, total, rotulo }: { valor: number; total: number
   );
 }
 
-/* ── props ──────────────────────────────────────────────── */
+/* ── Botão primário único ────────────────────────────────── */
+
+function BotaoPrimario({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-3.5 text-sm font-bold text-white transition hover:bg-brand-700 active:scale-[0.98]"
+    >
+      {children}
+    </button>
+  );
+}
+
+function BotaoSecundario({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-2 rounded-xl border border-carvao-200 px-6 py-3 text-sm font-semibold text-carvao-700 transition hover:bg-carvao-50 dark:border-carvao-700 dark:text-areia-200 dark:hover:bg-carvao-800"
+    >
+      {children}
+    </button>
+  );
+}
+
+/* ── Props ───────────────────────────────────────────────── */
 
 interface Props {
   estado: EstadoSemana;
@@ -133,185 +128,181 @@ interface Props {
   irPara: (aba: string) => void;
 }
 
-/* ── componente principal ────────────────────────────────── */
+/* ── Componente principal ────────────────────────────────── */
 
 export function AbaAgora({ estado, precos, aceitacao, fatores, papel, irPara }: Props) {
   const resumo = useMemo(() => resumoSemana(estado, precos, fatores), [estado, precos, fatores]);
   const etapa = estado.etapa;
   const media = useMemo(() => mediaAceitacaoGlobal(aceitacao), [aceitacao]);
-
   const podeEditar = papel === 'gestor' || papel === 'administrador' || papel === 'cozinha';
 
   return (
-    <div className="space-y-4">
-      {/* Progresso */}
-      <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-carvao-100 dark:bg-carvao-850 dark:ring-carvao-700">
-        <EtapaProgress etapa={etapa} />
-      </div>
+    <div className="space-y-10">
 
-      {/* ── RASCUNHO ─────────────────────────────────────── */}
-      {etapa === 'rascunho' && (
-        <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-carvao-100 dark:bg-carvao-850 dark:ring-carvao-700">
-          <h2 className="font-display text-2xl font-bold text-carvao-800 dark:text-areia-100">
-            Monte o cardápio
-          </h2>
-          <p className="mt-1.5 text-sm text-carvao-500 dark:text-carvao-400">
-            Defina os pratos da semana para a cozinha revisar e a lista de compras ser gerada automaticamente.
-          </p>
-          {podeEditar && (
-            <button
-              onClick={() => irPara('cardapio')}
-              className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-700 py-3.5 text-sm font-bold text-white transition hover:bg-brand-800 active:scale-[0.98] dark:bg-brand-600 dark:hover:bg-brand-700"
-            >
-              Montar cardápio
-              <Icone nome="proximo" tam={16} />
-            </button>
-          )}
-        </div>
-      )}
+      {/* Progresso da semana */}
+      <EtapaProgress etapa={etapa} />
 
-      {/* ── COZINHA ──────────────────────────────────────── */}
-      {etapa === 'cozinha' && (
-        <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-carvao-100 dark:bg-carvao-850 dark:ring-carvao-700">
-          <div className="mb-4 flex items-center gap-2">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-ouro-500" />
-            <span className="text-xs font-bold uppercase tracking-widest text-ouro-600 dark:text-ouro-400">
-              Com a cozinha
-            </span>
-          </div>
-          <div className="space-y-2.5">
-            {estado.dias.slice(0, 5).map((d, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <span className="w-8 shrink-0 text-xs font-bold text-carvao-400">{DIAS_PT[i]}</span>
-                <span
-                  className={`text-sm ${
-                    d.principal
-                      ? 'text-carvao-700 dark:text-areia-100'
-                      : 'text-carvao-300 dark:text-carvao-600'
-                  }`}
-                >
-                  {d.principal || '—'}
-                </span>
-              </div>
-            ))}
-          </div>
-          <button
-            onClick={() => irPara('cardapio')}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-700 py-3.5 text-sm font-bold text-white transition hover:bg-brand-800 active:scale-[0.98] dark:bg-brand-600 dark:hover:bg-brand-700"
-          >
-            {papel === 'cozinha' ? 'Revisar cardápio' : 'Ver cardápio'}
-            <Icone nome="proximo" tam={16} />
-          </button>
-        </div>
-      )}
+      {/* Conteúdo contextual — um objetivo por vez */}
+      <div className="space-y-6">
 
-      {/* ── COMPRAS ──────────────────────────────────────── */}
-      {etapa === 'compras' && (
-        <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-carvao-100 dark:bg-carvao-850 dark:ring-carvao-700">
-          <h2 className="font-display text-2xl font-bold text-carvao-800 dark:text-areia-100">
-            Lista de compras
-          </h2>
-          <div className="mt-4">
+        {/* ── RASCUNHO ──────────────────────────────────── */}
+        {etapa === 'rascunho' && (
+          <>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-carvao-400">Próximo passo</p>
+              <h2 className="mt-2 font-display text-3xl font-bold text-carvao-900 dark:text-white">
+                Monte o cardápio
+              </h2>
+              <p className="mt-2 text-base leading-relaxed text-carvao-500 dark:text-carvao-400">
+                Defina os pratos da semana. A lista de compras será gerada automaticamente.
+              </p>
+            </div>
+            {podeEditar && (
+              <BotaoPrimario onClick={() => irPara('cardapio')}>
+                Montar cardápio <Icone nome="proximo" tam={15} />
+              </BotaoPrimario>
+            )}
+          </>
+        )}
+
+        {/* ── COZINHA ───────────────────────────────────── */}
+        {etapa === 'cozinha' && (
+          <>
+            <div>
+              <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-ouro-600 dark:text-ouro-400">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-ouro-500" />
+                Com a cozinha
+              </p>
+              <h2 className="mt-2 font-display text-3xl font-bold text-carvao-900 dark:text-white">
+                Aguardando revisão
+              </h2>
+            </div>
+            <div className="space-y-0 divide-y divide-carvao-100 dark:divide-carvao-800">
+              {estado.dias.slice(0, 5).map((d, i) => (
+                <div key={i} className="flex items-center gap-4 py-3">
+                  <span className="w-8 shrink-0 text-xs font-bold text-carvao-400">{DIAS_PT[i]}</span>
+                  <span className={`text-sm ${d.principal ? 'font-medium text-carvao-800 dark:text-areia-100' : 'text-carvao-300 dark:text-carvao-700'}`}>
+                    {d.principal || '—'}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <BotaoPrimario onClick={() => irPara('cardapio')}>
+              {papel === 'cozinha' ? 'Revisar cardápio' : 'Ver cardápio'} <Icone nome="proximo" tam={15} />
+            </BotaoPrimario>
+          </>
+        )}
+
+        {/* ── COMPRAS ───────────────────────────────────── */}
+        {etapa === 'compras' && (
+          <>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-carvao-400">Em andamento</p>
+              <h2 className="mt-2 font-display text-3xl font-bold text-carvao-900 dark:text-white">
+                Lista de compras
+              </h2>
+            </div>
             <BarraProgresso
               valor={resumo.itensComprados}
               total={resumo.itensTotal}
               rotulo="itens comprados"
             />
-          </div>
-          <button
-            onClick={() => irPara('compras')}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-700 py-3.5 text-sm font-bold text-white transition hover:bg-brand-800 active:scale-[0.98] dark:bg-brand-600 dark:hover:bg-brand-700"
-          >
-            Ver lista completa
-            <Icone nome="proximo" tam={16} />
-          </button>
-        </div>
-      )}
+            <BotaoPrimario onClick={() => irPara('compras')}>
+              Continuar compras <Icone nome="proximo" tam={15} />
+            </BotaoPrimario>
+          </>
+        )}
 
-      {/* ── RECEBIMENTO ──────────────────────────────────── */}
-      {etapa === 'recebimento' && (
-        <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-carvao-100 dark:bg-carvao-850 dark:ring-carvao-700">
-          <h2 className="font-display text-2xl font-bold text-carvao-800 dark:text-areia-100">
-            Conferir recebimento
-          </h2>
-          <div className="mt-4">
+        {/* ── RECEBIMENTO ───────────────────────────────── */}
+        {etapa === 'recebimento' && (
+          <>
+            <div>
+              <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-ouro-600 dark:text-ouro-400">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-ouro-500" />
+                Aguardando entrega
+              </p>
+              <h2 className="mt-2 font-display text-3xl font-bold text-carvao-900 dark:text-white">
+                Conferir recebimento
+              </h2>
+            </div>
             <BarraProgresso
               valor={resumo.itensRecebidos}
               total={resumo.itensTotal}
               rotulo="itens recebidos"
             />
-          </div>
-          <button
-            onClick={() => irPara('compras')}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-700 py-3.5 text-sm font-bold text-white transition hover:bg-brand-800 active:scale-[0.98] dark:bg-brand-600 dark:hover:bg-brand-700"
-          >
-            Conferir na lista
-            <Icone nome="proximo" tam={16} />
-          </button>
-        </div>
-      )}
+            <BotaoPrimario onClick={() => irPara('compras')}>
+              Conferir na lista <Icone nome="proximo" tam={15} />
+            </BotaoPrimario>
+          </>
+        )}
 
-      {/* ── CONCLUÍDO ────────────────────────────────────── */}
-      {etapa === 'concluido' && (
-        <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-carvao-100 dark:bg-carvao-850 dark:ring-carvao-700">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/40">
-              <Icone nome="check" tam={16} className="text-brand-700 dark:text-brand-300" />
+        {/* ── CONCLUÍDO ─────────────────────────────────── */}
+        {etapa === 'concluido' && (
+          <>
+            <div>
+              <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">
+                <Icone nome="check" tam={12} />
+                Semana concluída
+              </p>
+              <h2 className="mt-2 font-display text-3xl font-bold text-carvao-900 dark:text-white">
+                Tudo certo
+              </h2>
             </div>
-            <h2 className="font-display text-2xl font-bold text-brand-700 dark:text-brand-300">
-              Semana concluída
-            </h2>
-          </div>
-          <div className="mt-5 grid grid-cols-3 gap-3">
-            <NumeroDestaque
-              valor={String(resumo.refeicoesReais || resumo.refeicoesPrevistas || '—')}
-              rotulo="refeições"
-            />
-            <NumeroDestaque
-              valor={
-                resumo.custoRefReal
-                  ? formatarReais(resumo.custoRefReal)
-                  : resumo.custoRefEstimado
-                  ? formatarReais(resumo.custoRefEstimado)
-                  : '—'
-              }
-              rotulo="por refeição"
-            />
-            <NumeroDestaque
-              valor={media !== null ? `${media.toFixed(1)}★` : '—'}
-              rotulo="aceitação"
-            />
-          </div>
-          <button
-            onClick={() => irPara('cardapio')}
-            className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl border border-brand-200 bg-brand-50 py-3 text-sm font-bold text-brand-700 transition hover:bg-brand-100 active:scale-[0.98] dark:border-brand-700 dark:bg-brand-900/30 dark:text-brand-300"
-          >
-            Avaliar pratos e registrar sobras
-            <Icone nome="proximo" tam={16} />
-          </button>
-        </div>
-      )}
+            <div className="grid grid-cols-3 divide-x divide-carvao-100 dark:divide-carvao-800">
+              <div className="pr-6">
+                <p className="font-display text-2xl font-bold text-carvao-900 dark:text-white">
+                  {resumo.refeicoesReais || resumo.refeicoesPrevistas || '—'}
+                </p>
+                <p className="mt-0.5 text-xs text-carvao-400">refeições</p>
+              </div>
+              <div className="px-6">
+                <p className="font-display text-2xl font-bold text-carvao-900 dark:text-white">
+                  {resumo.custoRefReal
+                    ? formatarReais(resumo.custoRefReal)
+                    : resumo.custoRefEstimado
+                    ? formatarReais(resumo.custoRefEstimado)
+                    : '—'}
+                </p>
+                <p className="mt-0.5 text-xs text-carvao-400">por refeição</p>
+              </div>
+              <div className="pl-6">
+                <p className="font-display text-2xl font-bold text-carvao-900 dark:text-white">
+                  {media !== null ? `${media.toFixed(1)}★` : '—'}
+                </p>
+                <p className="mt-0.5 text-xs text-carvao-400">aceitação</p>
+              </div>
+            </div>
+            <BotaoSecundario onClick={() => irPara('cardapio')}>
+              Avaliar pratos e registrar sobras <Icone nome="proximo" tam={15} />
+            </BotaoSecundario>
+          </>
+        )}
+      </div>
 
-      {/* Números-chave (etapas intermediárias) */}
+      {/* Números de apoio — etapas intermediárias */}
       {(etapa === 'cozinha' || etapa === 'compras' || etapa === 'recebimento') &&
         (resumo.refeicoesPrevistas > 0 || resumo.custoRefEstimado) && (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 divide-x divide-carvao-100 border-t border-carvao-100 pt-8 dark:divide-carvao-800 dark:border-carvao-800">
             {resumo.refeicoesPrevistas > 0 && (
-              <NumeroDestaque
-                valor={String(resumo.refeicoesPrevistas)}
-                rotulo="refeições previstas"
-              />
-            )}
-            {resumo.custoRefEstimado ? (
-              <NumeroDestaque
-                valor={formatarReais(resumo.custoRefEstimado)}
-                rotulo="estimado / refeição"
-              />
-            ) : (
-              <div className="rounded-2xl bg-carvao-50 p-4 text-center dark:bg-carvao-800">
-                <p className="text-sm text-carvao-400">Lance preços para ver o custo estimado</p>
+              <div className="pr-6">
+                <p className="font-display text-2xl font-bold text-carvao-900 dark:text-white">
+                  {resumo.refeicoesPrevistas}
+                </p>
+                <p className="mt-0.5 text-xs text-carvao-400">refeições previstas</p>
               </div>
             )}
+            <div className={resumo.refeicoesPrevistas > 0 ? 'pl-6' : ''}>
+              {resumo.custoRefEstimado ? (
+                <>
+                  <p className="font-display text-2xl font-bold text-carvao-900 dark:text-white">
+                    {formatarReais(resumo.custoRefEstimado)}
+                  </p>
+                  <p className="mt-0.5 text-xs text-carvao-400">estimado / refeição</p>
+                </>
+              ) : (
+                <p className="text-sm text-carvao-400">Lance preços para ver o custo estimado</p>
+              )}
+            </div>
           </div>
         )}
     </div>
