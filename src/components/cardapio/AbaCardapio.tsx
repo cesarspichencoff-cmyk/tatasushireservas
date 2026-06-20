@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Botao, Cartao, Pilula, Stepper } from '@/components/cardapio/ui';
+import { useMemo, useState } from 'react';
+import { Botao, Cartao, Pilula, Stepper } from '@/components/ui';
 import { Icone } from '@/components/Icones';
 import {
   DADOS,
@@ -10,8 +10,8 @@ import {
   proteinaDoPrato,
   ROTULO_PROTEINA,
   sugerirSemana,
-  sugerirSemanaHistorica,
   sugerirSemanaCriativa,
+  sugerirSemanaHistorica,
   temHistoricoExato,
   validarSemana,
   listaDoDia,
@@ -20,22 +20,24 @@ import {
   normalizar,
 } from '@/lib/cardapio/motor';
 import { custoTipado, resolverPreco } from '@/lib/cardapio/precos';
-import { RECEITAS_POR_CATEGORIA } from '@/lib/cardapio/receitas';
+import { RECEITAS_POR_CATEGORIA, GUARNICOES_FIXAS } from '@/lib/cardapio/receitas';
 import { useEstimativas } from '@/lib/cardapio/estimativas';
+import { useAceitacao, semanasComConteudo, lerSemana } from '@/lib/cardapio/estado';
 import type { DiaCardapio, EstadoSemana, Proteina } from '@/lib/cardapio/tipos';
 import { SeletorPrato } from './SeletorPrato';
 import { OperacaoDia } from './OperacaoDia';
 import { ChefIA } from './ChefIA';
 import { PrevisaoPresenca } from './PrevisaoPresenca';
 import { ComoFazer } from './ComoFazer';
+import { NutricaoPrato } from './NutricaoPrato';
 import { AntiMonotonia } from './AntiMonotonia';
 import { TermometroAlmoco } from './TermometroAlmoco';
 import { IndicadorNutricional } from './IndicadorNutricional';
 
-/** Junta pratos com receita (primeiro) e as opções históricas, sem repetir. */
-function mesclarOpcoes(receitas: string[], base: string[]): string[] {
-  const vistos = new Set(receitas.map((r) => normalizar(r)));
-  return [...receitas, ...base.filter((o) => !vistos.has(normalizar(o)))];
+/** Mescla receitas da biblioteca com histórico do dados.json, sem duplicatas. */
+function mesclarOpcoes(receitas: string[], historico: string[]): string[] {
+  const vistos = new Set(receitas.map(normalizar));
+  return [...receitas, ...historico.filter((o) => !vistos.has(normalizar(o)))];
 }
 
 const OPC_PRINCIPAIS = mesclarOpcoes(RECEITAS_POR_CATEGORIA.principal, DADOS.listas.principais);
@@ -88,9 +90,25 @@ export function AbaCardapio({
   definirPreco?: (itemNorm: string, valor: number | null) => void;
 }) {
   const { estimativas, gerarEstimativas } = useEstimativas();
+  const { aceitacao } = useAceitacao();
   const [opDia, setOpDia] = useState(false);
-  const avisos = validarSemana(estado.dias);
+  const avisos = validarSemana(estado.dias, precos);
   const temPrecos = Object.keys(precos).length > 0;
+
+  // Frequência de uso dos pratos nas últimas 4 semanas — alimenta a IA para
+  // evitar repetir na geração automática (anti-monotonia entre semanas).
+  const frequencia = useMemo(() => {
+    const cont: Record<string, number> = {};
+    for (const sid of semanasComConteudo().slice(-4)) {
+      lerSemana(sid).dias.forEach((d) => {
+        if (d.principal) {
+          const k = normalizar(d.principal);
+          cont[k] = (cont[k] ?? 0) + 1;
+        }
+      });
+    }
+    return cont;
+  }, []);
 
   const setDia = (i: number, patch: Partial<DiaCardapio>) =>
     atualizar((e) => ({
@@ -100,14 +118,13 @@ export function AbaCardapio({
 
   const gerar = (modo: 'historica' | 'economica' | 'criativa') => {
     const fn =
-      modo === 'criativa'
-        ? sugerirSemanaCriativa
-        : modo === 'historica'
-          ? sugerirSemanaHistorica
-          : sugerirSemana;
+      modo === 'historica' ? sugerirSemanaHistorica
+      : modo === 'criativa' ? sugerirSemanaCriativa
+      : sugerirSemana;
     const sugestao = fn(
       estado.dias.map((d) => d.pessoas),
       precos,
+      { aceitacao, frequencia },
     );
     if (sugestao) atualizar((e) => ({ ...e, dias: sugestao }));
   };
@@ -115,7 +132,7 @@ export function AbaCardapio({
   const custoSemana = estado.dias.reduce(
     (acc, d) => {
       if (!d.principal) return acc;
-      const itens = listaDoDia(d).map((s) => ({ norm: normalizar(s.item), qtd: s.qtd }));
+      const itens = listaDoDia(d).map((s) => ({ norm: normalizar(s.item), qtd: s.qtd, unid: s.unid }));
       const c = custoTipado(itens, precos, estimativas);
       return {
         total: acc.total + c.total,
@@ -147,6 +164,7 @@ export function AbaCardapio({
     const todos = new Set<string>();
     estado.dias.forEach((d) => {
       if (!d.principal) return;
+      // usa listaDoDia para que semPreco/normsSemana reflitam a mesma base do custo
       listaDoDia(d).forEach((s) => {
         const norm = normalizar(s.item);
         todos.add(norm);
@@ -280,7 +298,7 @@ export function AbaCardapio({
         {estado.dias.map((dia, i) => {
           const lista = dia.principal ? listaDoDia(dia) : [];
           const custo = custoTipado(
-            lista.map((s) => ({ norm: normalizar(s.item), qtd: s.qtd })),
+            lista.map((s) => ({ norm: normalizar(s.item), qtd: s.qtd, unid: s.unid })),
             precos,
             estimativas,
           );
@@ -318,7 +336,7 @@ export function AbaCardapio({
                 <SeletorPrato
                   rotulo="Guarnição fixa"
                   valor={dia.guarnicaoFixa}
-                  opcoes={DADOS.listas.guarnicoesFixas}
+                  opcoes={GUARNICOES_FIXAS}
                   aoEscolher={(v) => setDia(i, { guarnicaoFixa: v })}
                   desabilitado={!podeEditar}
                 />
@@ -348,15 +366,15 @@ export function AbaCardapio({
               {dia.principal && (
                 <>
                   <p className="text-xs text-carvao-400">
-                    {fonte === 'receita' ? (
-                      <span className="font-semibold text-brand-600">● Receita cadastrada</span>
+                    {fonte === 'combo' ? (
+                      <span className="font-semibold text-brand-600">● Histórico operacional</span>
+                    ) : fonte === 'mapa' ? (
+                      <span className="font-semibold text-brand-600">● Histórico por componente</span>
+                    ) : fonte === 'receita' ? (
+                      <span className="font-semibold text-[#9a6c17] dark:text-[#e3b45c]">○ Receita (sem histórico)</span>
                     ) : fonte === 'estimado' ? (
                       <span className="font-semibold text-[#b04c41]">▲ Ingredientes estimados</span>
-                    ) : temHistoricoExato(dia) ? (
-                      <span className="font-semibold text-brand-600">● Combinação já usada antes</span>
-                    ) : (
-                      <span>○ Combinação nova — lista por componente</span>
-                    )}
+                    ) : null}
                     {' · '}
                     {lista.length} itens de compra
                     {custo.total > 0 && <> · ≈ {formatarReais(custo.total)}</>}
@@ -376,6 +394,8 @@ export function AbaCardapio({
                   <div>
                     <ComoFazer prato={dia.principal} />
                   </div>
+                  {/* Nutrição por prato — visão principal (item 1) */}
+                  <NutricaoPrato prato={dia.principal} />
                 </>
               )}
             </Cartao>
@@ -402,7 +422,8 @@ export function AbaCardapio({
         </label>
         {!temPrecos && (
           <p className="text-xs text-carvao-400">
-            Cole a cotação da semana na aba <strong>Cotação</strong> para ver o custo estimado e otimizar a sugestão.
+            Cole a cotação da semana em <strong>Ajustes → Catálogo de preços</strong> ou edite item a item em{' '}
+            <strong>Compras → Preços</strong> para ver o custo estimado e otimizar a sugestão.
           </p>
         )}
         {temPrecos && semPreco.length > 0 && (
@@ -445,13 +466,14 @@ export function AbaCardapio({
                 </span>
               ))}
               {semPreco.length > 16 && (
-                <span className="self-center text-[11px] text-carvao-400">+{semPreco.length - 16} na aba Preços</span>
+                <span className="self-center text-[11px] text-carvao-400">+{semPreco.length - 16} em Compras → Preços</span>
               )}
             </div>
           </div>
         )}
         <p className="text-xs text-carvao-400">
-          <strong>Cardápio Antigo</strong>: combos mais repetidos do histórico real (occ ≥ 2). <strong>Sugerir</strong>: combinações que a equipe já aprovou no histórico. <strong>Nova</strong>: inventa combinações inéditas com a distribuição da casa e, com a cotação aplicada, puxa para as proteínas mais baratas.
+          <strong>Sugerir</strong>: combinações que a equipe já aprovou no histórico. <strong>Nova</strong>: inventa
+          combinações inéditas com a distribuição da casa e, com a cotação aplicada, puxa para as proteínas mais baratas.
         </p>
       </Cartao>
     </div>
