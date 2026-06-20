@@ -50,6 +50,45 @@ function promptParaModo(modo: ModoIA, tarefa: string, dossie: DossieIA): string 
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* Extração estruturada de conversas                                    */
+/* ------------------------------------------------------------------ */
+
+const SYSTEM_RESTRICOES = `Analise esta conversa e extraia restrições alimentares de funcionários.
+Retorne SOMENTE JSON (array, mesmo que vazio):
+[{ "nome": "Nome", "setor": "setor ou null", "turno": "almoco|jantar|ambos",
+   "restricoes": [{ "tipo": "alergia|preferencia|religioso", "alimento": "alimento", "obs": "obs ou null" }] }]
+Tipos: alergia=médica/intolerância, preferencia=pessoal/não gosta, religioso=halal/kosher/crença.
+Turno padrão: "almoco". Retorne [] se nada encontrado. Não invente.`;
+
+export async function extrairRestricoesDaConversa(
+  texto: string,
+): Promise<{ nome: string; setor: string | null; turno: string; restricoes: { tipo: string; alimento: string; obs: string | null }[] }[]> {
+  const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+  if (!apiKey) return [];
+  try {
+    const res = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: SYSTEM_RESTRICOES }] },
+          contents: [{ parts: [{ text: texto }] }],
+          generationConfig: { maxOutputTokens: 2000, responseMimeType: 'application/json', thinkingConfig: { thinkingBudget: 0 } },
+        }),
+      },
+    );
+    if (!res.ok) return [];
+    const json = await res.json();
+    const txt: string = json.candidates?.[0]?.content?.parts?.[0]?.text ?? '[]';
+    const data = JSON.parse(txt);
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
 /** Extrai o primeiro objeto JSON de um texto (LLMs às vezes envolvem em prosa). */
 function extrairJson(texto: string): RespostaIA {
   const match = texto.match(/\{[\s\S]*\}/);

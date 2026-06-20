@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Botao, Cartao } from '@/components/ui';
-import { agruparCotacao, parsearCotacao } from '@/lib/cardapio/cotacao';
+import { agruparCotacao, extrairRemetenteWhatsApp, parsearCotacao } from '@/lib/cardapio/cotacao';
 import type { LinhaCotacao } from '@/lib/cardapio/cotacao';
 import { DADOS, formatarReais, normalizar } from '@/lib/cardapio/motor';
 
@@ -30,6 +30,7 @@ export function AbaCotacao({
   const [unidades, setUnidades] = useState<Record<number, string>>({});
   const [cadastrados, setCadastrados] = useState<Set<number>>(new Set());
   const [aplicado, setAplicado] = useState(0);
+  const [fornecedorNome, setFornecedorNome] = useState('');
 
   useEffect(() => {
     try {
@@ -50,6 +51,8 @@ export function AbaCotacao({
     setUnidades({});
     setCadastrados(new Set());
     setAplicado(0);
+    const detectado = extrairRemetenteWhatsApp(texto);
+    if (detectado && !fornecedorNome) setFornecedorNome(detectado);
   };
 
   const { casados, soltos } = useMemo(
@@ -62,7 +65,7 @@ export function AbaCotacao({
   const aplicar = () => {
     selecionados.forEach((c) => {
       definirPreco(normalizar(c.item), c.preco, c.item);
-      definirFornecedor?.(normalizar(c.item), c.marca);
+      definirFornecedor?.(normalizar(c.item), fornecedorNome || c.marca);
     });
     setAplicado(selecionados.length);
   };
@@ -72,7 +75,7 @@ export function AbaCotacao({
     const unid = unidades[idx] ?? s.unid ?? 'kg';
     cadastrarItem?.(norm, s.nome, unid);
     definirPreco(norm, s.preco, s.nome);
-    definirFornecedor?.(norm, s.marca);
+    definirFornecedor?.(norm, fornecedorNome || s.marca);
     setCadastrados((c) => new Set(c).add(idx));
   };
 
@@ -147,6 +150,17 @@ export function AbaCotacao({
           placeholder={'Ex.:\n7,00 Frango inteiro RF\nAcém Resf - Ribeiro *31,90*\nTiras de carnes\t\tR$ 43,00\nALHO KG 29,80'}
           className="w-full rounded-2xl border border-carvao-200 bg-white px-4 py-3 font-mono text-xs leading-relaxed dark:border-carvao-600 dark:bg-carvao-900"
         />
+        <div>
+          <label className="mb-1 block text-[11px] font-bold uppercase tracking-widest text-carvao-400">
+            Fornecedor (detectado ou informe)
+          </label>
+          <input
+            value={fornecedorNome}
+            onChange={(e) => setFornecedorNome(e.target.value)}
+            placeholder="Nome do fornecedor (ex: Distribuidora XYZ)"
+            className="w-full rounded-2xl border border-carvao-200 bg-white px-4 py-2.5 text-sm dark:border-carvao-600 dark:bg-carvao-900"
+          />
+        </div>
         <Botao variante="primario" className="w-full" disabled={!texto.trim()} onClick={ler}>
           🔍 Ler cotação
         </Botao>

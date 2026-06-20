@@ -174,6 +174,23 @@ export function parsearCotacao(texto: string): LinhaCotacao[] {
   return linhas;
 }
 
+/**
+ * Extrai o remetente mais frequente de uma conversa exportada do WhatsApp.
+ * Útil para detectar o nome do fornecedor automaticamente quando o usuário
+ * cola uma cotação recebida pelo WhatsApp.
+ */
+export function extrairRemetenteWhatsApp(texto: string): string | null {
+  const re = /^\[[^\]]+\]\s*([^:\n]+):/gm;
+  const freq: Record<string, number> = {};
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(texto)) !== null) {
+    const nome = m[1].trim();
+    if (nome) freq[nome] = (freq[nome] ?? 0) + 1;
+  }
+  if (!Object.keys(freq).length) return null;
+  return Object.entries(freq).sort(([, a], [, b]) => b - a)[0]?.[0] ?? null;
+}
+
 /* ----------------- agregação: menor preço por item -------------------- */
 
 const unidadeDoItem = new Map<string, string>();

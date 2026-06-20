@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Botao, Cartao, Modal, estiloInput, estiloRotulo } from '@/components/ui';
 import { Icone } from '@/components/Icones';
 import { normalizar } from '@/lib/cardapio/motor';
+import { extrairRestricoesDaConversa } from '@/lib/cardapio/ia-cliente';
 import type { DiaCardapio, Funcionario, RestricaoAlimentar, TipoRestricao, TurnoFuncionario } from '@/lib/cardapio/tipos';
 
 const TURNO_ROTULO: Record<TurnoFuncionario, string> = {
@@ -229,6 +230,45 @@ export function AbaFuncionarios({
   const [modalAberto, setModalAberto] = useState(false);
   const [editando, setEditando] = useState<Funcionario | null>(null);
   const [confirmRemover, setConfirmRemover] = useState<string | null>(null);
+  const [importAberto, setImportAberto] = useState(false);
+  const [textoConversa, setTextoConversa] = useState('');
+  const [extraindo, setExtraindo] = useState(false);
+  const [extraidos, setExtraidos] = useState<{ nome: string; setor: string | null; turno: string; restricoes: { tipo: string; alimento: string; obs: string | null }[] }[]>([]);
+  const [importadosIdx, setImportadosIdx] = useState<Set<number>>(new Set());
+
+  const TURNOS_VALIDOS: TurnoFuncionario[] = ['almoco', 'jantar', 'ambos'];
+  const TIPOS_VALIDOS: TipoRestricao[] = ['alergia', 'preferencia', 'religioso'];
+
+  const extrairDaConversa = async () => {
+    if (!textoConversa.trim()) return;
+    setExtraindo(true);
+    setExtraidos([]);
+    setImportadosIdx(new Set());
+    const resultado = await extrairRestricoesDaConversa(textoConversa);
+    setExtraidos(resultado);
+    setExtraindo(false);
+  };
+
+  const importarExtraido = (idx: number) => {
+    const e = extraidos[idx];
+    if (!e || importadosIdx.has(idx)) return;
+    const turno: TurnoFuncionario = TURNOS_VALIDOS.includes(e.turno as TurnoFuncionario)
+      ? (e.turno as TurnoFuncionario)
+      : 'almoco';
+    const restricoes: RestricaoAlimentar[] = e.restricoes
+      .filter((r) => TIPOS_VALIDOS.includes(r.tipo as TipoRestricao))
+      .map((r) => ({
+        tipo: r.tipo as TipoRestricao,
+        alimento: r.alimento,
+        ...(r.obs ? { obs: r.obs } : {}),
+      }));
+    onSalvar({ nome: e.nome, setor: e.setor ?? '', turno, restricoes, ativo: true });
+    setImportadosIdx((prev) => new Set(prev).add(idx));
+  };
+
+  const importarTodos = () => {
+    extraidos.forEach((_, idx) => importarExtraido(idx));
+  };
 
   const conflitos = detectarConflitos(funcionarios, dias);
   const ativos = funcionarios.filter((f) => f.ativo);
@@ -308,9 +348,114 @@ export function AbaFuncionarios({
         </div>
       </div>
 
-      <Botao onClick={() => { setEditando(null); setModalAberto(true); }} className="w-full">
-        <Icone nome="somar" tam={18} /> Adicionar funcionário
-      </Botao>
+      <div className="flex gap-2">
+        <Botao onClick={() => { setEditando(null); setModalAberto(true); }} className="flex-1">
+          <Icone nome="somar" tam={18} /> Adicionar funcionário
+        </Botao>
+        <button
+          onClick={() => setImportAberto((v) => !v)}
+          className="flex items-center gap-1.5 rounded-2xl border border-carvao-200 px-3 py-2.5 text-sm font-semibold text-carvao-500 transition hover:border-brand-400 hover:text-brand-600 dark:border-carvao-600 dark:text-carvao-400"
+          title="Importar restrições a partir de conversa"
+        >
+          <span className="text-base">💬</span>
+          <span className="hidden sm:inline">Importar da conversa</span>
+        </button>
+      </div>
+
+      {importAberto && (
+        <Cartao className="space-y-3">
+          <p className="text-sm font-bold text-carvao-700 dark:text-areia-100">
+            💬 Importar restrições via conversa
+          </p>
+          <p className="text-xs text-carvao-400">
+            Cole abaixo uma conversa do WhatsApp (ou qualquer texto) onde restrições alimentares de funcionários são mencionadas. O Gemini extrai os nomes e restrições automaticamente.
+          </p>
+          {!process.env.NEXT_PUBLIC_GEMINI_API_KEY && (
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-800/40 dark:bg-amber-950/30 dark:text-amber-300">
+              ⚠️ Configure <code>NEXT_PUBLIC_GEMINI_API_KEY</code> para habilitar a extração por IA.
+            </p>
+          )}
+          <textarea
+            rows={6}
+            value={textoConversa}
+            onChange={(e) => setTextoConversa(e.target.value)}
+            placeholder={'Ex.:\nJoão não come frango por questão religiosa\nMaria tem alergia a glúten (celíaca)\n[12/05] Carlos: O Pedro evita carne de porco\nAna Silva - intolerante à lactose'}
+            className="w-full rounded-2xl border border-carvao-200 bg-white px-4 py-3 text-xs leading-relaxed dark:border-carvao-600 dark:bg-carvao-900"
+          />
+          <Botao
+            onClick={extrairDaConversa}
+            disabled={extraindo || !textoConversa.trim()}
+            className="w-full"
+          >
+            {extraindo ? (
+              <span className="flex items-center gap-2">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Extraindo…
+              </span>
+            ) : (
+              '✨ Extrair com IA'
+            )}
+          </Botao>
+
+          {extraidos.length === 0 && !extraindo && textoConversa.trim() && (
+            <p className="text-center text-xs text-carvao-400">
+              Nenhuma restrição encontrada. Tente incluir mais contexto na conversa.
+            </p>
+          )}
+
+          {extraidos.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold text-carvao-500">
+                  {extraidos.length} funcionário(s) encontrado(s)
+                </p>
+                <button
+                  onClick={importarTodos}
+                  className="rounded-full bg-brand-600 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-brand-700"
+                >
+                  Importar todos
+                </button>
+              </div>
+              {extraidos.map((e, idx) => {
+                const feito = importadosIdx.has(idx);
+                return (
+                  <div
+                    key={idx}
+                    className={`flex items-start gap-3 rounded-2xl border px-3 py-2.5 ${feito ? 'border-brand-200 bg-brand-50 dark:border-brand-800/40 dark:bg-brand-950/20' : 'border-carvao-100 dark:border-carvao-700'}`}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-carvao-800 dark:text-areia-100">
+                        {e.nome}
+                        {e.setor && <span className="ml-1.5 text-xs font-normal text-carvao-400">[{e.setor}]</span>}
+                      </p>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {e.restricoes.map((r, ri) => (
+                          <span key={ri} className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${RESTRICAO_COR[r.tipo as TipoRestricao] ?? 'bg-carvao-100 text-carvao-600'}`}>
+                            {RESTRICAO_EMOJI[r.tipo as TipoRestricao] ?? '🚫'} {r.alimento}
+                          </span>
+                        ))}
+                        {e.restricoes.length === 0 && (
+                          <span className="text-xs text-carvao-400">sem restrições identificadas</span>
+                        )}
+                      </div>
+                    </div>
+                    {feito ? (
+                      <span className="shrink-0 text-xs font-bold text-brand-600">✓ Importado</span>
+                    ) : (
+                      <button
+                        onClick={() => importarExtraido(idx)}
+                        className="shrink-0 rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-bold text-brand-700 hover:bg-brand-100 dark:bg-carvao-700 dark:text-brand-300"
+                      >
+                        Adicionar
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Cartao>
+      )}
 
       {funcionarios.length === 0 && (
         <div className="rounded-2xl bg-carvao-50 py-10 text-center dark:bg-carvao-800/50">

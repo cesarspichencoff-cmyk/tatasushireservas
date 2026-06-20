@@ -660,6 +660,10 @@ export default function PaginaCardapios() {
                     onAplicarPrecos={(itens) => {
                       itens.forEach(({ norm, valor, nome }) => definirPreco(norm, valor, nome));
                     }}
+                    onRegistrarFornecedor={(nome, cnpj, itens) => {
+                      salvarPerfilFornecedor(nome, { obs: cnpj ? `CNPJ: ${cnpj}` : undefined });
+                      itens?.forEach((i) => definirFornecedor(i.norm, nome));
+                    }}
                   />
                 )}
 

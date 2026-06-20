@@ -25,9 +25,11 @@ function alerteVariacao(item: string, precoNovo: number, precos: Record<string, 
 export function AbaNF({
   precos,
   onAplicarPrecos,
+  onRegistrarFornecedor,
 }: {
   precos: Record<string, number>;
   onAplicarPrecos: (itens: { norm: string; valor: number; nome: string }[]) => void;
+  onRegistrarFornecedor?: (nome: string, cnpj?: string, itens?: { norm: string; nome: string }[]) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -93,6 +95,9 @@ export function AbaNF({
       }));
     if (itens.length === 0) return;
     onAplicarPrecos(itens);
+    if (resultado.fornecedor && onRegistrarFornecedor) {
+      onRegistrarFornecedor(resultado.fornecedor, resultado.cnpj, itens);
+    }
     setAplicado(true);
     setTimeout(() => setAplicado(false), 3000);
   };
