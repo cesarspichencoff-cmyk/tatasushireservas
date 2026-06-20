@@ -9,7 +9,7 @@
 
 import { PESSOAS_PADRAO } from './motor';
 import { mediana } from './memoria';
-import type { EstadoSemana, EventoDemanda } from './tipos';
+import type { ContagemRefeicoesDia, EstadoSemana, EventoDemanda } from './tipos';
 
 export interface BandaPrevisao {
   dia: number;
@@ -96,20 +96,45 @@ export function calcularPrevisaoSemana(
 }
 
 /**
- * Extrai contagens históricas por dia da semana de todas as semanas salvas.
+ * Extrai contagens históricas por dia da semana cruzando três fontes:
+ *   1. estado.refeicoes — contagem real registrada na semana (mais confiável)
+ *   2. estado.dias[i].pessoas — headcount planejado (proxy quando não há real)
+ *   3. contagemRefeicoes — registro detalhado almoco/jantar/marmitas por data
+ *
  * Retorna um mapa dia→array de quantidades reais observadas.
  */
 export function extrairHistoricoContagens(
   semanas: { estado: EstadoSemana }[],
+  contagemRefeicoes?: ContagemRefeicoesDia[],
 ): Partial<Record<number, number[]>> {
   const acc: Record<number, number[]> = {};
+
   semanas.forEach(({ estado }) => {
-    Object.entries(estado.refeicoes ?? {}).forEach(([diS, qtd]) => {
-      if (!(qtd > 0)) return;
-      const di = Number(diS);
-      (acc[di] ??= []).push(qtd);
-    });
+    // Fonte 1: refeicoes registradas no estado (campo mais confiável)
+    const temRefeicoes = Object.keys(estado.refeicoes ?? {}).length > 0;
+    if (temRefeicoes) {
+      Object.entries(estado.refeicoes!).forEach(([diS, qtd]) => {
+        if (!(qtd > 0)) return;
+        (acc[Number(diS)] ??= []).push(qtd);
+      });
+    } else {
+      // Fonte 2: pessoas planejadas por dia (quando não há contagem real)
+      estado.dias.forEach((d, di) => {
+        if (d.principal && d.pessoas > 0) (acc[di] ??= []).push(d.pessoas);
+      });
+    }
   });
+
+  // Fonte 3: contagemRefeicoes (registro diário com almoco + jantar + marmitas)
+  contagemRefeicoes?.forEach((c) => {
+    const total = (c.almoco ?? 0) + (c.jantar ?? 0) + (c.marmitas ?? 0);
+    if (!(total > 0)) return;
+    const date = new Date(c.data + 'T12:00:00');
+    const dow = date.getDay(); // 0=dom…6=sab
+    const di = dow === 0 ? 6 : dow - 1; // converte para 0=seg…6=dom
+    (acc[di] ??= []).push(total);
+  });
+
   return acc;
 }
 

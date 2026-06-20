@@ -17,7 +17,7 @@ import {
   type RegistroAprendizado,
   type AjusteAprendido,
 } from './memoria';
-import { calcularDna, type DnaAlimentar } from './dna';
+import { calcularDna, freqBaseDosDados, TOTAL_DIAS_HISTORICO, type DnaAlimentar } from './dna';
 import { montarDossie, type DossieIA } from './dossie';
 import type {
   Aceitacao,
@@ -555,7 +555,21 @@ export function montarDnaAlimentar(): DnaAlimentar {
   const semanas = ids.map((id) => ({ semanaId: id, estado: lerSemana(id) }));
   const aceitacao = lerLocal<Aceitacao>('aceitacao', {});
   const desperdicio = ids.flatMap((id) => lerDesperdicio(id));
-  return calcularDna(semanas, aceitacao, desperdicio);
+
+  // Base histórica: frequência real de cada prato nos anos de operação (dados.json)
+  const freqBase = freqBaseDosDados();
+
+  // Média de pessoas/dia calculada das semanas registradas no app
+  let somaPessoas = 0;
+  let nDiasPessoas = 0;
+  semanas.forEach(({ estado }) => {
+    estado.dias.forEach((d) => {
+      if (d.principal && d.pessoas > 0) { somaPessoas += d.pessoas; nDiasPessoas++; }
+    });
+  });
+  const mediaPessoas = nDiasPessoas > 0 ? Math.round(somaPessoas / nDiasPessoas) : null;
+
+  return calcularDna(semanas, aceitacao, desperdicio, freqBase, TOTAL_DIAS_HISTORICO, mediaPessoas);
 }
 
 /** Hook do DNA alimentar — recalcula no cliente quando monta. */

@@ -2,8 +2,7 @@
 
 import { useMemo } from 'react';
 import { calcularPrevisaoSemana, extrairHistoricoContagens, pessoasPorDia } from '@/lib/cardapio/previsao';
-import { datasDaSemana, lerDesperdicio, lerSemana, semanasComConteudo } from '@/lib/cardapio/estado';
-import { lerEventos } from '@/lib/cardapio/estado';
+import { datasDaSemana, lerContagemRefeicoes, lerSemana, semanasComConteudo, lerEventos } from '@/lib/cardapio/estado';
 
 const DIAS_PT = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
@@ -18,9 +17,11 @@ export function PrevisaoCard({ semanaId, onPessoasAtualizadas }: Props) {
     const semanas = ids
       .filter((id) => id < semanaId)
       .sort()
-      .slice(-12)
+      .slice(-24) // amplia para 24 semanas para capturar mais padrões
       .map((id) => ({ estado: lerSemana(id) }));
-    const hist = extrairHistoricoContagens(semanas);
+    // Incorpora contagens reais (AbaContagem) além das refeições do estado
+    const contagens = lerContagemRefeicoes();
+    const hist = extrairHistoricoContagens(semanas, contagens);
     const eventos = lerEventos();
     const datas = datasDaSemana(semanaId);
     return calcularPrevisaoSemana(semanaId, hist, eventos, datas);

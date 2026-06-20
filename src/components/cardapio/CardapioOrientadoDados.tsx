@@ -4,9 +4,9 @@ import { useMemo } from 'react';
 import { Cartao, EstadoVazio, Kpi, Secao } from '@/components/ui';
 import { calcularCustosSemana } from '@/lib/cardapio/custo-prato';
 import { calcularProjecoes } from '@/lib/cardapio/projecao-precos';
-import { normalizar } from '@/lib/cardapio/motor';
+import { DADOS, normalizar } from '@/lib/cardapio/motor';
+import { rankingHistoricoPrincipais, TOTAL_DIAS_HISTORICO } from '@/lib/cardapio/dna';
 import type { Aceitacao, DiaCardapio, HistoricoPrecos } from '@/lib/cardapio/tipos';
-import { DADOS } from '@/lib/cardapio/motor';
 
 const nomeDe = new Map<string, string>();
 DADOS.itens.forEach((i) => nomeDe.set(normalizar(i.n), i.n));
@@ -121,6 +121,12 @@ export function CardapioOrientadoDados({
   }, [scores, bottom5]);
 
   const totalEconomia = sugestoes.reduce((s, x) => s + x.economiaEstimadaDia, 0);
+
+  // Ranking histórico: top pratos por ocorrência nos dados.json (3 anos)
+  const rankingHistorico = useMemo(
+    () => rankingHistoricoPrincipais(aceitacao, 12),
+    [aceitacao],
+  );
 
   if (custos.length === 0 && alertasAntecipados.length === 0) {
     return (
@@ -256,6 +262,49 @@ export function CardapioOrientadoDados({
             Registre avaliações dos pratos para gerar o ranking de custo-benefício.
           </p>
         </div>
+      )}
+
+      {/* Ranking histórico — pratos mais servidos em toda a operação */}
+      {rankingHistorico.length > 0 && (
+        <Secao titulo={`📊 Mais servidos no histórico — ${TOTAL_DIAS_HISTORICO} dias de operação`}>
+          <Cartao className="!p-0">
+            <ul className="divide-y divide-carvao-100 dark:divide-carvao-700/60">
+              {rankingHistorico.map((p, i) => (
+                <li key={p.norm} className="flex items-center gap-3 px-4 py-3">
+                  <span className="w-5 shrink-0 text-center text-sm font-bold text-carvao-300">
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-carvao-800 dark:text-areia-100">
+                      {p.prato}
+                    </p>
+                    <p className="text-[11px] text-carvao-400">
+                      servido {p.totalServido}× no histórico
+                      {p.nota !== null ? ` · ${p.nota.toFixed(1)}★ aceitação` : ' · sem avaliação ainda'}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {p.nota !== null && (
+                      <span className={`text-sm font-bold ${
+                        p.nota >= 4 ? 'text-brand-600 dark:text-brand-400' :
+                        p.nota >= 3 ? 'text-ouro-600 dark:text-ouro-300' :
+                        'text-[#b04c41] dark:text-[#e89a90]'
+                      }`}>
+                        {p.nota.toFixed(1)}★
+                      </span>
+                    )}
+                    <span className="rounded-full bg-carvao-50 px-2 py-0.5 text-[10px] font-semibold text-carvao-400 dark:bg-carvao-700 dark:text-carvao-300">
+                      {p.totalServido}×
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </Cartao>
+          <p className="mt-2 text-[11px] text-carvao-400 text-center">
+            Frequência de todos os anos de operação registrados · Avaliações acumulam conforme a equipe registra
+          </p>
+        </Secao>
       )}
     </div>
   );
