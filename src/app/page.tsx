@@ -26,6 +26,7 @@ import { AbaSimulador } from '@/components/cardapio/AbaSimulador';
 import { AbaAuditoria } from '@/components/cardapio/AbaAuditoria';
 import { AbaPrecos } from '@/components/cardapio/AbaPrecos';
 import { DnaCard } from '@/components/cardapio/DnaCard';
+import { PrevisaoCard } from '@/components/cardapio/PrevisaoCard';
 import {
   deslocarSemana,
   idSemanaIso,
@@ -663,6 +664,22 @@ export default function PaginaCardapios() {
                 {abaRelatorios === 'central' && (
                   <>
                     <DnaCard />
+                    <PrevisaoCard
+                      semanaId={semanaId}
+                      onPessoasAtualizadas={
+                        podeEditarCardapio
+                          ? (pessoas) => {
+                              atualizar((e) => ({
+                                ...e,
+                                dias: e.dias.map((d, i) =>
+                                  pessoas[i] != null ? { ...d, pessoas: pessoas[i] } : d,
+                                ),
+                              }));
+                              toast('Previsão aplicada às refeições da semana');
+                            }
+                          : undefined
+                      }
+                    />
                     <InteligenciaCard
                       estado={estado}
                       semanaId={semanaId}
