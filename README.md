@@ -165,3 +165,4 @@ src/
 public/
   manifest.webmanifest, sw.js, icons/   # PWA
 ```
+ 
