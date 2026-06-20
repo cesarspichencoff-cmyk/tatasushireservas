@@ -17,18 +17,22 @@ import {
   type RegistroAprendizado,
   type AjusteAprendido,
 } from './memoria';
-import { calcularDna, type DnaAlimentar } from './dna';
+import { calcularDna, freqBaseDosDados, TOTAL_DIAS_HISTORICO, type DnaAlimentar } from './dna';
 import { montarDossie, type DossieIA } from './dossie';
 import type {
   Aceitacao,
+  AvaliacaoFornecedor,
   ChefFeedback,
+  ContagemRefeicoesDia,
   Estoque,
   EventoDemanda,
+  Funcionario,
   HistoricoPrecos,
   ItemEstoque,
   MovEstoque,
   EstadoSemana,
   Papel,
+  PerfilFornecedor,
   RegistroAceitacao,
   RegistroAuditoria,
   RegistroDesperdicio,
@@ -551,7 +555,21 @@ export function montarDnaAlimentar(): DnaAlimentar {
   const semanas = ids.map((id) => ({ semanaId: id, estado: lerSemana(id) }));
   const aceitacao = lerLocal<Aceitacao>('aceitacao', {});
   const desperdicio = ids.flatMap((id) => lerDesperdicio(id));
-  return calcularDna(semanas, aceitacao, desperdicio);
+
+  // Base histórica: frequência real de cada prato nos anos de operação (dados.json)
+  const freqBase = freqBaseDosDados();
+
+  // Média de pessoas/dia calculada das semanas registradas no app
+  let somaPessoas = 0;
+  let nDiasPessoas = 0;
+  semanas.forEach(({ estado }) => {
+    estado.dias.forEach((d) => {
+      if (d.principal && d.pessoas > 0) { somaPessoas += d.pessoas; nDiasPessoas++; }
+    });
+  });
+  const mediaPessoas = nDiasPessoas > 0 ? Math.round(somaPessoas / nDiasPessoas) : null;
+
+  return calcularDna(semanas, aceitacao, desperdicio, freqBase, TOTAL_DIAS_HISTORICO, mediaPessoas);
 }
 
 /** Hook do DNA alimentar — recalcula no cliente quando monta. */
@@ -730,6 +748,230 @@ export function lerEventos(): EventoDemanda[] {
 /** Média de refeições aprendida por dia da semana (0=seg … 6=dom). */
 export function lerMediaRefeicoes(): Record<number, { f: number; n: number }> {
   return lerLocal('mediaRefeicoes', {});
+}
+
+/* =====================================================================
+   Módulo 11 — Ações comprometidas + rastreamento de resultados.
+   ===================================================================== */
+
+import type { AcaoComprometida, ResultadoAcao } from './tipos';
+
+export function useAcoesComprometidas() {
+  const [acoes, setAcoes] = useState<AcaoComprometida[]>([]);
+
+  useEffect(() => {
+    setAcoes(lerLocal<AcaoComprometida[]>('acoesComprometidas', []));
+  }, []);
+
+  const comprometer = useCallback((acao: Omit<AcaoComprometida, 'id' | 'comprometidaEm'>) => {
+    setAcoes((atual) => {
+      const nova: AcaoComprometida = {
+        ...acao,
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        comprometidaEm: new Date().toISOString(),
+      };
+      const novo = [nova, ...atual].slice(0, 200);
+      gravarLocal('acoesComprometidas', novo);
+      return novo;
+    });
+  }, []);
+
+  const registrarResultado = useCallback((id: string, resultado: ResultadoAcao) => {
+    setAcoes((atual) => {
+      const novo = atual.map((a) => (a.id === id ? { ...a, resultado } : a));
+      gravarLocal('acoesComprometidas', novo);
+      return novo;
+    });
+  }, []);
+
+  const acoesAtivas = useCallback(
+    (semanaId: string) => acoes.filter((a) => a.semanaId === semanaId && !a.resultado),
+    [acoes],
+  );
+
+  return { acoes, comprometer, registrarResultado, acoesAtivas };
+}
+
+export function lerAcoesComprometidas(): AcaoComprometida[] {
+  return lerLocal<AcaoComprometida[]>('acoesComprometidas', []);
+}
+
+/* =====================================================================
+   Módulo 12 — Inteligência de substituição.
+   ===================================================================== */
+
+import type { SubstituicaoRegistro } from './tipos';
+
+export function useSubstituicoes() {
+  const [registros, setRegistros] = useState<SubstituicaoRegistro[]>([]);
+
+  useEffect(() => {
+    setRegistros(lerLocal<SubstituicaoRegistro[]>('substituicoes', []));
+  }, []);
+
+  const registrar = useCallback((sub: Omit<SubstituicaoRegistro, 'id' | 'registradoEm'>) => {
+    setRegistros((atual) => {
+      // evita duplicata na mesma semana + dia
+      const existente = atual.find(
+        (r) => r.semanaId === sub.semanaId && r.dia === sub.dia && r.normOriginal === sub.normOriginal,
+      );
+      if (existente) return atual;
+      const novo: SubstituicaoRegistro = {
+        ...sub,
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        registradoEm: new Date().toISOString(),
+      };
+      const lista = [novo, ...atual].slice(0, 1000);
+      gravarLocal('substituicoes', lista);
+      return lista;
+    });
+  }, []);
+
+  const enriquecer = useCallback(
+    (semanaId: string, normSubstituto: string, aceitacao?: number, desperdicio?: number) => {
+      setRegistros((atual) => {
+        const novo = atual.map((r) =>
+          r.semanaId === semanaId && r.normSubstituto === normSubstituto
+            ? {
+                ...r,
+                ...(aceitacao != null ? { aceitacaoSubstituto: aceitacao } : {}),
+                ...(desperdicio != null ? { desperdicioSubstituto: desperdicio } : {}),
+              }
+            : r,
+        );
+        gravarLocal('substituicoes', novo);
+        return novo;
+      });
+    },
+    [],
+  );
+
+  return { registros, registrar, enriquecer };
+}
+
+export function lerSubstituicoes(): SubstituicaoRegistro[] {
+  return lerLocal<SubstituicaoRegistro[]>('substituicoes', []);
+}
+
+/* =====================================================================
+   Módulo: Funcionários e restrições alimentares
+   ===================================================================== */
+
+export function useFuncionarios() {
+  const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
+
+  useEffect(() => {
+    setFuncionarios(lerLocal<Funcionario[]>('funcionarios', []));
+  }, []);
+
+  const salvar = useCallback((f: Omit<Funcionario, 'id' | 'criadoEm'>) => {
+    setFuncionarios((atual) => {
+      const novo: Funcionario = {
+        ...f,
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        criadoEm: new Date().toISOString(),
+      };
+      const lista = [...atual, novo];
+      gravarLocal('funcionarios', lista);
+      registrarAuditoria({ acao: 'cadastrou funcionário', alvo: f.nome });
+      return lista;
+    });
+  }, []);
+
+  const atualizarFuncionario = useCallback((id: string, f: Partial<Funcionario>) => {
+    setFuncionarios((atual) => {
+      const novo = atual.map((x) => (x.id === id ? { ...x, ...f } : x));
+      gravarLocal('funcionarios', novo);
+      return novo;
+    });
+  }, []);
+
+  const removerFuncionario = useCallback((id: string) => {
+    setFuncionarios((atual) => {
+      const f = atual.find((x) => x.id === id);
+      const novo = atual.filter((x) => x.id !== id);
+      gravarLocal('funcionarios', novo);
+      if (f) registrarAuditoria({ acao: 'removeu funcionário', alvo: f.nome });
+      return novo;
+    });
+  }, []);
+
+  return { funcionarios, salvar, atualizarFuncionario, removerFuncionario };
+}
+
+export function lerFuncionarios(): Funcionario[] {
+  return lerLocal<Funcionario[]>('funcionarios', []);
+}
+
+/* =====================================================================
+   Módulo: Contagem de refeições por dia
+   ===================================================================== */
+
+export function useContagemRefeicoes() {
+  const [contagens, setContagens] = useState<ContagemRefeicoesDia[]>([]);
+
+  useEffect(() => {
+    setContagens(lerLocal<ContagemRefeicoesDia[]>('contagemRefeicoes', []));
+  }, []);
+
+  const registrar = useCallback((c: Omit<ContagemRefeicoesDia, 'registradoEm'>) => {
+    setContagens((atual) => {
+      const sem = atual.filter((x) => x.data !== c.data);
+      const novo = [{ ...c, registradoEm: new Date().toISOString() }, ...sem]
+        .sort((a, b) => b.data.localeCompare(a.data))
+        .slice(0, 365);
+      gravarLocal('contagemRefeicoes', novo);
+      registrarAuditoria({ acao: 'registrou contagem', alvo: c.data, para: c.almoco + c.jantar });
+      return novo;
+    });
+  }, []);
+
+  return { contagens, registrar };
+}
+
+export function lerContagemRefeicoes(): ContagemRefeicoesDia[] {
+  return lerLocal<ContagemRefeicoesDia[]>('contagemRefeicoes', []);
+}
+
+/* =====================================================================
+   Módulo: Perfis de fornecedor (inteligência além do preço)
+   ===================================================================== */
+
+export function useFornecedorPerfis() {
+  const [perfis, setPerfis] = useState<Record<string, PerfilFornecedor>>({});
+
+  useEffect(() => {
+    setPerfis(lerLocal('fornecedorPerfis', {}));
+  }, []);
+
+  const salvarPerfil = useCallback((nome: string, dados: Partial<Omit<PerfilFornecedor, 'nome' | 'avaliacoes'>>) => {
+    setPerfis((atual) => {
+      const prev = atual[nome] ?? { nome, avaliacoes: [] };
+      const novo = { ...atual, [nome]: { ...prev, ...dados, nome } };
+      gravarLocal('fornecedorPerfis', novo);
+      return novo;
+    });
+  }, []);
+
+  const adicionarAvaliacao = useCallback((nome: string, av: Omit<AvaliacaoFornecedor, 'em'>) => {
+    setPerfis((atual) => {
+      const prev = atual[nome] ?? { nome, avaliacoes: [] };
+      const novaAv: AvaliacaoFornecedor = { ...av, em: new Date().toISOString() };
+      const novo = {
+        ...atual,
+        [nome]: { ...prev, avaliacoes: [novaAv, ...prev.avaliacoes].slice(0, 50) },
+      };
+      gravarLocal('fornecedorPerfis', novo);
+      registrarAuditoria({ acao: 'avaliou fornecedor', alvo: nome, para: av.qualidade });
+      return novo;
+    });
+  }, []);
+
+  return { perfis, salvarPerfil, adicionarAvaliacao };
+}
+
+export function lerFornecedorPerfis(): Record<string, PerfilFornecedor> {
+  return lerLocal('fornecedorPerfis', {});
 }
 
 /* =====================================================================

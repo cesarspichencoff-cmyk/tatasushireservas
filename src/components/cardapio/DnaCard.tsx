@@ -1,16 +1,16 @@
 'use client';
 
 /* =====================================================================
-   Cartão de DNA Alimentar — dá rosto visual ao motor dna.ts, que cruza
-   histórico de cardápios × aceitação × desperdício para revelar o
-   "paladar da casa": proteínas preferidas, pratos campeões e pratos-
-   problema. Determinístico (sem IA). Antes era calculado mas nunca
-   exibido em tela.
+   Cartão de DNA Alimentar — exibe o perfil da casa cruzando
+   3 anos de operação (dados.json) + semanas registradas no app
+   + aceitação da equipe + desperdício.
    ===================================================================== */
 
 import { Cartao } from '@/components/ui';
 import { Icone } from '@/components/Icones';
 import { useDna } from '@/lib/cardapio/estado';
+import { TOTAL_DIAS_HISTORICO } from '@/lib/cardapio/dna';
+import { DADOS } from '@/lib/cardapio/motor';
 import type { Proteina } from '@/lib/cardapio/tipos';
 
 const COR_PROTEINA: Record<Proteina, string> = {
@@ -34,8 +34,9 @@ export function DnaCard() {
 
   if (!dna) return null;
 
-  const semBase = dna.baseSemanas === 0;
+  const semBase = dna.baseSemanas === 0 && dna.totalDiasHistorico === 0;
   const maxFreq = Math.max(...dna.perfilProteinas.map((p) => p.freq), 1);
+  const totalPratosUnicos = DADOS.listas.principais.length;
 
   return (
     <Cartao className="space-y-4 !p-0 overflow-hidden">
@@ -54,9 +55,23 @@ export function DnaCard() {
           </button>
         </div>
         <p className="mt-1.5 text-sm leading-relaxed text-areia-100/90">{dna.resumo}</p>
-        <p className="mt-2 text-[11px] font-semibold text-brand-200/80">
-          base: {dna.baseSemanas} semana(s) · {dna.baseAvaliacoes} avaliação(ões)
-        </p>
+
+        {/* Stats históricos */}
+        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-brand-200/80">
+          {dna.totalDiasHistorico > 0 && (
+            <span>📅 {dna.totalDiasHistorico} dias de operação</span>
+          )}
+          <span>🍽️ {totalPratosUnicos} pratos únicos</span>
+          {dna.baseSemanas > 0 && (
+            <span>📋 {dna.baseSemanas} semana{dna.baseSemanas > 1 ? 's' : ''} no app</span>
+          )}
+          {dna.baseAvaliacoes > 0 && (
+            <span>⭐ {dna.baseAvaliacoes} avaliação{dna.baseAvaliacoes > 1 ? 'ões' : ''}</span>
+          )}
+          {dna.mediaPessoas !== null && (
+            <span>👥 média {dna.mediaPessoas} pax/dia</span>
+          )}
+        </div>
       </div>
 
       {semBase ? (
@@ -67,10 +82,12 @@ export function DnaCard() {
           </p>
         </div>
       ) : (
-        <div className="space-y-4 px-5 pb-5">
+        <div className="space-y-5 px-5 pb-5">
           {/* Perfil de proteínas */}
           <div className="space-y-2">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-carvao-400">Perfil de proteínas</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-carvao-400">
+              Perfil de proteínas — {TOTAL_DIAS_HISTORICO} dias
+            </p>
             {dna.perfilProteinas
               .filter((p) => p.proteina !== 'outros')
               .map((p) => (
@@ -82,7 +99,8 @@ export function DnaCard() {
                       style={{ width: `${(p.freq / maxFreq) * 100}%`, backgroundColor: COR_PROTEINA[p.proteina] }}
                     />
                   </div>
-                  <span className="w-10 shrink-0 text-right text-xs font-bold tabular-nums">{p.pct}%</span>
+                  <span className="w-8 shrink-0 text-right text-xs font-bold tabular-nums text-carvao-500">{p.pct}%</span>
+                  <span className="w-12 shrink-0 text-right text-xs tabular-nums text-carvao-400">{p.freq}×</span>
                   <span className={`w-12 shrink-0 text-right text-xs font-bold tabular-nums ${notaTom(p.notaMedia)}`}>
                     {p.notaMedia !== null ? `${p.notaMedia}★` : '—'}
                   </span>
@@ -90,11 +108,42 @@ export function DnaCard() {
               ))}
           </div>
 
-          {/* Campeões */}
+          {/* Mais servidos no histórico */}
+          {dna.topPorFrequencia.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-carvao-400">
+                📈 Mais servidos no histórico
+              </p>
+              <div className="divide-y divide-carvao-50 dark:divide-carvao-800">
+                {dna.topPorFrequencia.map((p, i) => (
+                  <div key={p.prato} className="flex items-center gap-2 py-1.5">
+                    <span className="w-5 shrink-0 text-center text-[11px] font-bold text-carvao-300">
+                      {i + 1}
+                    </span>
+                    <span
+                      className="h-2 w-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: COR_PROTEINA[p.proteina] }}
+                    />
+                    <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-carvao-800 dark:text-areia-100">
+                      {p.prato}
+                    </span>
+                    <span className="shrink-0 text-[11px] text-carvao-400">{p.frequencia}×</span>
+                    {p.nota !== null && (
+                      <span className={`shrink-0 text-[11px] font-bold ${notaTom(p.nota)}`}>
+                        {p.nota}★
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Campeões de qualidade */}
           {dna.campeoes.length > 0 && (
             <div className="space-y-1.5">
               <p className="text-[11px] font-bold uppercase tracking-wider text-brand-600 dark:text-brand-300">
-                🏆 Campeões da casa
+                🏆 Campeões — mais aceitos pela equipe
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {dna.campeoes.map((c) => (
@@ -130,6 +179,12 @@ export function DnaCard() {
                 ))}
               </div>
             </div>
+          )}
+
+          {dna.baseAvaliacoes === 0 && (
+            <p className="text-[11px] text-carvao-400">
+              Campeões e problemas aparecerão conforme a equipe avaliar os pratos.
+            </p>
           )}
         </div>
       )}

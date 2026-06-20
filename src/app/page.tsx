@@ -28,6 +28,13 @@ import { AbaPrecos } from '@/components/cardapio/AbaPrecos';
 import { DnaCard } from '@/components/cardapio/DnaCard';
 import { PrevisaoCard } from '@/components/cardapio/PrevisaoCard';
 import { RoiCard } from '@/components/cardapio/RoiCard';
+import { AbaFuncionarios } from '@/components/cardapio/AbaFuncionarios';
+import { AbaContagem } from '@/components/cardapio/AbaContagem';
+import { AbaNF } from '@/components/cardapio/AbaNF';
+import { AlertaProteinaDia } from '@/components/cardapio/AlertaProteinaDia';
+import { AbaCustoPrato } from '@/components/cardapio/AbaCustoPrato';
+import { AbaFornecedorIntel } from '@/components/cardapio/AbaFornecedorIntel';
+import { CardapioOrientadoDados } from '@/components/cardapio/CardapioOrientadoDados';
 import {
   deslocarSemana,
   idSemanaIso,
@@ -37,10 +44,13 @@ import {
   semanasComConteudo,
   useAceitacao,
   useAprendizado,
+  useContagemRefeicoes,
   useDesperdicio,
   useEstoque,
   useEventos,
+  useFuncionarios,
   useFornecedores,
+  useFornecedorPerfis,
   useHistoricoPrecos,
   useItensExtras,
   usePapel,
@@ -260,7 +270,7 @@ export default function PaginaCardapios() {
   const [plaquinhaAberta, setPlaquinhaAberta] = useState(false);
   const [semanaSheet, setSemanaSheet] = useState(false);
   const [buscaAberta, setBuscaAberta] = useState(false);
-  const [abaCompras, setAbaCompras] = useState<'lista' | 'precos' | 'estoque'>('lista');
+  const [abaCompras, setAbaCompras] = useState<'lista' | 'precos' | 'estoque' | 'nf' | 'fornecedores'>('lista');
   const [abaRelatorios, setAbaRelatorios] = useState<'central' | 'cenarios' | 'auditoria'>('central');
 
   const { estado, atualizar, pronto } = useSemana(semanaId);
@@ -276,6 +286,9 @@ export default function PaginaCardapios() {
   const { eventos, adicionar: addEvento, remover: rmEvento } = useEventos();
   const { registros: desperdicio, adicionar: addDesperdicio, remover: rmDesperdicio } = useDesperdicio(semanaId);
   const historico = useHistoricoPrecos();
+  const { funcionarios, salvar: salvarFuncionario, atualizarFuncionario, removerFuncionario } = useFuncionarios();
+  const { contagens, registrar: registrarContagem } = useContagemRefeicoes();
+  const { perfis: perfisFornecedores, salvarPerfil: salvarPerfilFornecedor, adicionarAvaliacao: adicionarAvaliacaoFornecedor } = useFornecedorPerfis();
 
   const semanaAtualId = idSemanaIso(new Date());
 
@@ -514,6 +527,11 @@ export default function PaginaCardapios() {
                   historico={historico}
                   fornecedores={fornecedores}
                 />
+                <AlertaProteinaDia
+                  dias={estado.dias}
+                  estoque={estoque}
+                  funcionarios={funcionarios}
+                />
                 <AbaAgora
                   estado={estado}
                   precos={precos}
@@ -521,6 +539,10 @@ export default function PaginaCardapios() {
                   fatores={fatores}
                   papel={papel}
                   irPara={(alvo) => irPara(alvo as AbaId)}
+                />
+                <AbaContagem
+                  contagens={contagens}
+                  onRegistrar={registrarContagem}
                 />
               </div>
             )}
@@ -581,9 +603,9 @@ export default function PaginaCardapios() {
             {/* ── COMPRAS ───────────────────────────────────── */}
             {aba === 'compras' && (
               <div className="space-y-4">
-                {/* segmento Lista / Preços / Estoque */}
+                {/* segmento Lista / Preços / Estoque / NF */}
                 <div className="flex gap-4 border-b border-carvao-100 dark:border-carvao-800">
-                  {(['lista', 'precos', 'estoque'] as const).map((seg) => (
+                  {(['lista', 'precos', 'estoque', 'nf', 'fornecedores'] as const).map((seg) => (
                     <button
                       key={seg}
                       onClick={() => setAbaCompras(seg)}
@@ -593,7 +615,7 @@ export default function PaginaCardapios() {
                           : 'text-carvao-400 hover:text-carvao-600 dark:text-carvao-500'
                       }`}
                     >
-                      {seg === 'lista' ? 'Lista de compras' : seg === 'precos' ? 'Preços' : 'Estoque'}
+                      {seg === 'lista' ? 'Lista de compras' : seg === 'precos' ? 'Preços' : seg === 'estoque' ? 'Estoque' : seg === 'nf' ? '📄 Nota fiscal' : '🏪 Fornecedores'}
                     </button>
                   ))}
                 </div>
@@ -631,6 +653,25 @@ export default function PaginaCardapios() {
                     podeEditar={podeEstoque}
                   />
                 )}
+
+                {abaCompras === 'nf' && (
+                  <AbaNF
+                    precos={precos}
+                    onAplicarPrecos={(itens) => {
+                      itens.forEach(({ norm, valor, nome }) => definirPreco(norm, valor, nome));
+                    }}
+                  />
+                )}
+
+                {abaCompras === 'fornecedores' && (
+                  <AbaFornecedorIntel
+                    fornecedores={fornecedores}
+                    perfis={perfisFornecedores}
+                    precos={precos}
+                    onSalvarPerfil={salvarPerfilFornecedor}
+                    onAdicionarAvaliacao={adicionarAvaliacaoFornecedor}
+                  />
+                )}
               </div>
             )}
 
@@ -664,6 +705,16 @@ export default function PaginaCardapios() {
 
                 {abaRelatorios === 'central' && (
                   <>
+                    <CardapioOrientadoDados
+                      dias={estado.dias}
+                      precos={precos}
+                      aceitacao={aceitacao}
+                      historico={historico}
+                    />
+                    <AbaCustoPrato
+                      dias={estado.dias}
+                      precos={precos}
+                    />
                     <RoiCard precos={precos} historico={historico} fatores={fatores} />
                     <DnaCard />
                     <PrevisaoCard
@@ -735,6 +786,17 @@ export default function PaginaCardapios() {
                     definirFornecedor={definirFornecedor}
                     cadastrarItem={cadastrarItem}
                     itensExtras={itensExtras}
+                  />
+                </SecaoAjuste>
+
+                {/* Equipe e restrições alimentares */}
+                <SecaoAjuste titulo="Equipe e restrições alimentares">
+                  <AbaFuncionarios
+                    funcionarios={funcionarios}
+                    dias={estado.dias}
+                    onSalvar={salvarFuncionario}
+                    onAtualizar={atualizarFuncionario}
+                    onRemover={removerFuncionario}
                   />
                 </SecaoAjuste>
 

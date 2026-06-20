@@ -1,8 +1,10 @@
 /* =====================================================================
-   Núcleo de preços — três estados claros: real, estimado e sem preço.
-   - real:     veio da cotação, nota fiscal, fornecedor ou manual confirmado.
-   - estimado: média de mercado interna (histórico) — base pronta para IA.
-   - sem:      sem cotação e sem estimativa → exige revisão antes de fechar.
+   Núcleo de preços — quatro estados claros:
+   - real:       veio da cotação, nota fiscal ou entrada manual confirmada.
+   - historico:  média das planilhas de compras Mai/Jun 2026 — sempre disponível.
+   - estimado:   estimativa de mercado gerada pelo usuário (substituída pelo
+                 histórico quando disponível).
+   - sem:        item totalmente sem referência de preço.
    Funções puras, sem efeitos; a camada de UI só consome o resultado.
    ===================================================================== */
 
@@ -10,7 +12,7 @@ import { DADOS, normalizar, converterParaUnidadeBase } from './motor';
 import { PRECOS_COMPRAS, UNIDADES_COMPRAS } from './precos-compras';
 import type { HistoricoPrecos } from './tipos';
 
-export type TipoPreco = 'real' | 'estimado' | 'sem';
+export type TipoPreco = 'real' | 'historico' | 'estimado' | 'sem';
 
 export interface PrecoResolvido {
   valor: number;
@@ -24,7 +26,274 @@ function media(ns: number[]): number {
   return ns.reduce((a, b) => a + b, 0) / Math.max(ns.length, 1);
 }
 
-/** Resolve o preço de um item priorizando o real; depois o estimado; senão "sem". */
+/* ------------------------------------------------------------------ */
+/* Resolução aproximada — mapeia variantes do dados.json → PRECOS_COMPRAS */
+/* ------------------------------------------------------------------ */
+
+// Aliases explícitos para itens que não batem por prefixo
+const ALIASES_HISTORICO: Record<string, string> = {
+  // ovos
+  'ovos': 'ovo',
+  // óleos e gorduras
+  'oleo': 'oleo de soja',
+  'oleo vegetal': 'oleo de soja',
+  // temperos base
+  'alho': 'alho descascado',
+  'cebola': 'cebola branca',
+  'cebola roxa': 'cebola branca',
+  'cebola-': 'cebola branca',
+  // carboidratos
+  'arroz branco': 'arroz',
+  'espaguete': 'macarrao espaguete',
+  'macarrao': 'macarrao espaguete',
+  'macarrao parafuso': 'macarrao espaguete',
+  'macarrao penne': 'macarrao espaguete',
+  'macarrao spaguetti': 'macarrao espaguete',
+  'farinha de mandioca': 'farinha de mandioca crua',
+  'farinha mandioca': 'farinha de mandioca crua',
+  'farinha torrada de mandioca': 'farinha de mandioca crua',
+  'farinha de empanar': 'farinha para empanar',
+  'polenta': 'fuba',
+  // queijos
+  'parmesao': 'queijo parmesao',
+  'parmesao ralado': 'queijo parmesao',
+  'queijo mussarela': 'mussarela',
+  'mussarela-': 'mussarela',
+  // molhos e condimentos
+  'shoyu': 'molho shoyu',
+  'pimentao': 'pimentao verde',
+  'pimentao verde-': 'pimentao verde',
+  'barbecue': 'molho barbecue',
+  'extrato de tomate': 'molho de tomate',
+  'extrato tomate': 'molho de tomate',
+  // embutidos
+  'calabresa': 'linguica calabresa',
+  'linguica calabresa-': 'linguica calabresa',
+  'toscana': 'linguica toscana',
+  'linguica toscana-': 'linguica toscana',
+  'linguica fresca': 'linguica toscana',
+  // frango — variantes → file de frango (custo mais próximo)
+  'frango': 'file de frango',
+  'frango em cubos': 'file de frango',
+  'frango inteiro': 'coxa e sobre coxa',
+  'peito de frango': 'file de frango',
+  'file de peito': 'file de frango',
+  'file de coxa': 'file de frango',
+  'filezinho sassami': 'file de frango',
+  'cubos de frangos': 'file de frango',
+  'tiras de frango': 'file de frango',
+  'tiras de frangos': 'file de frango',
+  'tiras file de frango': 'file de frango',
+  'coxa': 'coxa e sobre coxa',
+  'coxa pilao': 'coxa e sobre coxa',
+  'sobre coxa': 'coxa e sobre coxa',
+  'sobrecoxa': 'coxa e sobre coxa',
+  'coxa e sobrecoxa': 'coxa e sobre coxa',
+  'coxa sobre coxa': 'coxa e sobre coxa',
+  // bovinos
+  'bife': 'acem',
+  'bife acem': 'acem',
+  'bife a role': 'acem',
+  'bife role': 'acem',
+  'bife de patinho': 'acem',
+  'carne moida': 'acem moido',
+  'carne em cubos': 'acem',
+  'tiras de carne': 'acem',
+  'tiras de carnes': 'acem',
+  'patinho': 'acem',
+  'aranha': 'acem',
+  'chuleta bovina': 'acem',
+  'chuleta paulista': 'acem',
+  // suínos
+  'pernil': 'pernil suino',
+  'pernil de porco': 'pernil suino',
+  'pernil fatiado': 'pernil suino',
+  'lombo': 'lombo suino',
+  'lombo de porco': 'lombo suino',
+  'costelinha': 'costela',
+  'costelinha de porco': 'costela',
+  'costelinha suina': 'costela',
+  'costelinha fresca': 'costela',
+  'costelina suina': 'costela',
+  'bisteca': 'bisteca suina',
+  'bisteca de porco': 'bisteca suina',
+  // sobremesas
+  'gelatina': 'gelatina (sabores)',
+  'gelatina de abacaxi': 'gelatina (sabores)',
+  'gelatina de morango': 'gelatina (sabores)',
+  'gelatina framboesa': 'gelatina (sabores)',
+  'gelatina-': 'gelatina (sabores)',
+  'pudim': 'pudim pronto',
+  'pudim chocolate': 'pudim pronto',
+  'pudim de chocolate': 'pudim pronto',
+  'pudim de coco': 'pudim pronto',
+  'pudim de morango': 'pudim pronto',
+  'flan baunilha': 'flan',
+  'flan de baunilha': 'flan',
+  'flany baunilha': 'flan',
+  'flany de baunilha': 'flan',
+  'mousse chocolate': 'flan',
+  'mousse de chocolate': 'flan',
+  'mousse de maracuja': 'flan',
+  'mousse de morango': 'flan',
+  'mousse morango pronto': 'flan',
+  'curau': 'curau pronto',
+  // frutas
+  'abacaxi madura': 'abacaxi',
+  'abacaxi maduro': 'abacaxi',
+  'banana': 'banana da terra',
+  'banana da terra madura': 'banana da terra',
+  'banana da terra maduro': 'banana da terra',
+  'banana da terra verde': 'banana da terra',
+  // legumes variantes
+  'abobora': 'abobora japonesa',
+  'abobrinha': 'abobrinha italiana',
+  'alface': 'alface crespa',
+  'alface americano': 'alface americana',
+  'couve': 'couve manteiga',
+  'couve flor': 'brocolis',
+  'couve-flor': 'brocolis',
+  'brocolis ninja': 'brocolis',
+  'batata doce': 'batata',
+  'batata bolinha': 'batata',
+  'batata frita': 'batata',
+  'fritas': 'batata congelada',
+  'pepino japones': 'pepino',
+  'pepino comum': 'pepino',
+  'cenoura ralada': 'cenoura',
+  'repolho': 'repolho branco',
+  'milho': 'milho verde em lata',
+  'milho verde': 'milho verde em lata',
+  // laticínios/derivados
+  'creme culinario': 'creme de leite',
+  'leite de coco': 'creme de leite',
+  'leite condensado-': 'leite condensado',
+  // massas/grãos
+  'pure de batata': 'pure em po',
+  'feijao carioca': 'feijao',
+  'feijao fraldinha': 'feijao fradinho',
+  'feijao fraldinho': 'feijao fradinho',
+  'massa de lasanha': 'massa para lasanha',
+  'massa lasanha': 'massa para lasanha',
+  // carne bovina genérica (captura "carne" após limpeza de qualificadores)
+  'carne': 'acem',
+  // almôndega = carne moída
+  'almondega': 'acem moido',
+  'almondegas': 'acem moido',
+  // alcatra e rabada → referência bovina disponível
+  'aranha da alcatra': 'acem',
+  'aranha de alcatra': 'acem',
+  'rabada bovina': 'costela',
+  'osso': 'costela',
+  // ervas frescas → herb mais próximo nas compras
+  'cebolinha': 'coentro',
+  'cebolihha': 'coentro',
+  'salsinha': 'salsa desidratada',
+  'manjericao': 'ervas finas',
+  'guento': 'coentro',
+  // gorduras/laticínios
+  'manteiga': 'creme de leite',
+  'essencia de baunilha': 'adocante',
+  // frutas não compradas → proxy de preço por unidade/kg disponível
+  'abacate': 'goiaba',
+  'laranja': 'goiaba',
+  'limao': 'goiaba',
+  'manga': 'goiaba',
+  'mamao': 'melao',
+  'maca': 'goiaba',
+  'maca fuji': 'goiaba',
+  'mexerica': 'goiaba',
+  'maracuja': 'melao',
+  // legumes não comprados → proxy de legume disponível
+  'agriao': 'acelga',
+  'berinjela': 'abobrinha italiana',
+  'espinafre': 'acelga',
+  'rucula': 'acelga',
+  // grãos/doces secos
+  'canjica': 'feijao',
+  'mazeina': 'maisena',
+  'chocolate': 'maisena',
+  'bolacha maisena': 'maisena',
+  'bolacha': 'refrescos',
+  'champion': 'chuchu',
+  // sucos industrializados → refrescos
+  'suco de morango': 'refrescos',
+  'suco de morango calda': 'refrescos',
+  'suco de maracuja': 'refrescos',
+  'suco de limao': 'refrescos',
+  'suco de frambeosa': 'refrescos',
+  'suco': 'refrescos',
+  // typos / nomes truncados
+  'leite condensadon': 'leite condensado',
+  'leite condesado': 'leite condensado',
+  'maionsese': 'maionese',
+  'peito de frango s': 'file de frango',
+  // cacau/cacão
+  'cacao': 'maisena',
+  // mousse sem qualificador (após remoção do parêntese " (Pronto)")
+  'mousse morango': 'flan',
+};
+
+// Pré-compila lookup por prefixo de palavras (ex: "batata" → "batata congelada")
+// Itens mais curtos têm prioridade (sorted menor primeiro)
+const LOOKUP_PREFIXO: Record<string, string> = {};
+for (const chave of Object.keys(PRECOS_COMPRAS).sort((a, b) => a.length - b.length)) {
+  const palavras = chave.split(' ');
+  for (let i = 1; i <= palavras.length; i++) {
+    const pref = palavras.slice(0, i).join(' ');
+    if (!LOOKUP_PREFIXO[pref]) LOOKUP_PREFIXO[pref] = chave;
+  }
+}
+
+/** Remove qualificadores que não mudam o produto base nem seu custo.
+ *  Usa lookahead (?=\s|$) para não consumir o espaço seguinte, permitindo
+ *  que múltiplos qualificadores (ex: "suína em tiras") sejam removidos numa
+ *  única passagem do regex. */
+function limpezaNorm(s: string): string {
+  return s
+    .replace(/[-\s.]+$/, '')
+    .replace(/\s*\([^)]*\)/g, '')                                             // "(Pronto)" "(sabores)" etc.
+    .replace(/\s+\d+[,.]?\d*\s*(?:kg|g|l|ml|un)\b/gi, '')                    // "16,4 kg" embutido no nome
+    .replace(
+      /\s+(sem osso|fatiado[a]?|em cubos?|em bifes?|em tiras?|em peca|em conserva|descascad[oa]|ralad[oa]|frit[oa]s?|pronto[a]?s?|maduro[a]?s?|de porco|bovina?|suina?|baunilha|inteiro[a]?s?|sem sabor|incolor|fresco[a]?|ninja|comum|na manteiga|em estoque|tem estoque|precisa vim)(?=\s|$)/gi,
+      ' ',
+    )
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Busca o preço histórico de um item por aproximação quando não há correspondência exata. */
+function buscarHistorico(norm: string): number | null {
+  // 1. Alias explícito
+  const aliasKey = ALIASES_HISTORICO[norm];
+  if (aliasKey && PRECOS_COMPRAS[aliasKey] > 0) return PRECOS_COMPRAS[aliasKey];
+
+  // 2. Norma limpa (sem qualificadores) → alias → direto
+  const limpo = limpezaNorm(norm);
+  if (limpo !== norm) {
+    if (PRECOS_COMPRAS[limpo] > 0) return PRECOS_COMPRAS[limpo];
+    const aliasLimpo = ALIASES_HISTORICO[limpo];
+    if (aliasLimpo && PRECOS_COMPRAS[aliasLimpo] > 0) return PRECOS_COMPRAS[aliasLimpo];
+  }
+
+  // 3. Prefixo de palavras (tenta o mais longo primeiro para máxima especificidade)
+  const palavras = limpo.split(' ');
+  for (let i = palavras.length; i >= 1; i--) {
+    const pref = palavras.slice(0, i).join(' ');
+    const chave = LOOKUP_PREFIXO[pref];
+    if (chave && PRECOS_COMPRAS[chave] > 0) return PRECOS_COMPRAS[chave];
+  }
+
+  return null;
+}
+
+/**
+ * Resolve o preço de um item em quatro camadas de prioridade:
+ * 1. real      — preço digitado pelo usuário para esta cotação
+ * 2. historico — dados reais de Mai/Jun 2026 (exato ou por aproximação)
+ * 3. estimado  — estimativa de mercado gerada pelo usuário
+ * 4. sem       — sem nenhuma referência (evitado ao máximo)
+ */
 export function resolverPreco(
   norm: string,
   precos: Record<string, number>,
@@ -32,6 +301,8 @@ export function resolverPreco(
 ): PrecoResolvido {
   const real = precos[norm];
   if (real > 0) return { valor: real, tipo: 'real' };
+  const hist = PRECOS_COMPRAS[norm] > 0 ? PRECOS_COMPRAS[norm] : buscarHistorico(norm);
+  if (hist !== null && hist > 0) return { valor: hist, tipo: 'historico' };
   const est = estimativas[norm];
   if (est > 0) return { valor: est, tipo: 'estimado' };
   return { valor: 0, tipo: 'sem' };
@@ -46,12 +317,14 @@ function unidadeBase(u: string): string {
 }
 
 /**
- * Estimativa de mercado interna — três camadas, da mais para a menos precisa:
- * 1. Histórico local registrado pelo usuário (entradas manuais anteriores).
- * 2. Média dos preços reais das planilhas de compras (Maio+Junho/2026) de
- *    itens com a mesma unidade — base muito mais realista que a heurística
- *    anterior.
- * 3. Média dos preços manuais de DADOS.itens com mesma unidade (fallback).
+ * Estimativa de preço para itens que não constam nas planilhas de compra:
+ * 1. Histórico local registrado pelo usuário (mais confiável).
+ * 2. Média de preços reais de outros itens com a mesma unidade.
+ * 3. null — sem referência possível.
+ *
+ * Nota: para itens presentes nas planilhas Mai/Jun 2026, o `resolverPreco`
+ * já retorna o preço histórico automaticamente; `estimarPreco` só é acionado
+ * para itens fora dessas planilhas.
  */
 export function estimarPreco(
   norm: string,
@@ -62,23 +335,17 @@ export function estimarPreco(
   const serie = historico[norm];
   if (serie && serie.length) return Math.round(media(serie.map((p) => p.valor)) * 100) / 100;
 
-  // 2 + 3. Média por unidade combinando planilhas reais + preços manuais
+  // 2. Média de itens com mesma unidade (combinando planilhas + entradas manuais)
   const u = unidadeDe.get(norm);
   if (u) {
     const ub = unidadeBase(u);
-
-    // Preços reais das planilhas de compras (mais confiáveis)
     const dasCompras = Object.entries(PRECOS_COMPRAS)
       .filter(([k, v]) => v > 0 && unidadeBase(UNIDADES_COMPRAS[k] ?? '') === ub)
       .map(([, v]) => v);
-
-    // Preços manuais informados para itens de DADOS com mesma unidade
     const dosDados = DADOS.itens
       .filter((it) => unidadeBase(it.u) === ub && precos[normalizar(it.n)] > 0)
       .map((it) => precos[normalizar(it.n)]);
-
-    const setTodos = new Set([...dasCompras, ...dosDados]);
-    const todos = Array.from(setTodos);
+    const todos = Array.from(new Set([...dasCompras, ...dosDados]));
     if (todos.length >= 2) return Math.round(media(todos) * 100) / 100;
     if (todos.length === 1) return Math.round(todos[0] * 100) / 100;
   }
@@ -130,7 +397,8 @@ export function custoTipado(
     if (r.tipo === 'real') {
       c.real += r.valor * qtdBase;
       c.itensReais++;
-    } else if (r.tipo === 'estimado') {
+    } else if (r.tipo === 'historico' || r.tipo === 'estimado') {
+      // histórico e estimado contribuem ao custo estimado (não confirmado)
       c.estimado += r.valor * qtdBase;
       c.itensEstimados++;
     } else {
@@ -143,7 +411,8 @@ export function custoTipado(
 }
 
 export const ROTULO_TIPO_PRECO: Record<TipoPreco, string> = {
-  real: 'real',
-  estimado: 'estimado',
-  sem: 'sem preço',
+  real:      'real',
+  historico: 'histórico',
+  estimado:  'estimado',
+  sem:       'sem preço',
 };

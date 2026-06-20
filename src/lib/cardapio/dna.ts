@@ -1,15 +1,17 @@
 /* =====================================================================
    DNA alimentar da empresa — o "paladar" do Tatá House aprendido com a
-   operação real. Cruza três fontes:
-     • histórico de cardápios  → o que a casa serve e com que frequência
-     • índice de aceitação     → o que a equipe gosta (notas 1–5)
-     • controle de desperdício → o que sobra no prato
+   operação real. Cruza quatro fontes:
+     • dados.json (combos históricos) → frequência real de cada prato nos
+       anos de operação antes e durante o app (campo occ = ocorrências)
+     • histórico de cardápios no app → semanas digitadas no sistema
+     • índice de aceitação           → o que a equipe gosta (notas 1–5)
+     • controle de desperdício       → o que sobra no prato
 
-   Tudo determinístico (sem IA). O resultado alimenta o dossiê e guia as
-   sugestões: priorizar campeões, evitar problemas, equilibrar proteínas.
+   Função pura (sem acesso a localStorage). A leitura dos dados
+   e a montagem do payload histórico fica em estado.tsx → montarDnaAlimentar.
    ===================================================================== */
 
-import { normalizar, proteinaDoPrato, ROTULO_PROTEINA } from './motor';
+import { DADOS, normalizar, proteinaDoPrato, ROTULO_PROTEINA } from './motor';
 import type {
   Aceitacao,
   EstadoSemana,
@@ -30,22 +32,70 @@ export interface PratoDna {
   proteina: Proteina;
   nota: number | null; // média de aceitação (1–5)
   avaliacoes: number;
-  frequencia: number; // vezes servido no histórico
+  frequencia: number; // vezes servido no histórico (dados.json + app)
   desperdicio: number | null; // taxa média de sobra (0–1)
   score: number; // índice combinado (-1 a +1)
 }
 
 export interface DnaAlimentar {
   perfilProteinas: PerfilProteina[];
-  campeoes: PratoDna[]; // alta aceitação + baixo desperdício
-  problemas: PratoDna[]; // baixa aceitação ou alto desperdício
+  campeoes: PratoDna[];         // alta aceitação + baixo desperdício
+  problemas: PratoDna[];        // baixa aceitação ou alto desperdício
+  topPorFrequencia: PratoDna[]; // top 10 por vezes servido (histórico real)
   resumo: string; // frase pronta para o gestor / LLM
-  baseSemanas: number;
+  baseSemanas: number;         // semanas registradas no app (localStorage)
+  totalDiasHistorico: number;  // dias totais no dados.json (operação histórica)
   baseAvaliacoes: number;
+  mediaPessoas: number | null; // média de pessoas/dia via semanas registradas
   geradoEm: string;
 }
 
 /* ------------------------------------------------------------------ */
+
+export type FreqBase = Map<string, { prato: string; proteina: Proteina; freq: number }>;
+
+/** Total de dias servidos registrados no dados.json. */
+export const TOTAL_DIAS_HISTORICO: number = DADOS.combos.reduce((s, c) => s + (c.occ ?? 1), 0);
+
+/**
+ * Constrói o mapa de frequência histórica de pratos principais a partir
+ * dos combos do dados.json. Campo `occ` = quantas vezes cada combinação foi
+ * servida na operação real (anos antes/durante o app).
+ *
+ * Exportado para que estado.tsx e outros módulos possam enriquecer
+ * qualquer cálculo com o peso histórico real, sem duplicar lógica.
+ */
+export function freqBaseDosDados(): FreqBase {
+  const m: FreqBase = new Map();
+  DADOS.combos.forEach((c) => {
+    if (!c.p) return;
+    const k = normalizar(c.p);
+    const occ = c.occ ?? 1;
+    const prev = m.get(k) ?? { prato: c.p, proteina: proteinaDoPrato(c.p), freq: 0 };
+    m.set(k, { ...prev, freq: prev.freq + occ });
+  });
+  return m;
+}
+
+/**
+ * Ranking dos pratos mais servidos no histórico, com nota de aceitação quando
+ * disponível. Fonte: dados.json (occ) + índice de aceitação do localStorage.
+ */
+export function rankingHistoricoPrincipais(
+  aceitacao: Record<string, { somaNotas: number; n: number }>,
+  limite = 15,
+): { prato: string; norm: string; proteina: Proteina; totalServido: number; nota: number | null }[] {
+  const freqBase = freqBaseDosDados();
+  return Array.from(freqBase.values())
+    .map((v) => {
+      const k = normalizar(v.prato);
+      const reg = aceitacao[k];
+      const nota = reg && reg.n > 0 ? Math.round((reg.somaNotas / reg.n) * 10) / 10 : null;
+      return { prato: v.prato, norm: k, proteina: v.proteina, totalServido: v.freq, nota };
+    })
+    .sort((a, b) => b.totalServido - a.totalServido)
+    .slice(0, limite);
+}
 
 function notaDe(aceitacao: Aceitacao, prato: string): { nota: number | null; n: number } {
   const r = aceitacao[normalizar(prato)];
@@ -63,16 +113,36 @@ function scorePrato(nota: number | null, desperdicio: number | null): number {
   return Math.round((aceit + sobra) * 100) / 100;
 }
 
+/**
+ * Calcula o DNA alimentar.
+ *
+ * @param semanas       Semanas registradas no app (localStorage)
+ * @param aceitacao     Índice global de aceitação
+ * @param desperdicio   Registros de desperdício de todas as semanas
+ * @param freqBase      Mapa de frequência histórica pré-semeado (dados.json)
+ * @param totalDiasHistorico  Total de dias servidos no dados.json
+ * @param mediaPessoas  Média de pessoas/dia calculada externamente
+ */
 export function calcularDna(
   semanas: { semanaId: string; estado: EstadoSemana }[],
   aceitacao: Aceitacao,
   desperdicio: RegistroDesperdicio[],
+  freqBase: FreqBase = new Map(),
+  totalDiasHistorico = 0,
+  mediaPessoas: number | null = null,
 ): DnaAlimentar {
-  // --- frequência de pratos e proteínas no histórico de cardápios ---
-  const freqPrato = new Map<string, { prato: string; proteina: Proteina; freq: number }>();
+  // Copia do mapa histórico — não modifica o original
+  const freqPrato: FreqBase = new Map(freqBase);
   const freqProteina = new Map<Proteina, number>();
   let totalPrincipais = 0;
 
+  // Contabiliza os totais já na base histórica
+  freqBase.forEach((v) => {
+    totalPrincipais += v.freq;
+    freqProteina.set(v.proteina, (freqProteina.get(v.proteina) ?? 0) + v.freq);
+  });
+
+  // Adiciona as semanas registradas no app por cima do histórico base
   semanas.forEach(({ estado }) => {
     estado.dias.forEach((d) => {
       if (!d.principal) return;
@@ -143,17 +213,27 @@ export function calcularDna(
     .sort((a, b) => a.score - b.score)
     .slice(0, 6);
 
-  // --- resumo em linguagem natural ---
+  // --- top por frequência: mais servidos no histórico (independente de rating) ---
+  const topPorFrequencia = [...pratos]
+    .sort((a, b) => b.frequencia - a.frequencia)
+    .slice(0, 10);
+
   const baseAvaliacoes = Object.values(aceitacao).reduce((a, r) => a + r.n, 0);
-  const resumo = montarResumo(perfilProteinas, campeoes, problemas, semanas.length, baseAvaliacoes);
+  const resumo = montarResumo(
+    perfilProteinas, campeoes, problemas,
+    semanas.length, baseAvaliacoes, totalDiasHistorico, mediaPessoas,
+  );
 
   return {
     perfilProteinas,
     campeoes,
     problemas,
+    topPorFrequencia,
     resumo,
     baseSemanas: semanas.length,
+    totalDiasHistorico,
     baseAvaliacoes,
+    mediaPessoas,
     geradoEm: new Date().toISOString(),
   };
 }
@@ -164,8 +244,12 @@ function montarResumo(
   problemas: PratoDna[],
   semanas: number,
   avaliacoes: number,
+  totalDiasHistorico: number,
+  mediaPessoas: number | null,
 ): string {
-  if (semanas === 0) return 'Sem histórico de cardápios suficiente para traçar o perfil da casa.';
+  if (totalDiasHistorico === 0 && semanas === 0) {
+    return 'Sem histórico de cardápios suficiente para traçar o perfil da casa.';
+  }
   const partes: string[] = [];
 
   const prefer = proteinas.filter((p) => p.proteina !== 'outros').slice(0, 2);
@@ -178,12 +262,24 @@ function montarResumo(
   const melhorProt = proteinas
     .filter((p) => p.notaMedia !== null && p.proteina !== 'outros')
     .sort((a, b) => (b.notaMedia ?? 0) - (a.notaMedia ?? 0))[0];
-  if (melhorProt) partes.push(`Melhor aceitação: ${melhorProt.rotulo.toLowerCase()} (nota ${melhorProt.notaMedia}).`);
+  if (melhorProt) {
+    partes.push(`Melhor aceitação: ${melhorProt.rotulo.toLowerCase()} (nota ${melhorProt.notaMedia}).`);
+  }
 
-  if (campeoes.length) partes.push(`Pratos campeões: ${campeoes.slice(0, 3).map((c) => c.prato).join(', ')}.`);
-  if (problemas.length) partes.push(`Atenção com: ${problemas.slice(0, 2).map((p) => p.prato).join(', ')}.`);
+  if (campeoes.length) {
+    partes.push(`Pratos campeões: ${campeoes.slice(0, 3).map((c) => c.prato).join(', ')}.`);
+  }
+  if (problemas.length) {
+    partes.push(`Atenção com: ${problemas.slice(0, 2).map((p) => p.prato).join(', ')}.`);
+  }
 
-  if (avaliacoes < 10) partes.push('(Perfil ainda em formação — quanto mais avaliações, mais preciso.)');
+  if (mediaPessoas !== null) {
+    partes.push(`Média de ${mediaPessoas} pessoas/dia nas semanas registradas.`);
+  }
+
+  if (avaliacoes < 10) {
+    partes.push('(Acrescentando avaliações dos pratos o perfil fica mais preciso.)');
+  }
 
   return partes.join(' ');
 }
