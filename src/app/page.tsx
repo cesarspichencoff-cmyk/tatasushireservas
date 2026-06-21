@@ -107,20 +107,34 @@ const COR_ETAPA_PONTO: Record<Etapa, string> = {
 
 const SEQ_ETAPAS: Etapa[] = ['rascunho', 'cozinha', 'compras', 'recebimento', 'concluido'];
 
-function MiniEtapas({ etapa }: { etapa: Etapa }) {
+function MiniEtapas({ etapa, sufixo }: { etapa: Etapa; sufixo?: string }) {
   const atual = SEQ_ETAPAS.indexOf(etapa);
+  const proxima = atual >= 0 && atual < SEQ_ETAPAS.length - 1 ? SEQ_ETAPAS[atual + 1] : null;
   return (
-    <div className="flex items-center gap-1.5" aria-label={`Etapa: ${ROTULO_ETAPA[etapa]}`}>
-      {SEQ_ETAPAS.map((e, i) => (
-        <div key={e} className="flex items-center gap-1.5">
+    <div className="space-y-1.5" aria-label={`Etapa: ${ROTULO_ETAPA[etapa]}`}>
+      <div className="flex items-center gap-1.5">
+        {SEQ_ETAPAS.map((e, i) => (
           <span
+            key={e}
             className={`h-1.5 rounded-full transition-all ${
-              i === atual ? 'w-6 bg-brand-600' : i < atual ? 'w-3 bg-brand-600/50' : 'w-3 bg-carvao-200 dark:bg-carvao-700'
+              i === atual ? 'w-7 bg-brand-600' : i < atual ? 'w-4 bg-brand-600/50' : 'w-4 bg-carvao-200 dark:bg-carvao-700'
             }`}
             title={ROTULO_ETAPA[e]}
           />
-        </div>
-      ))}
+        ))}
+      </div>
+      <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-rotulo font-semibold">
+        <span className={`inline-flex items-center gap-1.5 ${COR_ETAPA_TEXTO[etapa]}`}>
+          <span className={`h-2 w-2 rounded-full ${COR_ETAPA_PONTO[etapa]}`} />
+          {ROTULO_ETAPA[etapa]}
+        </span>
+        {sufixo && <span className="font-normal text-carvao-400">· {sufixo}</span>}
+        {proxima && (
+          <span className="font-normal text-carvao-400">
+            · próximo: <span className="font-semibold text-carvao-500 dark:text-carvao-300">{ROTULO_ETAPA[proxima]}</span>
+          </span>
+        )}
+      </p>
     </div>
   );
 }
@@ -140,20 +154,24 @@ function useBuscaGlobal(
   fornecedores: Record<string, string>,
   irPara: (aba: AbaId) => void,
 ) {
+  // Ações (paleta de comando) — verbos que levam direto à tarefa
+  const ACOES: { titulo: string; chaves: string; alvo: AbaId }[] = [
+    { titulo: 'Gerar cardápio',           chaves: 'gerar cardapio criar montar semana', alvo: 'cardapio' },
+    { titulo: 'Abrir cotação / preços',   chaves: 'cotacao preco precos catalogo',      alvo: 'cardapio' },
+    { titulo: 'Lista de compras',         chaves: 'lista compras comprar',              alvo: 'compras' },
+    { titulo: 'Estoque',                  chaves: 'estoque inventario saldo',           alvo: 'compras' },
+    { titulo: 'Gerar pedido',             chaves: 'pedido fornecedor encomenda',        alvo: 'compras' },
+    { titulo: 'Relatórios e exportação',  chaves: 'relatorio exportar csv dna ranking', alvo: 'relatorios' },
+  ];
+
   return (termo: string): ResultadoBusca[] => {
-    if (termo.trim().length < 2) return [];
     const t = termo.toLowerCase().trim();
+    // Estado vazio: paleta mostra as ações rápidas (estilo Raycast/Linear)
+    if (t.length < 2) {
+      return ACOES.map((a) => ({ tipo: 'acao' as const, titulo: a.titulo, subtitulo: 'Ação', acao: () => irPara(a.alvo) }));
+    }
     const res: ResultadoBusca[] = [];
 
-    // Ações (paleta de comando) — verbos que levam direto à tarefa
-    const ACOES: { titulo: string; chaves: string; alvo: AbaId }[] = [
-      { titulo: 'Gerar cardápio',           chaves: 'gerar cardapio criar montar semana', alvo: 'cardapio' },
-      { titulo: 'Abrir cotação / preços',   chaves: 'cotacao preco precos catalogo',      alvo: 'cardapio' },
-      { titulo: 'Lista de compras',         chaves: 'lista compras comprar',              alvo: 'compras' },
-      { titulo: 'Estoque',                  chaves: 'estoque inventario saldo',           alvo: 'compras' },
-      { titulo: 'Gerar pedido',             chaves: 'pedido fornecedor encomenda',        alvo: 'compras' },
-      { titulo: 'Relatórios e exportação',  chaves: 'relatorio exportar csv dna ranking', alvo: 'relatorios' },
-    ];
     ACOES.forEach((a) => {
       if (a.titulo.toLowerCase().includes(t) || a.chaves.includes(t)) {
         res.push({ tipo: 'acao', titulo: a.titulo, subtitulo: 'Ação', acao: () => irPara(a.alvo) });
@@ -208,7 +226,7 @@ function useBuscaGlobal(
       }
     });
 
-    return res.slice(0, 8);
+    return res.slice(0, 12);
   };
 }
 
@@ -220,6 +238,16 @@ const ICONE_TIPO: Record<ResultadoBusca['tipo'], React.ReactNode> = {
   acao:       <Icone nome="raio"      tam={14} />,
 };
 
+const ROTULO_GRUPO: Record<ResultadoBusca['tipo'], string> = {
+  acao:       'Ações',
+  cardapio:   'Cardápio',
+  compra:     'Compras',
+  fornecedor: 'Fornecedores',
+  relatorio:  'Relatórios',
+};
+
+const ORDEM_GRUPO: ResultadoBusca['tipo'][] = ['acao', 'cardapio', 'compra', 'fornecedor', 'relatorio'];
+
 /* ── componente busca ────────────────────────────────────── */
 
 function BuscaGlobal({
@@ -230,15 +258,33 @@ function BuscaGlobal({
   aoFechar: () => void;
 }) {
   const [termo, setTermo] = useState('');
+  const [sel, setSel] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const resultados = useMemo(() => buscar(termo), [buscar, termo]);
 
+  // Resultados ordenados por grupo — a navegação por teclado segue esta ordem
+  const ordenados = useMemo(() => {
+    const out: ResultadoBusca[] = [];
+    ORDEM_GRUPO.forEach((g) => resultados.filter((r) => r.tipo === g).forEach((r) => out.push(r)));
+    return out;
+  }, [resultados]);
+
+  useEffect(() => { setSel(0); }, [termo]);
+
   useEffect(() => {
     inputRef.current?.focus();
-    const fn = (e: KeyboardEvent) => e.key === 'Escape' && aoFechar();
+    const fn = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { aoFechar(); return; }
+      if (e.key === 'ArrowDown') { e.preventDefault(); setSel((s) => Math.min(ordenados.length - 1, s + 1)); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); setSel((s) => Math.max(0, s - 1)); }
+      else if (e.key === 'Enter') {
+        const alvo = ordenados[sel];
+        if (alvo) { alvo.acao(); aoFechar(); }
+      }
+    };
     window.addEventListener('keydown', fn);
     return () => window.removeEventListener('keydown', fn);
-  }, [aoFechar]);
+  }, [aoFechar, ordenados, sel]);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black/50 backdrop-blur-sm" onClick={aoFechar}>
@@ -266,31 +312,49 @@ function BuscaGlobal({
           </kbd>
         </div>
 
-        {/* resultados */}
-        {resultados.length > 0 && (
-          <div className="mt-2 overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-carvao-200 dark:bg-carvao-900 dark:ring-carvao-600">
-            {resultados.map((r, i) => (
-              <button
-                key={i}
-                onClick={() => { r.acao(); aoFechar(); }}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-carvao-50 dark:hover:bg-carvao-800 [&:not(:last-child)]:border-b [&:not(:last-child)]:border-carvao-100 dark:[&:not(:last-child)]:border-carvao-700"
-              >
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-carvao-100 text-carvao-500 dark:bg-carvao-700 dark:text-carvao-300">
-                  {ICONE_TIPO[r.tipo]}
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-carvao-800 dark:text-areia-100">{r.titulo}</p>
-                  {r.subtitulo && (
-                    <p className="truncate text-xs text-carvao-400">{r.subtitulo}</p>
-                  )}
-                </div>
-                <Icone nome="proximo" tam={14} className="ml-auto shrink-0 text-carvao-300" />
-              </button>
+        {/* resultados — agrupados por seção, navegáveis por teclado */}
+        {ordenados.length > 0 && (
+          <div className="mt-2 max-h-[60vh] overflow-y-auto rounded-2xl bg-white py-1.5 shadow-2xl ring-1 ring-carvao-200 dark:bg-carvao-900 dark:ring-carvao-600">
+            {ORDEM_GRUPO.filter((g) => resultados.some((r) => r.tipo === g)).map((g) => (
+              <div key={g} className="px-1.5 pb-1">
+                <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-[0.12em] text-carvao-400">
+                  {ROTULO_GRUPO[g]}
+                </p>
+                {resultados.filter((r) => r.tipo === g).map((r) => {
+                  const idx = ordenados.indexOf(r);
+                  const ativo = idx === sel;
+                  return (
+                    <button
+                      key={idx}
+                      onMouseEnter={() => setSel(idx)}
+                      onClick={() => { r.acao(); aoFechar(); }}
+                      className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${
+                        ativo ? 'bg-brand-50 dark:bg-carvao-800' : ''
+                      }`}
+                    >
+                      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
+                        ativo
+                          ? 'bg-brand-600 text-white'
+                          : 'bg-carvao-100 text-carvao-500 dark:bg-carvao-700 dark:text-carvao-300'
+                      }`}>
+                        {ICONE_TIPO[r.tipo]}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-corpo font-semibold text-carvao-800 dark:text-areia-100">{r.titulo}</p>
+                        {r.subtitulo && <p className="truncate text-caption text-carvao-400">{r.subtitulo}</p>}
+                      </div>
+                      {ativo && (
+                        <kbd className="hidden shrink-0 rounded bg-white px-1.5 py-0.5 text-[10px] font-semibold text-carvao-400 ring-1 ring-carvao-200 sm:block dark:bg-carvao-900 dark:ring-carvao-600">↵</kbd>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             ))}
           </div>
         )}
 
-        {termo.trim().length >= 2 && resultados.length === 0 && (
+        {termo.trim().length >= 2 && ordenados.length === 0 && (
           <div className="mt-2 rounded-2xl bg-white px-4 py-6 text-center shadow-xl ring-1 ring-carvao-200 dark:bg-carvao-900 dark:ring-carvao-600">
             <p className="text-sm text-carvao-400">Nenhum resultado para "{termo}"</p>
           </div>
@@ -527,15 +591,11 @@ export default function PaginaCardapios() {
             <h1 className="font-display text-2xl font-bold text-carvao-900 dark:text-white sm:text-3xl">
               {periodoSemana(semanaId)}
             </h1>
-            <p className={`mt-1 flex items-center gap-2 text-sm font-semibold ${COR_ETAPA_TEXTO[estado.etapa]}`}>
-              <span className={`h-2 w-2 rounded-full ${COR_ETAPA_PONTO[estado.etapa]}`} />
-              {ROTULO_ETAPA[estado.etapa]}
-              <span className="font-normal text-carvao-400">
-                · {semanaId === semanaAtualId ? 'semana atual' : 'semana planejada'}
-              </span>
-            </p>
-            <div className="mt-2">
-              <MiniEtapas etapa={estado.etapa} />
+            <div className="mt-2 max-w-xs">
+              <MiniEtapas
+                etapa={estado.etapa}
+                sufixo={semanaId === semanaAtualId ? 'semana atual' : 'semana planejada'}
+              />
             </div>
           </div>
           <div className="flex items-center gap-1">
