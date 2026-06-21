@@ -32,6 +32,8 @@ export type NomeIcone =
   | 'chefIA'
   | 'gerencial'
   | 'exportar'
+  | 'nutricao'
+  | 'controles'
   | 'ajustes';
 
 const CAMINHOS: Record<NomeIcone, ReactNode> = {
@@ -151,6 +153,20 @@ const CAMINHOS: Record<NomeIcone, ReactNode> = {
     <>
       <path d="M12 3v12M8 11l4 4 4-4" />
       <path d="M5 18h14" />
+    </>
+  ),
+  nutricao: (
+    <>
+      <path d="M11 21C6 21 3 17 3 12c5 0 8 1 9 4" />
+      <path d="M21 4c0 9-4 14-9 14 0-7 3-12 9-14z" />
+    </>
+  ),
+  controles: (
+    <>
+      <path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h8M16 18h4" />
+      <circle cx="16" cy="6" r="2" />
+      <circle cx="8" cy="12" r="2" />
+      <circle cx="14" cy="18" r="2" />
     </>
   ),
   ajustes: (

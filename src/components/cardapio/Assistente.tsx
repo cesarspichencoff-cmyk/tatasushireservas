@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { PERGUNTAS_SUGERIDAS, insightProativo, responder, responderAsync, type ContextoAssistente } from '@/lib/cardapio/assistente';
 import { montarDossieCompleto } from '@/lib/cardapio/estado';
+import { Icone } from '@/components/Icones';
 import { InteligenciaCard } from './InteligenciaCard';
 
 interface Fala {
@@ -57,9 +58,9 @@ export function Assistente({ contexto }: { contexto: ContextoAssistente }) {
       <button
         onClick={() => setAberto((a) => !a)}
         aria-label="Inteligência Tatá House"
-        className="fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-600 to-brand-800 text-2xl text-white shadow-flutuante ring-2 ring-ouro-400/50 transition hover:scale-105 active:scale-95 lg:bottom-5 lg:right-5 print:hidden"
+        className="fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-600 to-brand-800 text-white shadow-flutuante ring-2 ring-ouro-400/50 transition hover:scale-105 active:scale-95 lg:bottom-5 lg:right-5 print:hidden"
       >
-        {aberto ? '✕' : '🧠'}
+        <Icone nome={aberto ? 'fechar' : 'chefIA'} tam={24} />
         {proativo && !aberto && (
           <span className="absolute right-1 top-1 h-3.5 w-3.5 rounded-full bg-ouro-400 ring-2 ring-white" aria-hidden />
         )}
@@ -69,7 +70,7 @@ export function Assistente({ contexto }: { contexto: ContextoAssistente }) {
         <div className="fixed bottom-36 right-4 z-50 flex max-h-[80vh] w-[min(96vw,420px)] flex-col overflow-hidden rounded-3xl bg-white shadow-flutuante ring-1 ring-carvao-200 animate-subir lg:bottom-24 lg:right-5 dark:bg-carvao-850 dark:ring-carvao-700 print:hidden">
           {/* Cabeçalho */}
           <div className="flex items-center gap-2 bg-gradient-to-r from-brand-800 to-brand-600 px-4 py-3 text-white">
-            <span className="text-xl">🧠</span>
+            <Icone nome="chefIA" tam={20} />
             <div className="min-w-0 flex-1">
               <p className="font-display text-sm font-bold tracking-wide">Inteligência Tatá House</p>
               <p className="text-[10px] uppercase tracking-wider text-brand-200">análise local · sem dados externos</p>
@@ -88,7 +89,7 @@ export function Assistente({ contexto }: { contexto: ContextoAssistente }) {
                     : 'text-carvao-400 hover:text-carvao-700 dark:text-carvao-500'
                 }`}
               >
-                {a === 'chat' ? '💬 Perguntar' : '🎯 Objetivos'}
+                {a === 'chat' ? 'Perguntar' : 'Objetivos'}
               </button>
             ))}
           </div>
@@ -179,7 +180,7 @@ export function Assistente({ contexto }: { contexto: ContextoAssistente }) {
                   className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-700 text-white transition hover:bg-brand-800 disabled:opacity-60"
                   aria-label="Enviar"
                 >
-                  ➤
+                  <Icone nome="proximo" tam={18} />
                 </button>
               </form>
             </>

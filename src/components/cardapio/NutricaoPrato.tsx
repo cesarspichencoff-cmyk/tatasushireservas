@@ -9,6 +9,7 @@
    ===================================================================== */
 
 import { useState } from 'react';
+import { Icone } from '@/components/Icones';
 import { infoNutricional } from '@/lib/cardapio/nutricional';
 
 /** Rótulo do índice (mesma faixa do índice semanal). */
@@ -50,7 +51,7 @@ export function NutricaoPrato({ prato }: { prato: string }) {
         aria-expanded={aberto}
       >
         <span className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-carvao-400">
-          🥗 Nutrição do prato
+          <Icone nome="nutricao" tam={13} className="text-brand-500" /> Nutrição do prato
           {info.porcao !== '—' && <span className="font-bold text-carvao-400">· {info.porcao}</span>}
         </span>
         <span className="flex items-center gap-1.5">
