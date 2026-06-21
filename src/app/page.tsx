@@ -270,7 +270,9 @@ export default function PaginaCardapios() {
   const [semanaSheet, setSemanaSheet] = useState(false);
   const [buscaAberta, setBuscaAberta] = useState(false);
   const [abaCompras, setAbaCompras] = useState<'lista' | 'estoque' | 'nf' | 'fornecedores' | 'pedido'>('lista');
-  const [abaRelatorios, setAbaRelatorios] = useState<'central' | 'auditoria'>('central');
+  const [abaRelatorios, setAbaRelatorios] = useState<
+    'gerencial' | 'custos' | 'rankings' | 'previsao' | 'fornecedores' | 'auditoria'
+  >('gerencial');
 
   const { estado, atualizar, pronto } = useSemana(semanaId);
   const { precos, definirPreco } = usePrecos();
@@ -625,10 +627,10 @@ export default function PaginaCardapios() {
                         : seg === 'estoque'
                         ? 'Estoque'
                         : seg === 'nf'
-                        ? '📄 Nota fiscal'
+                        ? 'Nota fiscal'
                         : seg === 'fornecedores'
-                        ? '🏪 Fornecedores'
-                        : '📋 Pedido'}
+                        ? 'Fornecedores'
+                        : 'Pedido'}
                     </button>
                   ))}
                 </div>
@@ -704,16 +706,20 @@ export default function PaginaCardapios() {
                   <h2 className="font-display text-2xl font-bold text-carvao-900 dark:text-white">Relatórios</h2>
                   <p className="mt-1 text-sm text-carvao-400">Análise e exportação de dados da semana</p>
                 </div>
-                {/* sub-abas */}
-                <div className="flex gap-1 rounded-2xl bg-carvao-100 p-1 dark:bg-carvao-800">
+                {/* sub-abas por TEMA — navegação por assunto, não dump vertical */}
+                <div className="flex gap-1 overflow-x-auto rounded-2xl bg-carvao-100 p-1 dark:bg-carvao-800">
                   {([
-                    { id: 'central',   rotulo: '📊 Central' },
-                    ...(pode(papel, 'auditoria:ver') ? [{ id: 'auditoria', rotulo: '🔍 Auditoria' }] : []),
-                  ] as { id: 'central' | 'auditoria'; rotulo: string }[]).map((s) => (
+                    { id: 'gerencial',    rotulo: 'Visão geral' },
+                    { id: 'custos',       rotulo: 'Custos' },
+                    { id: 'rankings',     rotulo: 'DNA & Rankings' },
+                    { id: 'previsao',     rotulo: 'Previsão' },
+                    { id: 'fornecedores', rotulo: 'Fornecedores' },
+                    ...(pode(papel, 'auditoria:ver') ? [{ id: 'auditoria', rotulo: 'Auditoria' }] : []),
+                  ] as { id: typeof abaRelatorios; rotulo: string }[]).map((s) => (
                     <button
                       key={s.id}
                       onClick={() => setAbaRelatorios(s.id)}
-                      className={`flex-1 rounded-xl py-2 text-[13px] font-semibold transition ${
+                      className={`flex-1 whitespace-nowrap rounded-xl px-3 py-2 text-rotulo font-semibold transition ${
                         abaRelatorios === s.id
                           ? 'bg-white shadow-sm dark:bg-carvao-700'
                           : 'text-carvao-500 hover:text-carvao-700 dark:text-carvao-400'
@@ -724,7 +730,19 @@ export default function PaginaCardapios() {
                   ))}
                 </div>
 
-                {abaRelatorios === 'central' && (
+                {abaRelatorios === 'gerencial' && (
+                  <CentralGerencial
+                    estado={estado}
+                    semanaId={semanaId}
+                    precos={precos}
+                    historico={historico}
+                    aceitacao={aceitacao}
+                    fornecedores={fornecedores}
+                    fatores={fatores}
+                  />
+                )}
+
+                {abaRelatorios === 'custos' && (
                   <>
                     <CardapioOrientadoDados
                       dias={estado.dias}
@@ -732,39 +750,34 @@ export default function PaginaCardapios() {
                       aceitacao={aceitacao}
                       historico={historico}
                     />
-                    <AbaCustoPrato
-                      dias={estado.dias}
-                      precos={precos}
-                    />
+                    <AbaCustoPrato dias={estado.dias} precos={precos} />
                     <RoiCard precos={precos} historico={historico} fatores={fatores} />
-                    <DnaCard />
-                    <PrevisaoCard
-                      semanaId={semanaId}
-                      onPessoasAtualizadas={
-                        podeEditarCardapio
-                          ? (pessoas) => {
-                              atualizar((e) => ({
-                                ...e,
-                                dias: e.dias.map((d, i) =>
-                                  pessoas[i] != null ? { ...d, pessoas: pessoas[i] } : d,
-                                ),
-                              }));
-                              toast('Previsão aplicada às refeições da semana');
-                            }
-                          : undefined
-                      }
-                    />
-                    <CentralGerencial
-                      estado={estado}
-                      semanaId={semanaId}
-                      precos={precos}
-                      historico={historico}
-                      aceitacao={aceitacao}
-                      fornecedores={fornecedores}
-                      fatores={fatores}
-                    />
-                    <AbaRadar precos={precos} historico={historico} fornecedores={fornecedores} />
                   </>
+                )}
+
+                {abaRelatorios === 'rankings' && <DnaCard />}
+
+                {abaRelatorios === 'previsao' && (
+                  <PrevisaoCard
+                    semanaId={semanaId}
+                    onPessoasAtualizadas={
+                      podeEditarCardapio
+                        ? (pessoas) => {
+                            atualizar((e) => ({
+                              ...e,
+                              dias: e.dias.map((d, i) =>
+                                pessoas[i] != null ? { ...d, pessoas: pessoas[i] } : d,
+                              ),
+                            }));
+                            toast('Previsão aplicada às refeições da semana');
+                          }
+                        : undefined
+                    }
+                  />
+                )}
+
+                {abaRelatorios === 'fornecedores' && (
+                  <AbaRadar precos={precos} historico={historico} fornecedores={fornecedores} />
                 )}
 
                 {abaRelatorios === 'auditoria' && pode(papel, 'auditoria:ver') && (
