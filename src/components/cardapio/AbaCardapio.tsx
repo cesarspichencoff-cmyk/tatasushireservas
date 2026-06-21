@@ -94,6 +94,7 @@ export function AbaCardapio({
   const [opDia, setOpDia] = useState(false);
   const [gerarAberto, setGerarAberto] = useState(false);
   const [formPersonAberto, setFormPersonAberto] = useState(false);
+  const [explicacao, setExplicacao] = useState<{ titulo: string; itens: string[] } | null>(null);
   const [personalizado, setPersonalizado] = useState({
     eventos: '',
     proteinasPrefer: [] as string[],
@@ -127,6 +128,9 @@ export function AbaCardapio({
       dias: e.dias.map((d, j) => (j === i ? { ...d, ...patch } : d)),
     }));
 
+  const temAceitacao = Object.keys(aceitacao).length > 0;
+  const temFrequencia = Object.keys(frequencia).length > 0;
+
   const gerar = (modo: 'historica' | 'economica' | 'criativa') => {
     const fn =
       modo === 'historica' ? sugerirSemanaHistorica
@@ -137,7 +141,39 @@ export function AbaCardapio({
       precos,
       { aceitacao, frequencia },
     );
-    if (sugestao) atualizar((e) => ({ ...e, dias: sugestao }));
+    if (!sugestao) {
+      setExplicacao({ titulo: 'Não foi possível gerar', itens: ['Faltam dados de histórico ou preços para esse modo. Tente outro modo ou complete a cotação.'] });
+      return;
+    }
+    atualizar((e) => ({ ...e, dias: sugestao }));
+    // Por que esse cardápio? — transparência da decisão
+    const porques: Record<typeof modo, { titulo: string; itens: string[] }> = {
+      historica: {
+        titulo: 'Cardápio Antigo — por que estes pratos',
+        itens: [
+          'Priorizei combinações que já apareceram no histórico da operação.',
+          temAceitacao ? 'Dei preferência aos pratos com melhor aceitação registrada.' : 'Ainda não há notas de aceitação — usei a frequência de uso.',
+          'Mantive a rotação de proteínas dentro das regras da casa (frango 3–4, bovina 2–3, suína ≤2).',
+        ],
+      },
+      economica: {
+        titulo: 'Cardápio Mesclado — por que estes pratos',
+        itens: [
+          'Equilibrei pratos tradicionais com variações para evitar monotonia.',
+          temFrequencia ? 'Evitei repetir o que saiu nas últimas 4 semanas.' : 'Sem semanas anteriores para comparar — foquei na variedade interna.',
+          Object.keys(precos).length > 0 ? 'Com a cotação aplicada, busquei o melhor custo dentro das opções aceitas.' : 'Sem cotação: aplique os preços para eu otimizar custo.',
+        ],
+      },
+      criativa: {
+        titulo: 'Cardápio Novo — por que estes pratos',
+        itens: [
+          'Explorei combinações inéditas mantendo a distribuição de proteínas da casa.',
+          Object.keys(precos).length > 0 ? 'Puxei para as proteínas mais baratas da cotação atual.' : 'Aplique a cotação para eu priorizar as proteínas mais econômicas.',
+          'Respeitei as regras de rotação para não estourar nenhuma proteína.',
+        ],
+      },
+    };
+    setExplicacao(porques[modo]);
   };
 
   const gerarPersonalizado = () => {
@@ -149,6 +185,18 @@ export function AbaCardapio({
       { aceitacao, frequencia, criativo: true },
     );
     if (sugestao) atualizar((e) => ({ ...e, dias: sugestao }));
+    // Monta a explicação a partir dos parâmetros informados
+    const itens: string[] = [];
+    if (personalizado.proteinasPrefer.length) itens.push(`Priorizei as proteínas: ${personalizado.proteinasPrefer.join(', ')}.`);
+    if (personalizado.proteinasEvitar.length) itens.push(`Evitei as proteínas: ${personalizado.proteinasEvitar.join(', ')}.`);
+    if (personalizado.publico) itens.push(`Ajustei o perfil dos pratos para o público ${personalizado.publico}.`);
+    if (!isNaN(lim) && lim > 0) itens.push(`Defini o orçamento em R$ ${lim.toFixed(2)} por refeição.`);
+    if (personalizado.eventos.trim()) itens.push(`Considerei o evento: "${personalizado.eventos.trim()}".`);
+    if (personalizado.restricoes.trim()) itens.push(`Levei em conta as restrições: ${personalizado.restricoes.trim()}.`);
+    if (personalizado.regras.trim()) itens.push(`Apliquei as regras: ${personalizado.regras.trim()}.`);
+    if (itens.length === 0) itens.push('Nenhum parâmetro específico — gerei um cardápio criativo dentro das regras da casa.');
+    itens.push('Revise os dias abaixo: ajuste manualmente o que não fizer sentido para a sua operação.');
+    setExplicacao({ titulo: 'Cardápio Personalizado — o que eu considerei', itens });
     setGerarAberto(false);
     setFormPersonAberto(false);
   };
@@ -440,6 +488,32 @@ export function AbaCardapio({
         </div>
       )}
 
+      {/* Por que este cardápio? — transparência da IA, sem caixa-preta */}
+      {explicacao && (
+        <div className="rounded-2xl border border-brand-200 bg-white p-4 shadow-suave dark:border-brand-900 dark:bg-carvao-900">
+          <div className="mb-2 flex items-start justify-between gap-3">
+            <p className="flex items-center gap-2 text-sm font-bold text-brand-700 dark:text-brand-300">
+              <span aria-hidden>💡</span> {explicacao.titulo}
+            </p>
+            <button
+              onClick={() => setExplicacao(null)}
+              aria-label="Fechar explicação"
+              className="shrink-0 text-carvao-400 transition hover:text-carvao-700 dark:hover:text-areia-200"
+            >
+              <Icone nome="fechar" tam={15} />
+            </button>
+          </div>
+          <ul className="space-y-1.5">
+            {explicacao.itens.map((it, i) => (
+              <li key={i} className="flex gap-2 text-[13px] text-carvao-600 dark:text-areia-200">
+                <span className="mt-0.5 text-brand-400">•</span>
+                <span>{it}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Detalhe das regras quebradas */}
       {avisos.some((a) => a.nivel !== 'ok') && (
         <Cartao className="space-y-1.5 !py-3">
@@ -653,8 +727,9 @@ export function AbaCardapio({
           </div>
         )}
         <p className="text-xs text-carvao-400">
-          <strong>Sugerir</strong>: combinações que a equipe já aprovou no histórico. <strong>Nova</strong>: inventa
-          combinações inéditas com a distribuição da casa e, com a cotação aplicada, puxa para as proteínas mais baratas.
+          <strong>Antigo</strong>: combinações que a equipe já aprovou no histórico. <strong>Mesclado</strong>: equilibra
+          tradição e variedade. <strong>Novo</strong>: inventa combinações inéditas e, com a cotação aplicada, puxa para as
+          proteínas mais baratas. <strong>Personalizado</strong>: você define proteínas, público, custo, eventos e regras.
         </p>
       </Cartao>
     </div>
