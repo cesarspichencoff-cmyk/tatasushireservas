@@ -271,8 +271,10 @@ function BuscaGlobal({
 
   useEffect(() => { setSel(0); }, [termo]);
 
+  // Foco só na montagem — separado do handler para não re-focar a cada tecla
+  useEffect(() => { inputRef.current?.focus(); }, []);
+
   useEffect(() => {
-    inputRef.current?.focus();
     const fn = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { aoFechar(); return; }
       if (e.key === 'ArrowDown') { e.preventDefault(); setSel((s) => Math.min(ordenados.length - 1, s + 1)); }
