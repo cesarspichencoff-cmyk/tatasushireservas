@@ -71,8 +71,8 @@ export function AbaAceitacao({
   };
 
   const VOTOS: { v: 'bom' | 'ok' | 'ruim'; icone: 'check' | 'subtrair' | 'fechar'; cor: string; rot: string; tom: 'verde' | 'ouro' | 'vermelho' }[] = [
-    { v: 'bom',  icone: 'check',    cor: 'text-brand-600 dark:text-brand-400', rot: 'Gostei', tom: 'verde' },
-    { v: 'ok',   icone: 'subtrair', cor: 'text-ouro-600 dark:text-ouro-300',   rot: 'Neutro', tom: 'ouro' },
+    { v: 'bom',  icone: 'check',    cor: 'text-brand-600 dark:text-brand-400', rot: 'Gostei',     tom: 'verde' },
+    { v: 'ok',   icone: 'subtrair', cor: 'text-ouro-600 dark:text-ouro-300',   rot: 'Neutro',     tom: 'ouro' },
     { v: 'ruim', icone: 'fechar',   cor: 'text-perigo',                         rot: 'Não gostei', tom: 'vermelho' },
   ];
 

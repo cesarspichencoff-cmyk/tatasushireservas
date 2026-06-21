@@ -13,6 +13,12 @@ const nextConfig = {
   basePath,
   assetPrefix: basePath ? `${basePath}/` : undefined,
   images: { unoptimized: true },
+  transpilePackages: ['pdfjs-dist'],
+  webpack: (config) => {
+    // pdfjs tenta usar canvas para renderização; apenas extraímos texto
+    config.resolve.alias.canvas = false;
+    return config;
+  },
 };
 
 export default nextConfig;
