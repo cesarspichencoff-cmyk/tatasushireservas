@@ -21,8 +21,6 @@ import { CartaoNuvem } from '@/components/cardapio/CartaoNuvem';
 import { Assistente } from '@/components/cardapio/Assistente';
 import { PosterSemana } from '@/components/cardapio/PosterSemana';
 import { BriefingCard } from '@/components/cardapio/BriefingCard';
-import { InteligenciaCard } from '@/components/cardapio/InteligenciaCard';
-import { AbaSimulador } from '@/components/cardapio/AbaSimulador';
 import { AbaAuditoria } from '@/components/cardapio/AbaAuditoria';
 import { AbaPrecos } from '@/components/cardapio/AbaPrecos';
 import { DnaCard } from '@/components/cardapio/DnaCard';
@@ -272,7 +270,7 @@ export default function PaginaCardapios() {
   const [semanaSheet, setSemanaSheet] = useState(false);
   const [buscaAberta, setBuscaAberta] = useState(false);
   const [abaCompras, setAbaCompras] = useState<'lista' | 'precos' | 'estoque' | 'nf' | 'fornecedores' | 'pedido'>('lista');
-  const [abaRelatorios, setAbaRelatorios] = useState<'central' | 'cenarios' | 'auditoria'>('central');
+  const [abaRelatorios, setAbaRelatorios] = useState<'central' | 'auditoria'>('central');
 
   const { estado, atualizar, pronto } = useSemana(semanaId);
   const { precos, definirPreco } = usePrecos();
@@ -528,11 +526,6 @@ export default function PaginaCardapios() {
                   historico={historico}
                   fornecedores={fornecedores}
                 />
-                <AlertaProteinaDia
-                  dias={estado.dias}
-                  estoque={estoque}
-                  funcionarios={funcionarios}
-                />
                 <AbaAgora
                   estado={estado}
                   precos={precos}
@@ -541,22 +534,27 @@ export default function PaginaCardapios() {
                   papel={papel}
                   irPara={(alvo) => irPara(alvo as AbaId)}
                 />
-                <AbaContagem
-                  contagens={contagens}
-                  onRegistrar={registrarContagem}
-                />
               </div>
             )}
 
             {/* ── CARDÁPIO ──────────────────────────────────── */}
             {aba === 'cardapio' && (
               <div className="space-y-6">
+                <AlertaProteinaDia
+                  dias={estado.dias}
+                  estoque={estoque}
+                  funcionarios={funcionarios}
+                />
                 <AbaCardapio
                   estado={estado}
                   atualizar={atualizar}
                   podeEditar={podeEditarCardapio}
                   precos={precos}
                   definirPreco={definirPreco}
+                />
+                <AbaContagem
+                  contagens={contagens}
+                  onRegistrar={registrarContagem}
                 />
                 <AbaFluxo
                   estado={estado}
@@ -713,9 +711,8 @@ export default function PaginaCardapios() {
                 <div className="flex gap-1 rounded-2xl bg-carvao-100 p-1 dark:bg-carvao-800">
                   {([
                     { id: 'central',   rotulo: '📊 Central' },
-                    { id: 'cenarios',  rotulo: '🔬 Cenários' },
                     ...(pode(papel, 'auditoria:ver') ? [{ id: 'auditoria', rotulo: '🔍 Auditoria' }] : []),
-                  ] as { id: 'central' | 'cenarios' | 'auditoria'; rotulo: string }[]).map((s) => (
+                  ] as { id: 'central' | 'auditoria'; rotulo: string }[]).map((s) => (
                     <button
                       key={s.id}
                       onClick={() => setAbaRelatorios(s.id)}
@@ -760,15 +757,6 @@ export default function PaginaCardapios() {
                           : undefined
                       }
                     />
-                    <InteligenciaCard
-                      estado={estado}
-                      semanaId={semanaId}
-                      precos={precos}
-                      aceitacao={aceitacao}
-                      estoque={estoque}
-                      historico={historico}
-                      fornecedores={fornecedores}
-                    />
                     <CentralGerencial
                       estado={estado}
                       semanaId={semanaId}
@@ -780,16 +768,6 @@ export default function PaginaCardapios() {
                     />
                     <AbaRadar precos={precos} historico={historico} fornecedores={fornecedores} />
                   </>
-                )}
-
-                {abaRelatorios === 'cenarios' && (
-                  <AbaSimulador
-                    estado={estado}
-                    atualizar={atualizar}
-                    precos={precos}
-                    fatores={fatores}
-                    podeEditar={podeEditarCardapio}
-                  />
                 )}
 
                 {abaRelatorios === 'auditoria' && pode(papel, 'auditoria:ver') && (
