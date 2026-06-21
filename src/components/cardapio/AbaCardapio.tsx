@@ -310,9 +310,9 @@ export function AbaCardapio({
             {podeEditar && (
               <button
                 onClick={() => { setGerarAberto((a) => !a); setFormPersonAberto(false); }}
-                className="shrink-0 rounded-xl border border-carvao-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-carvao-600 transition hover:bg-areia-100 dark:border-carvao-600 dark:bg-carvao-800 dark:text-areia-200"
+                className="flex shrink-0 items-center gap-1.5 rounded-xl border border-carvao-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-carvao-600 transition hover:bg-areia-100 dark:border-carvao-600 dark:bg-carvao-800 dark:text-areia-200"
               >
-                🎛️ Gerar cardápio
+                <Icone nome="controles" tam={14} /> Gerar cardápio
               </button>
             )}
           </div>
@@ -377,7 +377,7 @@ export function AbaCardapio({
                   : 'border-brand-300 bg-brand-50 hover:bg-brand-100 dark:border-brand-700 dark:bg-brand-950/30'
               }`}
             >
-              <span className="mt-0.5 text-xl leading-none">🎛️</span>
+              <span className="mt-0.5 leading-none text-brand-600 dark:text-brand-300"><Icone nome="controles" tam={20} /></span>
               <div>
                 <p className="text-sm font-bold text-brand-800 dark:text-brand-200">Personalizado</p>
                 <p className="text-[11px] text-brand-600 dark:text-brand-400">Eventos, metas, proteínas, custo…</p>
@@ -664,7 +664,7 @@ export function AbaCardapio({
           className="flex w-full items-center justify-between gap-3 bg-white px-4 py-3 text-left transition hover:bg-areia-50 dark:bg-carvao-900 dark:hover:bg-carvao-850"
         >
           <span className="flex items-center gap-2">
-            <span className="text-lg" aria-hidden>📊</span>
+            <Icone nome="insights" tam={18} className="text-brand-500" />
             <span>
               <span className="block text-subtitulo text-carvao-800 dark:text-areia-100">Análise da semana</span>
               <span className="block text-caption text-carvao-400">Termômetro, monotonia, Chef IA, nutrição e previsão de presença</span>
@@ -770,7 +770,7 @@ export function AbaCardapio({
           className="flex w-full items-center justify-between gap-3 bg-white px-4 py-3 text-left transition hover:bg-areia-50 dark:bg-carvao-900 dark:hover:bg-carvao-850"
         >
           <span className="flex items-center gap-2">
-            <span className="text-lg" aria-hidden>💰</span>
+            <Icone nome="cotacao" tam={18} className="text-brand-500" />
             <span>
               <span className="block text-sm font-bold text-carvao-800 dark:text-areia-100">Cotação — catálogo de preços</span>
               <span className="block text-[11px] text-carvao-400">Preço, histórico e variação de cada item · fonte única da semana</span>
