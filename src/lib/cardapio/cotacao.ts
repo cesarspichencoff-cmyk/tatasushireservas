@@ -55,8 +55,8 @@ const RUIDO = new Set([
   'tipo', 'extra', 'especial', 'novilho', 'solteira', 'temp',
 ]);
 
-/** Fallback de fornecedores hardcoded — usados só se o usuário não cadastrou nenhum. */
-const FORNECEDORES_FALLBACK: [RegExp, string][] = [
+/** Fornecedores sempre reconhecidos — nunca desabilitados, mesmo quando o usuário cadastra os seus. */
+const FORNECEDORES_BASE: [RegExp, string][] = [
   [/vita[\s-]*frango/i, 'Vita Frango'],
   [/\bjampac\b/i,       'Jampac'],
   [/apetito/i,          'Apetito Foods'],
@@ -70,11 +70,15 @@ function regexDeFornecedor(nome: string): RegExp {
   return new RegExp(`\\b${s}\\b`, 'i');
 }
 
-/** Constrói lookup de fornecedores: cadastrados pelo usuário têm prioridade sobre o fallback. */
+/**
+ * Constrói lookup: custom tem prioridade, base é sempre incluída como complemento.
+ * Nunca inventa fornecedor — só reconhece o que foi cadastrado ou está na base.
+ */
 function buildLookupFornecedor(custom: string[]): (s: string) => string | null {
-  const lista: [RegExp, string][] = custom.length
-    ? custom.map((n) => [regexDeFornecedor(n), n])
-    : FORNECEDORES_FALLBACK;
+  const customPares: [RegExp, string][] = custom.map((n) => [regexDeFornecedor(n), n]);
+  const customNomes = new Set(custom.map((n) => n.toLowerCase()));
+  const basePares = FORNECEDORES_BASE.filter(([, nome]) => !customNomes.has(nome.toLowerCase()));
+  const lista = [...customPares, ...basePares];
   return (s: string) => {
     for (const [re, nome] of lista) if (re.test(s)) return nome;
     return null;
@@ -273,18 +277,9 @@ export function parsearCotacao(texto: string, fornecedoresCustom: string[] = [])
     const precos = linha.match(RE_PRECO);
 
     if (!precos) {
-      // Fornecedores cadastrados/conhecidos têm prioridade absoluta
+      // Só reconhece fornecedor se está na lista cadastrada ou na base — nunca inventa.
       const fk = fornecedorConhecido(linha);
-      if (fk) {
-        fornecedorSecao = fk;
-        continue;
-      }
-      // Detecção genérica: só sobrescreve no início de nova mensagem WA
-      // ou quando ainda não há fornecedor ativo.
-      const forn = detectarFornecedor(linha);
-      if (forn && (temPrefitoWA || !fornecedorSecao)) {
-        fornecedorSecao = forn;
-      }
+      if (fk) fornecedorSecao = fk;
       continue;
     }
 
@@ -327,11 +322,13 @@ export function parsearCotacao(texto: string, fornecedoresCustom: string[] = [])
     nome = nome.replace(/[-–:.,]+\s*$/, '').replace(/\s+/g, ' ').trim();
     if (!nome || !(preco > 0)) continue;
 
-    // marca/frigorífico após " - " (ex.: "Acém Resf - Ribeiro")
+    // Marca após " - ": limpa o nome sempre, mas só registra marca se for fornecedor conhecido.
+    // Evita que "Acém - Ribeiro" vire fornecedor "Ribeiro" (Ribeiro é frigorifico, não cadastrado).
     let marca: string | null = null;
     const sep = nome.split(/\s[-–]\s/);
     if (sep.length > 1) {
-      marca = sep[sep.length - 1].trim() || null;
+      const candidato = sep[sep.length - 1].trim();
+      marca = fornecedorConhecido(candidato);
       nome = sep.slice(0, -1).join(' - ').trim();
     }
 
