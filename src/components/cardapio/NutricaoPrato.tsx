@@ -58,7 +58,7 @@ export function NutricaoPrato({ prato }: { prato: string }) {
           <span className={`flex items-center gap-1 rounded-full bg-white px-2.5 py-0.5 text-[11px] font-black ring-1 ring-carvao-100 dark:bg-carvao-800 dark:ring-carvao-700 ${idx.cor}`}>
             {info.indiceSaudavel}% {idx.texto}
           </span>
-          <span className={`text-carvao-400 transition-transform ${aberto ? 'rotate-180' : ''}`} aria-hidden>⌄</span>
+          <Icone nome="baixo" tam={14} className={`text-carvao-400 transition-transform ${aberto ? 'rotate-180' : ''}`} />
         </span>
       </button>
 
