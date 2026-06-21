@@ -29,8 +29,10 @@ function Capa() {
       <div className="pointer-events-none absolute left-1/2 top-0 h-64 w-96 -translate-x-1/2 rounded-full bg-white/5 blur-3xl" />
 
       <div className="relative z-10">
-        <div className="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-3xl bg-white/15 shadow-xl ring-1 ring-white/20">
-          <Icone nome="gerencial" tam={48} className="text-white" />
+        {/* Logo Tatá House */}
+        <div className="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-3xl bg-white shadow-xl ring-1 ring-white/20">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-tata.png" alt="Tatá House" className="h-16 w-16 object-contain" />
         </div>
         <p className="mb-1 text-xs font-bold uppercase tracking-[0.3em] text-green-300/70">
           Sistema de Gestão
@@ -335,8 +337,10 @@ export default function ManualPage() {
       `}</style>
       <div className="mx-auto max-w-2xl space-y-5 px-4 py-8">
 
-        <Capa />
         <BotaoBaixarManual />
+
+        <div id="manual-conteudo" className="space-y-5">
+        <Capa />
         <Indice />
 
         {/* ═══════════════════════════════════════════════════
@@ -1220,6 +1224,10 @@ export default function ManualPage() {
             </p>
           </div>
         </div>
+
+        </div>{/* fim manual-conteudo */}
+
+        <BotaoBaixarManual />
 
       </div>
     </div>
