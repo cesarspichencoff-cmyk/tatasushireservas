@@ -13,6 +13,7 @@ import { BottomSheet, Pilula } from '@/components/ui';
 import { formatarQtd } from '@/lib/cardapio/motor';
 import { receitaDoPrato } from '@/lib/cardapio/receitas';
 import { preparoDoPrato } from '@/lib/cardapio/preparos';
+import { mediaDiaAtual } from '@/lib/cardapio/media-diaria';
 
 const ROTULO_CLASSE: Record<string, string> = {
   economica: 'Econômica',
@@ -34,6 +35,7 @@ export function ComoFazer({ prato, className = '' }: { prato: string; className?
   const passos = receita?.preparo?.length ? receita.preparo : preparoDoPrato(prato);
   const ingredientes = receita?.ingredientes ?? [];
   const nu = receita?.nutricao;
+  const media = mediaDiaAtual();
 
   return (
     <>
@@ -89,11 +91,37 @@ export function ComoFazer({ prato, className = '' }: { prato: string; className?
             </p>
           )}
 
+          {/* Quantidades para hoje — escala automática pela média real do dia */}
+          {ingredientes.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="flex items-center gap-2 text-caption font-bold uppercase tracking-wider text-carvao-400">
+                Para hoje
+                <Pilula tom="azul">{media.nome} · ~{media.total} refeições</Pilula>
+              </p>
+              <ul className="divide-y divide-brand-100 rounded-2xl bg-brand-50/40 ring-1 ring-brand-100 dark:divide-carvao-700/60 dark:bg-carvao-800/30 dark:ring-carvao-700/40">
+                {ingredientes.map((ing, i) => (
+                  <li key={i} className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm">
+                    <span className="text-carvao-700 dark:text-areia-100">
+                      {ing.item}
+                      {ing.opcional && <span className="ml-1 text-caption text-carvao-400">(opcional)</span>}
+                    </span>
+                    <span className="shrink-0 font-bold tabular-nums text-brand-700 dark:text-brand-300">
+                      {formatarQtd(ing.porPessoa * media.total)} {ing.unid}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-caption text-carvao-400">
+                Almoço ~{media.almoco} · Jantar ~{media.jantar} · Temperos a gosto
+              </p>
+            </div>
+          )}
+
           {/* Ingredientes (por pessoa) */}
           {ingredientes.length > 0 && (
             <div className="space-y-1.5">
               <p className="flex items-center gap-2 text-caption font-bold uppercase tracking-wider text-carvao-400">
-                Ingredientes <Pilula tom="neutro">por pessoa</Pilula>
+                Por pessoa <Pilula tom="neutro">referência</Pilula>
               </p>
               <ul className="divide-y divide-carvao-100 rounded-2xl ring-1 ring-carvao-100 dark:divide-carvao-700/60 dark:ring-carvao-700/60">
                 {ingredientes.map((ing, i) => (
@@ -102,15 +130,12 @@ export function ComoFazer({ prato, className = '' }: { prato: string; className?
                       {ing.item}
                       {ing.opcional && <span className="ml-1 text-caption text-carvao-400">(opcional)</span>}
                     </span>
-                    <span className="shrink-0 font-semibold tabular-nums text-carvao-500 dark:text-areia-200">
+                    <span className="shrink-0 tabular-nums text-carvao-500 dark:text-areia-200">
                       {formatarQtd(ing.porPessoa)} {ing.unid}
                     </span>
                   </li>
                 ))}
               </ul>
-              <p className="text-caption text-carvao-400">
-                Quantidades por pessoa — o app multiplica pelo nº de refeições do dia. Temperos a gosto.
-              </p>
             </div>
           )}
 
