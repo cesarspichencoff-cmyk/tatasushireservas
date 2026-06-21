@@ -33,6 +33,8 @@ export function AbaCotacao({
   const [cadastrados, setCadastrados] = useState<Set<number>>(new Set());
   const [aplicado, setAplicado] = useState(0);
   const [fornecedorNome, setFornecedorNome] = useState('');
+  const [pdfCarregando, setPdfCarregando] = useState(false);
+  const [pdfErro, setPdfErro] = useState('');
 
   useEffect(() => {
     try {
@@ -107,16 +109,51 @@ export function AbaCotacao({
       return novo;
     });
 
-  /* Importa arquivo CSV, TXT ou Excel (convertido via FileReader) */
-  const importarArquivo = (e: React.ChangeEvent<HTMLInputElement>) => {
+  /* Extrai texto de PDF via pdfjs-dist (carregado sob demanda) */
+  const lerPdf = async (file: File) => {
+    setPdfCarregando(true);
+    setPdfErro('');
+    try {
+      const pdfjsLib = await import('pdfjs-dist');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+
+      const paginas: string[] = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const textoPage = content.items
+          .map((item) => ('str' in item ? (item as { str: string }).str : ''))
+          .join(' ');
+        paginas.push(textoPage);
+      }
+
+      const novoTexto = paginas.join('\n');
+      setTexto((prev) => (prev ? prev + '\n' + novoTexto : novoTexto));
+    } catch {
+      setPdfErro('Não foi possível ler o PDF. Confira se o arquivo não está protegido por senha.');
+    } finally {
+      setPdfCarregando(false);
+    }
+  };
+
+  /* Importa arquivo CSV, TXT ou PDF */
+  const importarArquivo = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
+
+    if (file.name.toLowerCase().endsWith('.pdf')) {
+      await lerPdf(file);
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (ev) => {
       const conteudo = ev.target?.result as string;
       if (!conteudo) return;
-      // Normaliza separadores e converte para formato texto livre
       const linhas = conteudo
         .split(/\r?\n/)
         .map((l) => l.replace(/\t|;/g, ' ').trim())
@@ -138,18 +175,24 @@ export function AbaCotacao({
         </p>
 
         {/* Upload de arquivo */}
-        <div className="flex items-center gap-3">
-          <label className="cursor-pointer rounded-full border border-dashed border-carvao-300 px-4 py-2 text-rotulo font-bold text-carvao-500 transition hover:border-brand-400 hover:text-brand-600 dark:border-carvao-600 dark:text-carvao-400">
-            Importar arquivo (CSV / TXT)
+        <div className="flex flex-wrap items-center gap-3">
+          <label className={`cursor-pointer rounded-full border border-dashed px-4 py-2 text-rotulo font-bold transition ${pdfCarregando ? 'border-carvao-200 text-carvao-300 pointer-events-none dark:border-carvao-700' : 'border-carvao-300 text-carvao-500 hover:border-brand-400 hover:text-brand-600 dark:border-carvao-600 dark:text-carvao-400'}`}>
+            {pdfCarregando ? 'Lendo PDF…' : 'Importar arquivo (CSV / TXT / PDF)'}
             <input
               type="file"
-              accept=".csv,.txt,.tsv"
+              accept=".csv,.txt,.tsv,.pdf"
               className="hidden"
+              disabled={pdfCarregando}
               onChange={importarArquivo}
             />
           </label>
           <span className="text-caption text-carvao-400">O conteúdo é adicionado à área de texto</span>
         </div>
+        {pdfErro && (
+          <p className="rounded-xl bg-red-50 px-3 py-2 text-caption font-semibold text-red-700 ring-1 ring-red-200 dark:bg-red-950/30 dark:text-red-400 dark:ring-red-800/40">
+            {pdfErro}
+          </p>
+        )}
 
         <textarea
           rows={8}
