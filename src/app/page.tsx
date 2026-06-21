@@ -5,7 +5,9 @@ import { AlternadorTema } from '@/components/AlternadorTema';
 import { BottomNav, GRUPOS } from '@/components/BottomNav';
 import { ToastHost, toast } from '@/components/Toast';
 import { Icone } from '@/components/Icones';
-import { BottomSheet, Skeleton } from '@/components/ui';
+import { BottomSheet, Skeleton, Kpi } from '@/components/ui';
+import { resumoSemana } from '@/lib/cardapio/indicadores';
+import { formatarReais } from '@/lib/cardapio/motor';
 import { AbaAgora } from '@/components/cardapio/AbaAgora';
 import { AbaAceitacao } from '@/components/cardapio/AbaAceitacao';
 import { PlaquinhaQR } from '@/components/cardapio/PlaquinhaQR';
@@ -19,6 +21,7 @@ import { CentralGerencial } from '@/components/cardapio/CentralGerencial';
 import { Configuracoes } from '@/components/cardapio/Configuracoes';
 import { CartaoNuvem } from '@/components/cardapio/CartaoNuvem';
 import { Assistente } from '@/components/cardapio/Assistente';
+import { insightProativo } from '@/lib/cardapio/assistente';
 import { PosterSemana } from '@/components/cardapio/PosterSemana';
 import { BriefingCard } from '@/components/cardapio/BriefingCard';
 import { AbaAuditoria } from '@/components/cardapio/AbaAuditoria';
@@ -95,10 +98,32 @@ const COR_ETAPA_TEXTO: Record<Etapa, string> = {
 const COR_ETAPA_PONTO: Record<Etapa, string> = {
   rascunho:    'bg-carvao-300',
   cozinha:     'bg-ouro-400 animate-pulse',
-  compras:     'bg-[#2d6f8e]',
+  compras:     'bg-info',
   recebimento: 'bg-ouro-400 animate-pulse',
   concluido:   'bg-brand-500',
 };
+
+/* ── mini-stepper de etapas — espinha dorsal visível em todas as telas ── */
+
+const SEQ_ETAPAS: Etapa[] = ['rascunho', 'cozinha', 'compras', 'recebimento', 'concluido'];
+
+function MiniEtapas({ etapa }: { etapa: Etapa }) {
+  const atual = SEQ_ETAPAS.indexOf(etapa);
+  return (
+    <div className="flex items-center gap-1.5" aria-label={`Etapa: ${ROTULO_ETAPA[etapa]}`}>
+      {SEQ_ETAPAS.map((e, i) => (
+        <div key={e} className="flex items-center gap-1.5">
+          <span
+            className={`h-1.5 rounded-full transition-all ${
+              i === atual ? 'w-6 bg-brand-600' : i < atual ? 'w-3 bg-brand-600/50' : 'w-3 bg-carvao-200 dark:bg-carvao-700'
+            }`}
+            title={ROTULO_ETAPA[e]}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /* ── busca global ────────────────────────────────────────── */
 
@@ -119,6 +144,21 @@ function useBuscaGlobal(
     if (termo.trim().length < 2) return [];
     const t = termo.toLowerCase().trim();
     const res: ResultadoBusca[] = [];
+
+    // Ações (paleta de comando) — verbos que levam direto à tarefa
+    const ACOES: { titulo: string; chaves: string; alvo: AbaId }[] = [
+      { titulo: 'Gerar cardápio',           chaves: 'gerar cardapio criar montar semana', alvo: 'cardapio' },
+      { titulo: 'Abrir cotação / preços',   chaves: 'cotacao preco precos catalogo',      alvo: 'cardapio' },
+      { titulo: 'Lista de compras',         chaves: 'lista compras comprar',              alvo: 'compras' },
+      { titulo: 'Estoque',                  chaves: 'estoque inventario saldo',           alvo: 'compras' },
+      { titulo: 'Gerar pedido',             chaves: 'pedido fornecedor encomenda',        alvo: 'compras' },
+      { titulo: 'Relatórios e exportação',  chaves: 'relatorio exportar csv dna ranking', alvo: 'relatorios' },
+    ];
+    ACOES.forEach((a) => {
+      if (a.titulo.toLowerCase().includes(t) || a.chaves.includes(t)) {
+        res.push({ tipo: 'acao', titulo: a.titulo, subtitulo: 'Ação', acao: () => irPara(a.alvo) });
+      }
+    });
 
     // pratos da semana atual
     const DIAS_PT = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
@@ -270,7 +310,9 @@ export default function PaginaCardapios() {
   const [semanaSheet, setSemanaSheet] = useState(false);
   const [buscaAberta, setBuscaAberta] = useState(false);
   const [abaCompras, setAbaCompras] = useState<'lista' | 'estoque' | 'nf' | 'fornecedores' | 'pedido'>('lista');
-  const [abaRelatorios, setAbaRelatorios] = useState<'central' | 'auditoria'>('central');
+  const [abaRelatorios, setAbaRelatorios] = useState<
+    'gerencial' | 'custos' | 'rankings' | 'previsao' | 'fornecedores' | 'auditoria'
+  >('gerencial');
 
   const { estado, atualizar, pronto } = useSemana(semanaId);
   const { precos, definirPreco } = usePrecos();
@@ -340,6 +382,26 @@ export default function PaginaCardapios() {
   const podeAvaliar = pode(papel, 'cardapio:editar');
 
   const buscarFn = useBuscaGlobal(estado, precos, fornecedores, irPara);
+
+  // Insight proativo da IA exibido no Início (antes só visível no balão flutuante)
+  const insightInicio = useMemo(
+    () => insightProativo({ estado, semanaId, precos, historico, fornecedores, aceitacao, estoque, fatores }),
+    [estado, semanaId, precos, historico, fornecedores, aceitacao, estoque, fatores],
+  );
+
+  // KPIs-herói do topo de Relatórios — leitura gerencial de 5 segundos
+  const kpisRelatorios = useMemo(() => {
+    const r = resumoSemana(estado, precos, fatores);
+    const custoSemana = r.custoReal || r.custoEstimado;
+    const custoRef = r.custoRefReal ?? r.custoRefEstimado;
+    let somaNotas = 0, nNotas = 0;
+    Object.values(aceitacao).forEach((a) => { if (a.n > 0) { somaNotas += a.somaNotas; nNotas += a.n; } });
+    const mediaAceit = nNotas > 0 ? somaNotas / nNotas : null;
+    let prod = 0, sobra = 0;
+    desperdicio.forEach((d) => { if (d.produzido > 0) { prod += d.produzido; sobra += Math.max(0, d.produzido - d.consumido); } });
+    const desperdicioPct = prod > 0 ? (sobra / prod) * 100 : null;
+    return { custoSemana, custoRef, mediaAceit, desperdicioPct };
+  }, [estado, precos, fatores, aceitacao, desperdicio]);
 
   // atalho de teclado ⌘K / Ctrl+K
   useEffect(() => {
@@ -448,6 +510,9 @@ export default function PaginaCardapios() {
                 · {semanaId === semanaAtualId ? 'semana atual' : 'semana planejada'}
               </span>
             </p>
+            <div className="mt-2">
+              <MiniEtapas etapa={estado.etapa} />
+            </div>
           </div>
           <div className="flex items-center gap-1">
             <button
@@ -518,6 +583,15 @@ export default function PaginaCardapios() {
             {/* ── INÍCIO ────────────────────────────────────── */}
             {aba === 'agora' && (
               <div className="space-y-4">
+                {/* Gerência: leitura gerencial de 5s logo no Início */}
+                {(papel === 'gestor' || papel === 'administrador') && (
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <Kpi rotulo="Custo da semana" valor={kpisRelatorios.custoSemana > 0 ? formatarReais(kpisRelatorios.custoSemana) : '—'} tom="neutro" />
+                    <Kpi rotulo="Custo / refeição" valor={kpisRelatorios.custoRef ? formatarReais(kpisRelatorios.custoRef) : '—'} tom="verde" />
+                    <Kpi rotulo="Aceitação média" valor={kpisRelatorios.mediaAceit !== null ? `${kpisRelatorios.mediaAceit.toFixed(1)}★` : '—'} tom="ouro" />
+                    <Kpi rotulo="Desperdício" valor={kpisRelatorios.desperdicioPct !== null ? `${Math.round(kpisRelatorios.desperdicioPct)}%` : '—'} tom={kpisRelatorios.desperdicioPct !== null && kpisRelatorios.desperdicioPct >= 15 ? 'vermelho' : 'neutro'} />
+                  </div>
+                )}
                 <BriefingCard
                   estado={estado}
                   semanaId={semanaId}
@@ -527,6 +601,15 @@ export default function PaginaCardapios() {
                   historico={historico}
                   fornecedores={fornecedores}
                 />
+                {insightInicio && (
+                  <div className="flex items-start gap-3 rounded-2xl border border-ouro-400/30 bg-ouro-300/10 px-4 py-3">
+                    <span className="mt-0.5 shrink-0 text-carvao-500 dark:text-ouro-300"><Icone nome="raio" tam={18} /></span>
+                    <div className="min-w-0">
+                      <p className="text-rotulo font-bold uppercase tracking-wide text-ouro-600">Destaque da IA</p>
+                      <p className="mt-0.5 text-corpo text-carvao-700 dark:text-areia-100">{insightInicio.texto}</p>
+                    </div>
+                  </div>
+                )}
                 <AbaAgora
                   estado={estado}
                   precos={precos}
@@ -625,27 +708,50 @@ export default function PaginaCardapios() {
                         : seg === 'estoque'
                         ? 'Estoque'
                         : seg === 'nf'
-                        ? '📄 Nota fiscal'
+                        ? 'Nota fiscal'
                         : seg === 'fornecedores'
-                        ? '🏪 Fornecedores'
-                        : '📋 Pedido'}
+                        ? 'Fornecedores'
+                        : 'Pedido'}
                     </button>
                   ))}
                 </div>
 
                 {abaCompras === 'lista' && (
-                  <AbaCompras
-                    estado={estado}
-                    atualizar={atualizar}
-                    papel={papel}
-                    precos={precos}
-                    fornecedores={fornecedores}
-                    ofertas={ofertas}
-                    fatores={fatores}
-                    definirPreco={definirPreco}
-                    definirFornecedor={definirFornecedor}
-                    registrarOferta={registrarOferta}
-                  />
+                  <>
+                    {/* A partir da lista — NF e Pedido são fluxo; Estoque e Fornecedores, ferramentas */}
+                    <div className="flex flex-wrap gap-2">
+                      {([
+                        { id: 'nf' as const,           rotulo: 'Lançar nota fiscal', tom: 'acao' },
+                        { id: 'pedido' as const,       rotulo: 'Gerar pedido',       tom: 'acao' },
+                        { id: 'fornecedores' as const, rotulo: 'Fornecedores',       tom: 'ferr' },
+                        { id: 'estoque' as const,      rotulo: 'Estoque',            tom: 'ferr' },
+                      ]).map((a) => (
+                        <button
+                          key={a.id}
+                          onClick={() => setAbaCompras(a.id)}
+                          className={`rounded-xl px-3 py-2 text-rotulo font-semibold transition ${
+                            a.tom === 'acao'
+                              ? 'bg-brand-600 text-white hover:bg-brand-700'
+                              : 'border border-carvao-200 text-carvao-600 hover:bg-carvao-50 dark:border-carvao-700 dark:text-areia-200 dark:hover:bg-carvao-800'
+                          }`}
+                        >
+                          {a.rotulo}
+                        </button>
+                      ))}
+                    </div>
+                    <AbaCompras
+                      estado={estado}
+                      atualizar={atualizar}
+                      papel={papel}
+                      precos={precos}
+                      fornecedores={fornecedores}
+                      ofertas={ofertas}
+                      fatores={fatores}
+                      definirPreco={definirPreco}
+                      definirFornecedor={definirFornecedor}
+                      registrarOferta={registrarOferta}
+                    />
+                  </>
                 )}
 
                 {abaCompras === 'estoque' && (
@@ -704,16 +810,43 @@ export default function PaginaCardapios() {
                   <h2 className="font-display text-2xl font-bold text-carvao-900 dark:text-white">Relatórios</h2>
                   <p className="mt-1 text-sm text-carvao-400">Análise e exportação de dados da semana</p>
                 </div>
-                {/* sub-abas */}
-                <div className="flex gap-1 rounded-2xl bg-carvao-100 p-1 dark:bg-carvao-800">
+                {/* KPIs-herói — leitura gerencial instantânea no topo */}
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <Kpi
+                    rotulo="Custo da semana"
+                    valor={kpisRelatorios.custoSemana > 0 ? formatarReais(kpisRelatorios.custoSemana) : '—'}
+                    tom="neutro"
+                  />
+                  <Kpi
+                    rotulo="Custo / refeição"
+                    valor={kpisRelatorios.custoRef ? formatarReais(kpisRelatorios.custoRef) : '—'}
+                    tom="verde"
+                  />
+                  <Kpi
+                    rotulo="Aceitação média"
+                    valor={kpisRelatorios.mediaAceit !== null ? `${kpisRelatorios.mediaAceit.toFixed(1)}★` : '—'}
+                    tom="ouro"
+                  />
+                  <Kpi
+                    rotulo="Desperdício"
+                    valor={kpisRelatorios.desperdicioPct !== null ? `${Math.round(kpisRelatorios.desperdicioPct)}%` : '—'}
+                    tom={kpisRelatorios.desperdicioPct !== null && kpisRelatorios.desperdicioPct >= 15 ? 'vermelho' : 'neutro'}
+                  />
+                </div>
+                {/* sub-abas por TEMA — navegação por assunto, não dump vertical */}
+                <div className="flex gap-1 overflow-x-auto rounded-2xl bg-carvao-100 p-1 dark:bg-carvao-800">
                   {([
-                    { id: 'central',   rotulo: '📊 Central' },
-                    ...(pode(papel, 'auditoria:ver') ? [{ id: 'auditoria', rotulo: '🔍 Auditoria' }] : []),
-                  ] as { id: 'central' | 'auditoria'; rotulo: string }[]).map((s) => (
+                    { id: 'gerencial',    rotulo: 'Visão geral' },
+                    { id: 'custos',       rotulo: 'Custos' },
+                    { id: 'rankings',     rotulo: 'DNA & Rankings' },
+                    { id: 'previsao',     rotulo: 'Previsão' },
+                    { id: 'fornecedores', rotulo: 'Fornecedores' },
+                    ...(pode(papel, 'auditoria:ver') ? [{ id: 'auditoria', rotulo: 'Auditoria' }] : []),
+                  ] as { id: typeof abaRelatorios; rotulo: string }[]).map((s) => (
                     <button
                       key={s.id}
                       onClick={() => setAbaRelatorios(s.id)}
-                      className={`flex-1 rounded-xl py-2 text-[13px] font-semibold transition ${
+                      className={`flex-1 whitespace-nowrap rounded-xl px-3 py-2 text-rotulo font-semibold transition ${
                         abaRelatorios === s.id
                           ? 'bg-white shadow-sm dark:bg-carvao-700'
                           : 'text-carvao-500 hover:text-carvao-700 dark:text-carvao-400'
@@ -724,7 +857,19 @@ export default function PaginaCardapios() {
                   ))}
                 </div>
 
-                {abaRelatorios === 'central' && (
+                {abaRelatorios === 'gerencial' && (
+                  <CentralGerencial
+                    estado={estado}
+                    semanaId={semanaId}
+                    precos={precos}
+                    historico={historico}
+                    aceitacao={aceitacao}
+                    fornecedores={fornecedores}
+                    fatores={fatores}
+                  />
+                )}
+
+                {abaRelatorios === 'custos' && (
                   <>
                     <CardapioOrientadoDados
                       dias={estado.dias}
@@ -732,39 +877,34 @@ export default function PaginaCardapios() {
                       aceitacao={aceitacao}
                       historico={historico}
                     />
-                    <AbaCustoPrato
-                      dias={estado.dias}
-                      precos={precos}
-                    />
+                    <AbaCustoPrato dias={estado.dias} precos={precos} />
                     <RoiCard precos={precos} historico={historico} fatores={fatores} />
-                    <DnaCard />
-                    <PrevisaoCard
-                      semanaId={semanaId}
-                      onPessoasAtualizadas={
-                        podeEditarCardapio
-                          ? (pessoas) => {
-                              atualizar((e) => ({
-                                ...e,
-                                dias: e.dias.map((d, i) =>
-                                  pessoas[i] != null ? { ...d, pessoas: pessoas[i] } : d,
-                                ),
-                              }));
-                              toast('Previsão aplicada às refeições da semana');
-                            }
-                          : undefined
-                      }
-                    />
-                    <CentralGerencial
-                      estado={estado}
-                      semanaId={semanaId}
-                      precos={precos}
-                      historico={historico}
-                      aceitacao={aceitacao}
-                      fornecedores={fornecedores}
-                      fatores={fatores}
-                    />
-                    <AbaRadar precos={precos} historico={historico} fornecedores={fornecedores} />
                   </>
+                )}
+
+                {abaRelatorios === 'rankings' && <DnaCard />}
+
+                {abaRelatorios === 'previsao' && (
+                  <PrevisaoCard
+                    semanaId={semanaId}
+                    onPessoasAtualizadas={
+                      podeEditarCardapio
+                        ? (pessoas) => {
+                            atualizar((e) => ({
+                              ...e,
+                              dias: e.dias.map((d, i) =>
+                                pessoas[i] != null ? { ...d, pessoas: pessoas[i] } : d,
+                              ),
+                            }));
+                            toast('Previsão aplicada às refeições da semana');
+                          }
+                        : undefined
+                    }
+                  />
+                )}
+
+                {abaRelatorios === 'fornecedores' && (
+                  <AbaRadar precos={precos} historico={historico} fornecedores={fornecedores} />
                 )}
 
                 {abaRelatorios === 'auditoria' && pode(papel, 'auditoria:ver') && (

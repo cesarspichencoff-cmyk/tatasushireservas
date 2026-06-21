@@ -48,10 +48,10 @@ const OPC_SALADAS = mesclarOpcoes(RECEITAS_POR_CATEGORIA.salada, DADOS.listas.sa
 const OPC_SOBREMESAS = mesclarOpcoes(RECEITAS_POR_CATEGORIA.sobremesa, DADOS.listas.sobremesas);
 
 const COR_PROTEINA: Record<string, string> = {
-  bovina: 'bg-[#8a3b34]/10 text-[#8a3b34] ring-[#8a3b34]/25 dark:text-[#e0867c]',
-  frango: 'bg-[#b07c1e]/10 text-[#9a6c17] ring-[#b07c1e]/25 dark:text-[#e3b45c]',
-  suina: 'bg-[#b05a7e]/10 text-[#9c4a6c] ring-[#b05a7e]/25 dark:text-[#dd92b4]',
-  peixe: 'bg-[#2d6f8e]/10 text-[#2d6f8e] ring-[#2d6f8e]/25 dark:text-[#7cb8d4]',
+  bovina: 'bg-bovina/10 text-bovina ring-bovina/25 dark:text-bovina-claro',
+  frango: 'bg-frango/10 text-frango-escuro ring-frango/25 dark:text-frango-claro',
+  suina: 'bg-suina/10 text-suina-escuro ring-suina/25 dark:text-suina-claro',
+  peixe: 'bg-peixe/10 text-peixe ring-peixe/25 dark:text-peixe-claro',
   ovo: 'bg-ouro-400/10 text-ouro-600 ring-ouro-400/25 dark:text-ouro-300',
   outros: 'bg-carvao-400/10 text-carvao-500 ring-carvao-400/25 dark:text-carvao-300',
 };
@@ -108,6 +108,7 @@ export function AbaCardapio({
   const [formPersonAberto, setFormPersonAberto] = useState(false);
   const [explicacao, setExplicacao] = useState<{ titulo: string; itens: string[] } | null>(null);
   const [cotacaoAberta, setCotacaoAberta] = useState(false);
+  const [analiseAberta, setAnaliseAberta] = useState(false);
   const [personalizado, setPersonalizado] = useState({
     eventos: '',
     proteinasPrefer: [] as string[],
@@ -298,7 +299,7 @@ export function AbaCardapio({
                 <p className="text-xs font-semibold text-carvao-400">
                   semana {formatarReais(custoSemana.total)}
                   {dentroOrcamento !== null && (
-                    <span className={dentroOrcamento ? 'text-brand-600' : 'font-bold text-[#b04c41]'}>
+                    <span className={dentroOrcamento ? 'text-brand-600' : 'font-bold text-perigo'}>
                       {' '}
                       · {dentroOrcamento ? 'no orçamento' : 'acima'}
                     </span>
@@ -418,7 +419,7 @@ export function AbaCardapio({
                     onClick={() => toggleProtein('proteinasEvitar', p)}
                     className={`rounded-full px-3 py-1 text-[11px] font-semibold transition ${
                       personalizado.proteinasEvitar.includes(p)
-                        ? 'bg-[#b04c41] text-white'
+                        ? 'bg-perigo text-white'
                         : 'bg-carvao-100 text-carvao-600 hover:bg-carvao-200 dark:bg-carvao-700 dark:text-carvao-300'
                     }`}
                   >
@@ -536,7 +537,7 @@ export function AbaCardapio({
               <p
                 key={i}
                 className={`flex items-start gap-2 text-sm font-medium ${
-                  a.nivel === 'erro' ? 'text-[#b04c41]' : 'text-[#9a6c17] dark:text-[#e3b45c]'
+                  a.nivel === 'erro' ? 'text-perigo' : 'text-[#9a6c17] dark:text-[#e3b45c]'
                 }`}
               >
                 <span aria-hidden>{a.nivel === 'erro' ? '⛔' : '⚠️'}</span>
@@ -546,22 +547,7 @@ export function AbaCardapio({
         </Cartao>
       )}
 
-      {/* Termômetro em tempo real — satisfação do almoço de hoje */}
-      <TermometroAlmoco estado={estado} />
-
-      {/* Monotonia percebida — repetição de textura ou acompanhamentos */}
-      <AntiMonotonia estado={estado} />
-
-      {/* Chef IA — análise inteligente do cardápio (resumo; aba dedicada tem visão completa) */}
-      <ChefIA estado={estado} precos={precos} />
-
-      {/* Índice nutricional estimado da semana */}
-      <IndicadorNutricional dias={estado.dias} />
-
-      {/* Previsão de presença — gêmeo digital da demanda */}
-      <PrevisaoPresenca estado={estado} atualizar={atualizar} podeEditar={podeEditar} />
-
-      {/* Dias */}
+      {/* Dias — protagonistas da tela */}
       <div className="grid gap-3 lg:grid-cols-2">
         {estado.dias.map((dia, i) => {
           const lista = dia.principal ? listaDoDia(dia) : [];
@@ -641,7 +627,7 @@ export function AbaCardapio({
                     ) : fonte === 'receita' ? (
                       <span className="font-semibold text-[#9a6c17] dark:text-[#e3b45c]">○ Receita (sem histórico)</span>
                     ) : fonte === 'estimado' ? (
-                      <span className="font-semibold text-[#b04c41]">▲ Ingredientes estimados</span>
+                      <span className="font-semibold text-perigo">▲ Ingredientes estimados</span>
                     ) : null}
                     {' · '}
                     {lista.length} itens de compra
@@ -650,11 +636,11 @@ export function AbaCardapio({
                       <span className="font-semibold text-[#9a6c17] dark:text-[#e3b45c]"> · {custo.itensEstimados} estimado(s)</span>
                     )}
                     {custo.itensSemPreco > 0 && (
-                      <span className="font-semibold text-[#b04c41]"> · {custo.itensSemPreco} sem preço</span>
+                      <span className="font-semibold text-perigo"> · {custo.itensSemPreco} sem preço</span>
                     )}
                   </p>
                   {fonte === 'estimado' && (
-                    <p className="rounded-xl bg-[#b04c41]/10 px-2.5 py-1.5 text-[11px] font-semibold text-[#b04c41] ring-1 ring-[#b04c41]/20">
+                    <p className="rounded-xl bg-perigo/10 px-2.5 py-1.5 text-[11px] font-semibold text-perigo ring-1 ring-perigo/20">
                       ⚠️ Este prato não tem receita cadastrada — os ingredientes são um chute. Escolha um prato com
                       receita ou complete os itens na lista de compras.
                     </p>
@@ -669,6 +655,32 @@ export function AbaCardapio({
             </Cartao>
           );
         })}
+      </div>
+
+      {/* Análise da semana — leitura de apoio, recolhida para os dias dominarem */}
+      <div className="overflow-hidden rounded-2xl border border-carvao-200 dark:border-carvao-700">
+        <button
+          onClick={() => setAnaliseAberta((a) => !a)}
+          className="flex w-full items-center justify-between gap-3 bg-white px-4 py-3 text-left transition hover:bg-areia-50 dark:bg-carvao-900 dark:hover:bg-carvao-850"
+        >
+          <span className="flex items-center gap-2">
+            <span className="text-lg" aria-hidden>📊</span>
+            <span>
+              <span className="block text-subtitulo text-carvao-800 dark:text-areia-100">Análise da semana</span>
+              <span className="block text-caption text-carvao-400">Termômetro, monotonia, Chef IA, nutrição e previsão de presença</span>
+            </span>
+          </span>
+          <Icone nome="baixo" tam={16} className={`shrink-0 text-carvao-400 transition-transform ${analiseAberta ? 'rotate-180' : ''}`} />
+        </button>
+        {analiseAberta && (
+          <div className="space-y-4 border-t border-carvao-100 bg-areia-50/40 p-3 dark:border-carvao-700 dark:bg-carvao-900/40">
+            <TermometroAlmoco estado={estado} />
+            <AntiMonotonia estado={estado} />
+            <ChefIA estado={estado} precos={precos} />
+            <IndicadorNutricional dias={estado.dias} />
+            <PrevisaoPresenca estado={estado} atualizar={atualizar} podeEditar={podeEditar} />
+          </div>
+        )}
       </div>
 
       {/* Orçamento + itens sem preço */}
