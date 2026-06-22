@@ -85,6 +85,7 @@ export function OperacaoDia({
   const totalTarefas = produzir.length + receber.length + comprar.length;
   const feitasProd = produzir.filter(([rot]) => feitos.has(rot)).length;
   const tudoFeito = produzir.length > 0 && feitasProd === produzir.length && receber.length === 0 && comprar.length === 0;
+  const pct = tudoFeito ? 100 : totalTarefas > 0 ? Math.round((feitasProd / totalTarefas) * 100) : 0;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-gradient-to-b from-brand-900 via-carvao-900 to-carvao-950 pb-24 text-white">
@@ -97,6 +98,19 @@ export function OperacaoDia({
           <h2 className="font-display text-base font-black tracking-wide">Operação do Dia</h2>
           <span className="text-caption font-bold uppercase tracking-wide text-ouro-300">{DIAS_SEMANA[di]}</span>
         </div>
+        {dia.principal && totalTarefas > 0 && (
+          <div className="mx-auto mt-2 max-w-2xl">
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
+                <div
+                  className="h-full rounded-full bg-brand-400 transition-all duration-500"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <span className="w-8 text-right text-micro font-bold tabular-nums text-brand-300">{pct}%</span>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="mx-auto max-w-2xl space-y-5 px-4 py-5">

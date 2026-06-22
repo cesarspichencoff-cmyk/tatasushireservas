@@ -1,13 +1,8 @@
 'use client';
 
-/* =====================================================================
-   Configurações — troca dos PINs de acesso por perfil. Aparece no Painel
-   (visível só para a Gerência). Substitui o uso dos PINs padrão.
-   ===================================================================== */
-
 import { useState } from 'react';
 import { toast } from '@/components/Toast';
-import { Botao, Cartao, Secao } from '@/components/ui';
+import { Botao } from '@/components/ui';
 import { PERFIS, useLogin } from '@/lib/cardapio/login';
 
 export function Configuracoes() {
@@ -26,35 +21,65 @@ export function Configuracoes() {
   };
 
   return (
-    <Secao titulo="Configurações — PINs de acesso">
-      <Cartao className="space-y-3">
-        <p className="text-xs text-carvao-500 dark:text-areia-200">
-          Defina um PIN próprio para cada perfil (substitui os PINs padrão). Guarde com segurança e compartilhe só com
-          quem deve ter acesso.
+    <div className="space-y-4">
+      <div className="space-y-1">
+        <p className="text-micro font-bold uppercase tracking-[0.18em] text-carvao-400">Segurança</p>
+        <p className="text-sm text-carvao-500 dark:text-areia-300">
+          Substitua os PINs padrão por números próprios. Compartilhe só com quem precisa.
         </p>
-        {PERFIS.map((p) => (
-          <div key={p.id} className="flex flex-wrap items-center gap-2">
-            <span className="w-44 shrink-0 text-sm font-semibold">
-              {p.icone} {p.rotulo}
-            </span>
-            <input
-              type="password"
-              inputMode="numeric"
-              value={pins[p.id] ?? ''}
-              onChange={(e) => setPins((s) => ({ ...s, [p.id]: e.target.value }))}
-              placeholder="novo PIN"
-              className="min-w-0 flex-1 rounded-xl border border-carvao-200 bg-white px-3 py-2 text-sm font-bold tracking-widest dark:border-carvao-600 dark:bg-carvao-900"
-            />
-            <Botao variante="secundario" className="!min-h-9 !px-3 !py-1.5 text-xs" onClick={() => salvar(p.id, p.rotulo)}>
-              Salvar
-            </Botao>
+      </div>
+
+      {PERFIS.map((p, i) => {
+        const isPrimario = i === 0;
+        return (
+          <div
+            key={p.id}
+            className={`rounded-2xl p-4 ${
+              isPrimario
+                ? 'bg-brand-50 ring-1 ring-brand-200/60 dark:bg-carvao-800/80 dark:ring-brand-700/40'
+                : 'bg-carvao-50 dark:bg-carvao-800/40'
+            }`}
+          >
+            <div className="mb-3">
+              <p className={`text-sm font-extrabold ${isPrimario ? 'text-brand-800 dark:text-brand-300' : 'text-carvao-700 dark:text-areia-200'}`}>
+                {p.icone} {p.rotulo}
+              </p>
+              {isPrimario && (
+                <p className="mt-0.5 text-caption text-carvao-500 dark:text-areia-400">
+                  Acesso total ao sistema — guarde este PIN com atenção.
+                </p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <label className="mb-1 block text-caption font-semibold text-carvao-500">Novo PIN</label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  value={pins[p.id] ?? ''}
+                  onChange={(e) => setPins((s) => ({ ...s, [p.id]: e.target.value }))}
+                  onKeyDown={(e) => e.key === 'Enter' && salvar(p.id, p.rotulo)}
+                  placeholder="mínimo 4 dígitos"
+                  className="w-full rounded-xl border border-carvao-200 bg-white px-3 py-2.5 text-sm font-bold tracking-widest placeholder:font-normal placeholder:tracking-normal dark:border-carvao-600 dark:bg-carvao-900"
+                />
+              </div>
+              <div className="flex items-end">
+                <Botao
+                  variante={isPrimario ? 'primario' : 'secundario'}
+                  className="!min-h-[42px] !px-4 !py-2 text-sm"
+                  onClick={() => salvar(p.id, p.rotulo)}
+                >
+                  Salvar
+                </Botao>
+              </div>
+            </div>
           </div>
-        ))}
-        <p className="text-caption text-carvao-400">
-          Dica de segurança: troque os PINs padrão (1234 / 1111 / 2222) por números só seus. Para acesso individual por
-          pessoa (e auditoria por usuário), a etapa de banco de dados (Supabase Auth) é o próximo passo.
-        </p>
-      </Cartao>
-    </Secao>
+        );
+      })}
+
+      <p className="px-1 text-caption text-carvao-400">
+        Para auditoria por usuário individual, a próxima etapa é Supabase Auth.
+      </p>
+    </div>
   );
 }

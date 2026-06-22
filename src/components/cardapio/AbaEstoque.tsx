@@ -26,6 +26,7 @@ export function AbaEstoque({
   podeEditar: boolean;
 }) {
   const [busca, setBusca] = useState('');
+  const [apenasCriticos, setApenasCriticos] = useState(false);
   const [novoItem, setNovoItem] = useState('');
   const [novaQtd, setNovaQtd] = useState('');
   const [invAberto, setInvAberto] = useState(false);

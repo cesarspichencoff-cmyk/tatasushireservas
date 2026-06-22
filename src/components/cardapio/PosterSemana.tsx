@@ -251,7 +251,7 @@ export function PosterSemana({
       ctx.fillText('BOM APETITE', W / 2, H - 46);
       ctx.fillStyle = '#aab0b9';
       ctx.font = '600 12px sans-serif';
-      ctx.fillText('Cardápio sujeito a alteração', W / 2, H - 24);
+      ctx.fillText('Tatá House · cozinha com propósito', W / 2, H - 24);
 
       const a = document.createElement('a');
       a.href = c.toDataURL('image/png');
@@ -443,7 +443,7 @@ export function PosterSemana({
             Bom apetite
           </p>
           <p className="mt-1 text-center text-[9px] font-semibold uppercase tracking-[0.16em] text-carvao-400">
-            Cardápio sujeito a alteração
+            Tatá House · cozinha com propósito
           </p>
         </footer>
       </div>

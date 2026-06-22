@@ -30,6 +30,7 @@ export function PrevisaoCard({ semanaId, onPessoasAtualizadas }: Props) {
   const pessoas = useMemo(() => pessoasPorDia(previsao, 'otimista'), [previsao]);
 
   const barraMax = Math.max(...previsao.dias.map((d) => d.otimista), 1);
+  const picoDia = previsao.dias.reduce((best, d, i) => d.esperado > previsao.dias[best].esperado ? i : best, 0);
 
   function aplicar() {
     onPessoasAtualizadas?.(pessoas);
@@ -49,7 +50,7 @@ export function PrevisaoCard({ semanaId, onPessoasAtualizadas }: Props) {
         )}
       </div>
       <p className="mb-4 text-rotulo text-carvao-500 dark:text-areia-400">
-        Pessimista · Esperado · Otimista por dia (com intervalo de confiança)
+        Mínimo · Previsto · Máximo por dia
       </p>
 
       {/* barras por dia */}
@@ -85,6 +86,9 @@ export function PrevisaoCard({ semanaId, onPessoasAtualizadas }: Props) {
               <span className="text-[9px] text-carvao-400">
                 {d.pessimista}–{d.otimista}
               </span>
+              {previsao.dias.indexOf(d) === picoDia && d.esperado > 0 && (
+                <span className="text-[8px] font-bold text-ouro-600 dark:text-ouro-400">↑ pico</span>
+              )}
               {conf > 0 && (
                 <span className="text-[8px] text-carvao-400">{conf}%</span>
               )}
@@ -96,15 +100,15 @@ export function PrevisaoCard({ semanaId, onPessoasAtualizadas }: Props) {
       {/* totais */}
       <div className="mt-4 grid grid-cols-3 gap-2 text-center">
         <div className="rounded-2xl bg-areia-50 py-2 dark:bg-carvao-800">
-          <p className="text-caption text-carvao-500">Pessimista</p>
+          <p className="text-caption text-carvao-500">Mínimo</p>
           <p className="font-display text-lg font-bold text-carvao-700 dark:text-areia-100">{previsao.totalPessimista}</p>
         </div>
         <div className="rounded-2xl bg-brand-50 py-2 dark:bg-carvao-800">
-          <p className="text-caption text-brand-600">Esperado</p>
+          <p className="text-caption text-brand-600">Previsto</p>
           <p className="font-display text-lg font-bold text-brand-700 dark:text-brand-300">{previsao.totalEsperado}</p>
         </div>
         <div className="rounded-2xl bg-ouro-50 py-2 dark:bg-carvao-800">
-          <p className="text-caption text-ouro-600">Otimista</p>
+          <p className="text-caption text-ouro-600">Máximo</p>
           <p className="font-display text-lg font-bold text-ouro-700 dark:text-ouro-300">{previsao.totalOtimista}</p>
         </div>
       </div>
@@ -115,7 +119,7 @@ export function PrevisaoCard({ semanaId, onPessoasAtualizadas }: Props) {
           onClick={aplicar}
           className="mt-4 w-full rounded-2xl bg-brand-600 py-2.5 text-sm font-bold text-white transition hover:bg-brand-700 active:scale-95"
         >
-          Usar previsão otimista na lista de compras
+          Usar previsão máxima na lista de compras
         </button>
       )}
 
