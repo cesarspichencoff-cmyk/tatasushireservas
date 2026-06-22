@@ -1,14 +1,24 @@
-# Tatá Sushi — Cardápios da Equipe
+# Tatá House — Sistema de Gestão do Refeitório
 
-App independente para o planejamento da refeição dos funcionários:
+App completo para planejamento e operação da refeição dos funcionários do Tatá Sushi.
 
-- **🍽️ Cardápio** — montagem da semana com sugestão automática (histórico de 405 dias,
-  370 combinações reais) respeitando as regras de rotação de proteínas:
-  suína ≤ 2×/semana, frango 3–4×, sem proteína repetida em dias seguidos.
-- **🛒 Compras** — lista gerada automaticamente, com quantidades escaladas pelo
-  movimento de cada dia (Seg/Ter 55 · Qua/Qui 65 · Sex–Dom 80, configurável).
-- **🚦 Acompanhar** — fluxo de aprovação por setor: Gestor → Cozinha → Compras → Recebimento.
-- **💰 Preços** — tabela de preços por item para estimar o custo do cardápio vs. orçamento.
+## Funcionalidades principais
+
+- **🏠 Início** — Painel do Diretor com cards de decisão (economia, risco, fornecedor destaque, favorito, estoque crítico) + Briefing inteligente com alertas priorizados e insight proativo da IA. Fluxo da semana com progresso por etapa.
+
+- **📅 Cardápio** — Montagem da semana com sugestão automática (histórico de 485 dias, 32.837+ refeições reais) respeitando regras de rotação de proteínas. Inteligência por prato (nota★, frequência, custo/pessoa) direto na seleção. Receitas com quantidades calculadas por dia. Pôster imprimível.
+
+- **💬 Cotação integrada** — Cole a mensagem do fornecedor; a IA extrai itens e preços. Comparação automática entre fornecedores. Selos de confiança (🟢/🟡/🔴) com base em evidências históricas. Radar de preços com Parecer do Comprador.
+
+- **🛒 Compras** — Lista gerada automaticamente descontando o estoque. Leitura de nota fiscal por IA (foto ou PDF). Perfis de fornecedores com histórico de qualidade e entregas. Pedido pelo WhatsApp em 1 toque.
+
+- **📦 Estoque** — Saldo em tempo real, alertas de mínimo, baixa automática ao concluir semana, inventário mensal.
+
+- **📊 Relatórios** — Visão financeira, custos por categoria, DNA da casa (linha do tempo + conquistas + campeões + proteínas), previsão de demanda com 3 cenários, auditoria de alterações.
+
+- **🤖 Assistente de IA** — Abre tomando iniciativa: apresenta análise da semana, frentes de economia e plano de ação antes de receber qualquer pergunta. Badge vermelho quando há algo crítico detectado.
+
+- **⭐ Avaliação** — QR Code no refeitório para avaliação em 20 segundos. Histórico permanente que alimenta o Chef IA e o ranking de pratos.
 
 ## Rodar localmente
 
@@ -17,20 +27,16 @@ npm install
 npm run dev
 ```
 
-## Publicar na Vercel
+## Publicar
 
-Importe este repositório na Vercel como um projeto novo (framework: Next.js,
-sem variáveis de ambiente). O app não tem login — os dados ficam no
-navegador (localStorage) nesta fase de protótipo.
+GitHub Pages via Actions. Push na branch `tata-house` dispara o deploy automaticamente.
 
 ## Atualizar o banco de dados do histórico
 
-Os dados ficam em `src/lib/cardapio/dados.json`. Quando um novo mês fechar,
-coloque as planilhas em uma pasta e rode:
+Os dados ficam em `src/lib/cardapio/dados.json`. Quando um novo período fechar, coloque as planilhas em uma pasta e rode:
 
 ```bash
 python3 scripts/cardapio/consolidar.py
 ```
 
-Veja `scripts/cardapio/README.md` para detalhes. 
- 
+Veja `scripts/cardapio/README.md` para detalhes.

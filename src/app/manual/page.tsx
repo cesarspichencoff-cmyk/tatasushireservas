@@ -405,8 +405,8 @@ export default function ManualPage() {
             <Card titulo="🧠 Briefing do dia — IA analisa, você decide"
               desc="Alertas em ordem de prioridade: urgente (vermelho), atenção (amarelo), informativo (azul). Cobre estoque baixo, pratos sem preço, alta de fornecedor, risco de desperdício e muito mais. Quando não há urgência, o briefing mostra a melhor oportunidade da semana — nunca fica em silêncio."
               cor="blue" />
-            <Card titulo="⚡ Destaque da IA — aviso proativo"
-              desc="Quando o sistema identifica algo importante — preço subindo, prato rejeitado no cardápio da semana, oportunidade de economia com substituto — aparece como aviso dourado. Toque para abrir a análise completa no Assistente."
+            <Card titulo="⚡ Insight proativo — integrado ao Briefing"
+              desc='Quando não há alertas urgentes, o Briefing exibe o ícone ⚡ com o insight mais relevante da semana — prato muito repetido, oportunidade de economia, custo abaixo da média. O link "Analisar com IA →" abre o Assistente com análise detalhada. Quando há alertas, a IA narra o diagnóstico logo acima da lista de itens — você lê a conclusão antes de ver cada problema.'
               cor="yellow" />
             <Card titulo="🔄 Fluxo da semana"
               desc="Barra de progresso: Rascunho → Cozinha → Compras → Recebimento → Concluído. Cada equipe vê exatamente em qual etapa está e qual é o próximo passo — sem precisar perguntar."
@@ -468,6 +468,9 @@ export default function ManualPage() {
             <Card titulo="💰 Custo em tempo real"
               desc="Conforme os preços são lançados na Cotação, o custo estimado por refeição aparece ao lado de cada prato. O total da semana atualiza instantaneamente — sem planilha, sem calculadora."
               cor="gray" />
+            <Card titulo="📊 Inteligência por prato — na hora da escolha"
+              desc="Abaixo do nome de cada prato, uma linha de inteligência exibe: nota★ com número de avaliações (verde ≥ 4, amarelo ≥ 3, vermelho < 3), frequência recente (quantas vezes apareceu nos últimos meses) e custo estimado por pessoa. Se os preços estiverem incompletos, o sistema sinaliza 'preço incompleto' em vermelho. Toda a informação necessária para a decisão sem sair da tela."
+              cor="purple" />
             <Card titulo="🖨️ Pôster da semana"
               desc="Um card visual pronto para imprimir e colocar no refeitório. Mostra o cardápio da semana formatado profissionalmente. Toque no botão Pôster no topo."
               cor="purple" />
@@ -863,6 +866,17 @@ export default function ManualPage() {
             </p>
           </div>
 
+          <div className="rounded-2xl border border-yellow-100 bg-yellow-50 p-4">
+            <p className="mb-2 font-bold text-yellow-800">🏆 Conquistas da Casa — marcos de orgulho</p>
+            <p className="text-sm text-yellow-700">
+              Acima da linha do tempo, o sistema exibe os grandes marcos da operação:
+              primeiras 10.000 refeições, 1 ano completo de registro, 50 semanas consecutivas,
+              100+ pratos diferentes servidos. Cada conquista fica fixada no momento em que
+              aconteceu — um reconhecimento do esforço coletivo da equipe, extraído dos dados
+              reais sem nenhuma configuração manual.
+            </p>
+          </div>
+
           <div className="space-y-2">
             <Card titulo="🥩 Proteínas mais servidas"
               desc="Ranking de qual proteína domina o cardápio com % histórico real. Ex: Frango 42% · Boi 28% · Peixe 15%. O sistema cruza com a aceitação média de cada proteína para dizer qual vale mais a pena priorizar." cor="blue" />
@@ -1074,6 +1088,14 @@ export default function ManualPage() {
               {
                 p: 'Por que o radar de fornecedores agora começa com um texto?',
                 r: 'É o Parecer do Comprador: em vez de mostrar tabelas primeiro, o sistema abre com a conclusão — quanto dá para economizar e o que trocar, reforçar ou renegociar. Os dados detalhados continuam logo abaixo, para quem quiser conferir.',
+              },
+              {
+                p: 'O que são os números que aparecem abaixo do nome de cada prato no Cardápio?',
+                r: 'É a linha de inteligência PratoIntel. Ela mostra: a nota média em estrelas (com quantas avaliações), quantas vezes o prato foi servido recentemente e o custo estimado por pessoa. Verde = bem avaliado. Amarelo = prato repetindo muito. "preço incompleto" em vermelho = falta lançar preços na Cotação para calcular o custo.',
+              },
+              {
+                p: 'O Briefing sumiu o aviso dourado de destaque da IA. Onde foi parar?',
+                r: 'O aviso proativo foi integrado diretamente ao Briefing. Quando não há alertas urgentes, o Briefing exibe o ícone ⚡ com o insight mais relevante da semana e o link "Analisar com IA →". A informação está no mesmo lugar — só deixou de ser um banner separado para ficar mais limpo.',
               },
             ].map((item, i) => (
               <div key={i} className="rounded-2xl bg-gray-50 p-4">
