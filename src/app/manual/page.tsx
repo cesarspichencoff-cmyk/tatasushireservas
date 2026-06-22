@@ -399,14 +399,14 @@ export default function ManualPage() {
             texto="Abra o sistema toda manhã e leia o Briefing primeiro. Ele reúne os alertas mais críticos antes de você começar — e é gerado pela IA com base nos dados reais da casa." />
 
           <div className="space-y-3">
-            <Card titulo="🧠 Briefing do dia — IA analisa, você decide"
-              desc="Alertas em ordem de prioridade: urgente (vermelho), atenção (amarelo), informativo (azul). Cobre estoque baixo, pratos sem preço, alta de fornecedor, risco de desperdício e muito mais. A IA gera um parágrafo de contexto quando detecta algo crítico."
+            <Card titulo="🗂️ Painel do Diretor — decisões, não dados"
+              desc='Para o gestor, o sistema abre com uma saudação ("Bom dia, [nome]") e cards de decisão: economia possível, maior risco de preço, fornecedor destaque, prato favorito da equipe e estoque crítico. Cada card só aparece quando há algo real a dizer — uma leitura de 5 segundos que já entrega o que decidir.'
               cor="green" />
-            <Card titulo="📊 KPIs da semana"
-              desc="Custo total, custo por refeição, aceitação média e percentual de desperdício — quatro números que resumem a semana inteira. Atualizam em tempo real conforme os dados entram."
+            <Card titulo="🧠 Briefing do dia — IA analisa, você decide"
+              desc="Alertas em ordem de prioridade: urgente (vermelho), atenção (amarelo), informativo (azul). Cobre estoque baixo, pratos sem preço, alta de fornecedor, risco de desperdício e muito mais. Quando não há urgência, o briefing mostra a melhor oportunidade da semana — nunca fica em silêncio."
               cor="blue" />
             <Card titulo="⚡ Destaque da IA — aviso proativo"
-              desc="Quando o sistema identifica algo importante — preço subindo, prato rejeitado no cardápio da semana, oportunidade de economia com substituto — aparece como aviso dourado. Toque para ver a análise completa."
+              desc="Quando o sistema identifica algo importante — preço subindo, prato rejeitado no cardápio da semana, oportunidade de economia com substituto — aparece como aviso dourado. Toque para abrir a análise completa no Assistente."
               cor="yellow" />
             <Card titulo="🔄 Fluxo da semana"
               desc="Barra de progresso: Rascunho → Cozinha → Compras → Recebimento → Concluído. Cada equipe vê exatamente em qual etapa está e qual é o próximo passo — sem precisar perguntar."
@@ -545,6 +545,17 @@ export default function ManualPage() {
               O sistema compara cada preço cotado com o histórico do mesmo item. Se subiu mais de 15%,
               aparece alerta vermelho com a variação em %. Se caiu, sugere aproveitar para comprar mais.
               O sistema aprende com cada cotação que você faz.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+            <p className="mb-2 font-bold text-blue-800">🟢 Selo de confiança — você decide com base sólida</p>
+            <p className="text-sm text-blue-700">
+              Ao lado de cada preço, um selo colorido mostra o quanto aquele valor é confiável:
+              <strong> 🟢 verde</strong> (muitas cotações, vários fornecedores, preço recente),
+              <strong> 🟡 amarelo</strong> (base parcial) ou <strong>🔴 cinza</strong> (preço estimado).
+              Toque no selo para ver a base — "18 cotações, 4 fornecedores, cotado há 7 dias". O número
+              deixa de ser um palpite e passa a ter lastro.
             </p>
           </div>
 
@@ -769,6 +780,17 @@ export default function ManualPage() {
           <Destaque cor="green" icone="🧠"
             texto="O sistema não só cadastra fornecedores — ele os monitora. Depois de algumas avaliações, ele diz qual está melhor agora, qual tem melhor taxa de entrega e quais estão ficando mais caros." />
 
+          <div className="rounded-2xl border border-gray-700 bg-gray-900 p-4 text-white">
+            <p className="mb-2 font-bold">🛒 Parecer do comprador — abre com a conclusão</p>
+            <p className="text-sm text-gray-200">
+              O radar de fornecedores (em Relatórios → Fornecedores) não despeja mais tabelas. Ele fala
+              como um comprador sênior: abre dizendo <strong>"Identifiquei R$ X de economia possível nesta
+              cotação"</strong> e lista as recomendações priorizadas — <strong>trocar</strong> (proteína em
+              alta com substituto mais barato), <strong>reforçar</strong> (item que caiu de preço) e
+              <strong> atenção</strong> (alta sem alternativa). A decisão vem primeiro; os dados ficam logo abaixo.
+            </p>
+          </div>
+
           <div className="space-y-2">
             <Card titulo="📋 Perfil e inteligência"
               desc="Cada fornecedor tem uma página com avaliações de qualidade e pontualidade, quais itens ele fornece e a qual preço. O painel de inteligência aponta automaticamente o melhor agora — baseado em score combinado de qualidade e confiabilidade."
@@ -815,9 +837,9 @@ export default function ManualPage() {
           <div className="space-y-2">
             <Card titulo="Visão geral" desc="Central gerencial com resumo financeiro completo da semana, histórico de custos e comparativo com semanas anteriores." cor="gray" />
             <Card titulo="Custos" desc="Detalhamento por categoria (proteína, verdura, etc.) e por dia. Custo por prato, ROI da operação e onde está indo cada real gasto." cor="blue" />
-            <Card titulo="DNA & Rankings" desc="Perfil alimentar da casa: proteínas mais usadas, campeões de aceitação, pratos a evitar e o histórico de 485 dias de operação." cor="purple" />
+            <Card titulo="DNA & Rankings" desc="A história da casa em linha do tempo + perfil alimentar: proteínas mais usadas, campeões de aceitação, pratos a evitar e os 485 dias de operação." cor="purple" />
             <Card titulo="Previsão" desc="Projeção de demanda com três cenários — pessimista, esperado e otimista. Aplique diretamente ao cardápio para recalcular a lista de compras." cor="green" />
-            <Card titulo="Fornecedores" desc="Radar de preços: comparativo entre fornecedores, tendências de alta e queda, alertas de variação anormal." cor="gray" />
+            <Card titulo="Fornecedores" desc="O Comprador Virtual: abre com o parecer e a economia possível, depois o radar de preços com tendências e alertas de variação anormal por fornecedor." cor="gray" />
             <Card titulo="Auditoria" desc="Histórico completo de tudo que foi alterado — quem mudou, o quê e quando. Exclusivo para Administrador." cor="yellow" />
           </div>
         </Secao>
@@ -830,6 +852,16 @@ export default function ManualPage() {
 
           <Destaque cor="dark" icone="✦"
             texto="O DNA não é um relatório. É a memória viva da casa — o que funcionou, o que falhou, o que a equipe mais aprecia e o que vai ao lixo toda semana. É aqui que a história da operação é contada com dados." />
+
+          <div className="rounded-2xl border border-gray-700 bg-gray-900 p-4 text-white">
+            <p className="mb-2 font-bold">📖 A história da casa — linha do tempo</p>
+            <p className="text-sm text-gray-200">
+              No topo da aba, a operação é contada como narrativa: <strong>32.837 refeições servidas</strong>
+              desde setembro de 2024, divididas em capítulos por ano — "O começo", "Consolidação", "O ano em
+              curso" — cada um com o ritmo real do período. Um mini-gráfico mostra o volume mês a mês e destaca
+              o mês recorde. Tudo extraído das contagens reais; nada inventado.
+            </p>
+          </div>
 
           <div className="space-y-2">
             <Card titulo="🥩 Proteínas mais servidas"
@@ -897,11 +929,14 @@ export default function ManualPage() {
         {/* ═══════════════════════════════════════════════════
             15 — ASSISTENTE
         ════════════════════════════════════════════════════ */}
-        <Secao id="assistente" emoji="🤖" titulo="Assistente de IA"
-          subtitulo="Responde perguntas sobre a operação com base nos dados reais do Tatá House — não é IA genérica.">
+        <Secao id="assistente" emoji="🤖" titulo="Assistente de IA" badge="Estratégico"
+          subtitulo="Não espera a pergunta. Ao abrir, já apresenta o trabalho feito — como um analista que adiantou a análise da semana.">
+
+          <Destaque cor="dark" icone="✦"
+            texto='Toque no ícone 💬 no canto inferior direito e a IA já abre com a posição pronta: "Já analisei a semana. Identifiquei R$ X de economia possível e N frentes de ação" — seguida das frentes priorizadas e do botão "Montar plano de economia", que conduz a conversa. Ela toma a iniciativa; você decide.' />
 
           <Destaque cor="blue" icone="💬"
-            texto="O Assistente conhece os pratos, fornecedores, preços e histórico desta casa. Pergunte em linguagem natural — ele responde com os dados reais, não com estimativas genéricas. Toque no ícone 💬 no canto inferior direito." />
+            texto="Depois da abertura, pergunte o que quiser em linguagem natural. O Assistente conhece os pratos, fornecedores, preços e histórico desta casa — responde com os dados reais, não com estimativas genéricas." />
 
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {[
@@ -1031,6 +1066,14 @@ export default function ManualPage() {
               {
                 p: 'A busca global (⌘K) serve para quê?',
                 r: 'Para ir diretamente a qualquer prato, fornecedor, relatório ou ação do sistema sem precisar navegar pelas abas. É o atalho de poder do sistema — como uma paleta de comandos.',
+              },
+              {
+                p: 'O que significam as bolinhas coloridas ao lado dos preços?',
+                r: 'É o selo de confiança do preço. Verde = base sólida (muitas cotações, vários fornecedores, preço recente). Amarelo = base parcial. Cinza = preço estimado. Toque no selo para ver em quantas evidências aquele valor se apoia.',
+              },
+              {
+                p: 'Por que o radar de fornecedores agora começa com um texto?',
+                r: 'É o Parecer do Comprador: em vez de mostrar tabelas primeiro, o sistema abre com a conclusão — quanto dá para economizar e o que trocar, reforçar ou renegociar. Os dados detalhados continuam logo abaixo, para quem quiser conferir.',
               },
             ].map((item, i) => (
               <div key={i} className="rounded-2xl bg-gray-50 p-4">
