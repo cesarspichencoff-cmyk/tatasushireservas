@@ -211,6 +211,14 @@ export function ListaCompras({
                   <span className="font-semibold">Cardápio:</span> {servido.join(' · ')}
                 </p>
               )}
+              {total > 0 && (
+                <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-carvao-200 dark:bg-carvao-700">
+                  <div
+                    className={`h-full rounded-full transition-all ${comprados === total ? 'bg-brand-500' : 'bg-ouro-400'}`}
+                    style={{ width: `${total > 0 ? Math.round((comprados / total) * 100) : 0}%` }}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Checklist compacto */}
@@ -305,7 +313,7 @@ export function ListaCompras({
                         className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-areia-50 disabled:cursor-default dark:hover:bg-carvao-800/40"
                       >
                         <span
-                          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-caption font-bold ${
+                          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-caption font-bold ${
                             comprado
                               ? 'border-brand-600 bg-brand-600 text-white'
                               : 'border-carvao-300 text-transparent dark:border-carvao-500'

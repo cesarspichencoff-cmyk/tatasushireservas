@@ -325,91 +325,75 @@ function GrupoFornecedor({
       {/* itens do grupo */}
       {expandido && (
         <div className="border-t border-carvao-100 dark:border-carvao-800">
-          {/* cabeçalho da tabela */}
-          <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 border-b border-carvao-100 bg-carvao-50/60 px-4 py-1.5 text-micro font-bold uppercase tracking-wide text-carvao-400 dark:border-carvao-800 dark:bg-carvao-900/30">
-            <span>Item</span>
-            <span className="text-center">Qtd / Un</span>
-            <span className="text-center">Previsão</span>
-            <span className="text-center">OK?</span>
-          </div>
-
-          {itens.map(({ chave, item, unid, qtd, pedido: p }) => {
-            const qtdFinal = p.qtdOverride ?? qtd;
-            return (
-              <div
-                key={chave}
-                className={`grid grid-cols-[1fr_auto_auto_auto] items-center gap-2 border-b border-carvao-100/60 px-4 py-2.5 last:border-0 dark:border-carvao-800/60 ${
-                  p.confirmado ? 'opacity-60' : ''
-                }`}
+          {podeEditar && !tudo && (
+            <div className="flex justify-end border-b border-carvao-100 px-4 py-2 dark:border-carvao-800">
+              <button
+                onClick={() => itens.forEach((i) => !i.pedido.confirmado && onSetItem(i.chave, { confirmado: true }))}
+                className="text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400"
               >
-                {/* nome */}
-                <span
-                  className={`text-nota font-semibold leading-snug ${
-                    p.confirmado
-                      ? 'line-through text-carvao-400'
-                      : 'text-carvao-800 dark:text-areia-100'
-                  }`}
+                Confirmar todos ✓
+              </button>
+            </div>
+          )}
+
+          <ul className="divide-y divide-carvao-100 dark:divide-carvao-800">
+            {itens.map(({ chave, item, unid, qtd, pedido: p }) => {
+              const qtdFinal = p.qtdOverride ?? qtd;
+              return (
+                <li
+                  key={chave}
+                  className={`flex items-center gap-3 px-4 py-2.5 ${p.confirmado ? 'opacity-50' : ''}`}
                 >
-                  {item}
-                </span>
-
-                {/* quantidade */}
-                <div className="flex items-center gap-1">
-                  {podeEditar ? (
-                    <input
-                      type="number"
-                      min={0}
-                      step="0.5"
-                      value={qtdFinal}
-                      onChange={(e) =>
-                        onSetItem(chave, { qtdOverride: Number(e.target.value) || qtd })
-                      }
-                      className="h-8 w-14 rounded-lg border border-carvao-200 bg-white px-1.5 text-center text-rotulo font-bold tabular-nums dark:border-carvao-600 dark:bg-carvao-900"
-                    />
-                  ) : (
-                    <strong className="tabular-nums text-nota">{formatarQtd(qtdFinal)}</strong>
-                  )}
-                  <span className="text-caption text-carvao-400">{unid}</span>
-                </div>
-
-                {/* data prevista */}
-                <div className="w-[90px]">
-                  {podeEditar ? (
-                    <input
-                      type="date"
-                      value={p.previsao ?? ''}
-                      onChange={(e) => onSetItem(chave, { previsao: e.target.value || undefined })}
-                      className="h-8 w-full rounded-lg border border-carvao-200 bg-white px-1 text-caption dark:border-carvao-600 dark:bg-carvao-900 dark:[color-scheme:dark]"
-                    />
-                  ) : p.previsao ? (
-                    <span className="text-rotulo font-semibold tabular-nums text-carvao-700 dark:text-areia-200">
-                      {ddmm(p.previsao)}
-                    </span>
-                  ) : (
-                    <span className="text-carvao-300 text-rotulo">—</span>
-                  )}
-                </div>
-
-                {/* checkbox confirmação */}
-                <div className="flex justify-center">
                   <button
                     disabled={!podeEditar}
                     onClick={() => onSetItem(chave, { confirmado: !p.confirmado })}
                     title={p.confirmado ? 'Marcar como pendente' : 'Confirmar recebimento'}
-                    className={`flex h-7 w-7 items-center justify-center rounded-lg ring-1 transition ${
+                    className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ring-1 transition ${
                       p.confirmado
                         ? 'bg-brand-500 ring-brand-500/50 text-white'
                         : podeEditar
-                        ? 'bg-white ring-carvao-200 text-transparent hover:ring-brand-300 dark:bg-carvao-800 dark:ring-carvao-600'
+                        ? 'bg-white ring-carvao-200 text-transparent hover:ring-brand-400 dark:bg-carvao-800 dark:ring-carvao-600'
                         : 'bg-white ring-carvao-100 text-transparent dark:bg-carvao-800'
                     }`}
                   >
-                    <Icone nome="check" tam={13} />
+                    <Icone nome="check" tam={12} />
                   </button>
-                </div>
-              </div>
-            );
-          })}
+
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-sm font-semibold leading-snug ${p.confirmado ? 'line-through text-carvao-400' : 'text-carvao-800 dark:text-areia-100'}`}>
+                      {item}
+                    </p>
+                    {!podeEditar && (
+                      <p className="text-xs text-carvao-400 tabular-nums">
+                        {formatarQtd(qtdFinal)} {unid}
+                        {p.previsao && ` · previsto ${ddmm(p.previsao)}`}
+                      </p>
+                    )}
+                  </div>
+
+                  {podeEditar && (
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.5"
+                        value={qtdFinal}
+                        onChange={(e) => onSetItem(chave, { qtdOverride: Number(e.target.value) || qtd })}
+                        className="h-8 w-14 rounded-lg border border-carvao-200 bg-white px-1.5 text-center text-rotulo font-bold tabular-nums dark:border-carvao-600 dark:bg-carvao-900"
+                      />
+                      <span className="text-xs text-carvao-400">{unid}</span>
+                      <input
+                        type="date"
+                        value={p.previsao ?? ''}
+                        onChange={(e) => onSetItem(chave, { previsao: e.target.value || undefined })}
+                        className="h-8 w-[90px] rounded-lg border border-carvao-200 bg-white px-1 text-caption dark:border-carvao-600 dark:bg-carvao-900 dark:[color-scheme:dark]"
+                      />
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
         </div>
       )}
     </Cartao>
