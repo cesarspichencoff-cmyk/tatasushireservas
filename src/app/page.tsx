@@ -26,6 +26,7 @@ import { PosterSemana } from '@/components/cardapio/PosterSemana';
 import { BriefingCard } from '@/components/cardapio/BriefingCard';
 import { AbaAuditoria } from '@/components/cardapio/AbaAuditoria';
 import { DnaCard } from '@/components/cardapio/DnaCard';
+import { LinhaTempoCasa } from '@/components/cardapio/LinhaTempoCasa';
 import { PrevisaoCard } from '@/components/cardapio/PrevisaoCard';
 import { RoiCard } from '@/components/cardapio/RoiCard';
 import { AbaFuncionarios } from '@/components/cardapio/AbaFuncionarios';
@@ -1013,7 +1014,12 @@ export default function PaginaCardapios() {
                   </>
                 )}
 
-                {abaRelatorios === 'rankings' && <DnaCard />}
+                {abaRelatorios === 'rankings' && (
+                  <div className="space-y-6">
+                    <LinhaTempoCasa />
+                    <DnaCard />
+                  </div>
+                )}
 
                 {abaRelatorios === 'previsao' && (
                   <PrevisaoCard

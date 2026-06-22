@@ -69,6 +69,105 @@ export function calcularTendenciaMensal(): MesTendencia[] {
   return meses;
 }
 
+/* ── Linha do tempo da casa ──────────────────────────────────────────
+   Conta a história real da operação: cada ano vira um capítulo com os
+   números verdadeiros (refeições servidas, dias, ritmo) + o mês recorde.
+   Sem inventar nada — só dá voz ao que o WhatsApp registrou. */
+
+export interface CapituloCasa {
+  ano: string;
+  titulo: string;
+  refeicoes: number;
+  dias: number;
+  mediaDia: number;
+  destaque: string;
+}
+
+export interface LinhaTempoCasa {
+  capitulos: CapituloCasa[];
+  totalRefeicoes: number;
+  totalDias: number;
+  inicio: string; // "set/2024"
+  mesRecorde: { rotulo: string; total: number } | null;
+  sparkline: number[]; // volume mensal normalizado, ordem cronológica
+}
+
+const MES_NOME = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+function rotuloMes(ym: string): string {
+  const [y, m] = ym.split('-');
+  return `${MES_NOME[Number(m) - 1]}/${y.slice(2)}`;
+}
+
+export function linhaDoTempoCasa(): LinhaTempoCasa | null {
+  const dados = getDados() as Raw;
+  const datas = Object.keys(dados).filter((k) => (dados[k]?.[2] ?? 0) > 0).sort();
+  if (datas.length === 0) return null;
+
+  // Agrega por ano e por mês
+  const porAno = new Map<string, { ref: number; dias: number }>();
+  const porMes = new Map<string, number>();
+  let total = 0;
+
+  for (const k of datas) {
+    const t = dados[k][2];
+    total += t;
+    const ano = k.slice(0, 4);
+    const ym = k.slice(0, 7);
+    const a = porAno.get(ano) ?? { ref: 0, dias: 0 };
+    porAno.set(ano, { ref: a.ref + t, dias: a.dias + 1 });
+    porMes.set(ym, (porMes.get(ym) ?? 0) + t);
+  }
+
+  // Mês recorde
+  let mesRecorde: { rotulo: string; total: number } | null = null;
+  Array.from(porMes.entries()).forEach(([ym, v]) => {
+    if (!mesRecorde || v > mesRecorde.total) mesRecorde = { rotulo: rotuloMes(ym), total: v };
+  });
+
+  // Capítulos por ano com narrativa derivada dos próprios números
+  const anos = Array.from(porAno.keys()).sort();
+  const capitulos: CapituloCasa[] = anos.map((ano, i) => {
+    const { ref, dias } = porAno.get(ano)!;
+    const mediaDia = Math.round(ref / dias);
+    const anterior = i > 0 ? porAno.get(anos[i - 1]) : null;
+    let titulo = 'Operação';
+    let destaque = `${ref.toLocaleString('pt-BR')} refeições em ${dias} dias`;
+
+    if (i === 0) {
+      titulo = 'O começo';
+      destaque = `As primeiras ${ref.toLocaleString('pt-BR')} refeições da casa`;
+    } else if (i === anos.length - 1 && ano === String(new Date().getFullYear())) {
+      titulo = 'O ano em curso';
+      destaque = `${ref.toLocaleString('pt-BR')} refeições até agora, ${mediaDia}/dia`;
+    } else {
+      const cresc = anterior && anterior.dias > 0
+        ? Math.round((mediaDia / Math.round(anterior.ref / anterior.dias) - 1) * 100)
+        : 0;
+      titulo = ref >= (anterior?.ref ?? 0) ? 'Consolidação' : 'Operação';
+      destaque = cresc > 5
+        ? `Ritmo ${cresc}% maior — ${mediaDia} refeições/dia`
+        : `${ref.toLocaleString('pt-BR')} refeições, ${mediaDia}/dia constante`;
+    }
+
+    return { ano, titulo, refeicoes: ref, dias, mediaDia, destaque };
+  });
+
+  // Sparkline mensal normalizado
+  const mesesOrd = Array.from(porMes.keys()).sort();
+  const max = Math.max(...mesesOrd.map((m) => porMes.get(m)!), 1);
+  const sparkline = mesesOrd.map((m) => Math.round((porMes.get(m)! / max) * 100));
+
+  return {
+    capitulos,
+    totalRefeicoes: total,
+    totalDias: datas.length,
+    inicio: rotuloMes(datas[0].slice(0, 7)),
+    mesRecorde,
+    sparkline,
+  };
+}
+
 export function calcularStats(): StatsRefeicoes {
   const dados = getDados();
   const hoje = hojeISO();
