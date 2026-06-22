@@ -15,10 +15,36 @@ import { useMemo, useState } from 'react';
 import { Botao, Cartao, Modal, Pilula, estiloInput } from '@/components/ui';
 import { Icone } from '@/components/Icones';
 import { DADOS, DIAS_SEMANA, formatarQtd, formatarReais, linhasDoDia, normalizar } from '@/lib/cardapio/motor';
-import type { EstadoSemana } from '@/lib/cardapio/tipos';
+import { confiancaPreco, COR_CONFIANCA } from '@/lib/cardapio/confianca';
+import type { EstadoSemana, HistoricoPrecos } from '@/lib/cardapio/tipos';
 
 function hojeIso(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+/** Selo de confiança do preço — 🟢/🟡/🔴 com as evidências no title. */
+function SeloConfianca({
+  norm,
+  historico,
+  ofertas,
+  temPreco,
+}: {
+  norm: string;
+  historico: HistoricoPrecos;
+  ofertas: Record<string, { fornecedor: string; preco: number }[]>;
+  temPreco: boolean;
+}) {
+  const c = confiancaPreco(norm, historico, ofertas, temPreco);
+  const cor = COR_CONFIANCA[c.nivel];
+  return (
+    <span
+      className={`inline-flex items-center gap-1 ${cor.texto}`}
+      title={`Confiança ${c.pct}% · baseado em ${c.baseado.join(', ')}`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${cor.ponto}`} />
+      <span className="text-micro font-bold tabular-nums">{c.pct}%</span>
+    </span>
+  );
 }
 
 export function ListaCompras({
@@ -31,6 +57,7 @@ export function ListaCompras({
   precos = {},
   fornecedores = {},
   ofertas = {},
+  historico = {},
   podePreco = false,
   definirPreco,
   definirFornecedor,
@@ -49,6 +76,7 @@ export function ListaCompras({
   precos?: Record<string, number>;
   fornecedores?: Record<string, string>;
   ofertas?: Record<string, { fornecedor: string; preco: number }[]>;
+  historico?: HistoricoPrecos;
   podePreco?: boolean;
   definirPreco?: (itemNorm: string, valor: number | null, nome?: string) => void;
   definirFornecedor?: (itemNorm: string, marca: string | null) => void;
@@ -298,12 +326,17 @@ export function ListaCompras({
                             {obs && <span className="ml-1 text-caption italic text-carvao-400">· </span>}
                           </span>
                           {!podeMexerPreco && (fornecedores[l.chave] || precos[l.chave] > 0) && (
-                            <span className="mt-0.5 block text-micro font-semibold text-brand-600 dark:text-brand-300">
-                              {fornecedores[l.chave] || 'fornecedor não informado'}
+                            <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-micro font-semibold text-brand-600 dark:text-brand-300">
+                              <span>
+                                {fornecedores[l.chave] || 'fornecedor não informado'}
+                                {precos[l.chave] > 0 && (
+                                  <span className="font-normal text-carvao-400">
+                                    {' · '}{formatarReais(precos[l.chave])}/{unidAtual}
+                                  </span>
+                                )}
+                              </span>
                               {precos[l.chave] > 0 && (
-                                <span className="font-normal text-carvao-400">
-                                  {' · '}{formatarReais(precos[l.chave])}/{unidAtual}
-                                </span>
+                                <SeloConfianca norm={l.chave} historico={historico} ofertas={ofertas} temPreco />
                               )}
                             </span>
                           )}

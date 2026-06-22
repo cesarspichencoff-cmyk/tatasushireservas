@@ -13,7 +13,7 @@ import {
 } from '@/lib/cardapio/motor';
 import { registrarAuditoria, useMostrarBasicos } from '@/lib/cardapio/estado';
 import { pode } from '@/lib/cardapio/org';
-import type { EstadoSemana, Papel, StatusItem } from '@/lib/cardapio/tipos';
+import type { EstadoSemana, HistoricoPrecos, Papel, StatusItem } from '@/lib/cardapio/tipos';
 import { ListaCompras } from './ListaCompras';
 import { ConciliacaoSemana } from './ConciliacaoSemana';
 
@@ -51,6 +51,7 @@ export function AbaCompras({
   precos,
   fornecedores = {},
   ofertas = {},
+  historico = {},
   fatores,
   definirPreco,
   definirFornecedor,
@@ -62,6 +63,7 @@ export function AbaCompras({
   precos: Record<string, number>;
   fornecedores?: Record<string, string>;
   ofertas?: Record<string, { fornecedor: string; preco: number }[]>;
+  historico?: HistoricoPrecos;
   fatores?: Record<string, number>;
   definirPreco?: (itemNorm: string, valor: number | null, nome?: string) => void;
   definirFornecedor?: (itemNorm: string, marca: string | null) => void;
@@ -291,6 +293,7 @@ export function AbaCompras({
           precos={precos}
           fornecedores={fornecedores}
           ofertas={ofertas}
+          historico={historico}
           podePreco={podePreco}
           definirPreco={definirPreco}
           definirFornecedor={definirFornecedor}
