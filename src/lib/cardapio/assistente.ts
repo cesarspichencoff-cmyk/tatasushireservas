@@ -205,6 +205,60 @@ export function insightProativo(ctx: ContextoAssistente): RespostaAssistente | n
   return null;
 }
 
+/**
+ * Resumo estratégico: o que a IA faria agora, sem esperar pergunta.
+ * Sintetiza economia possível + frentes prioritárias para abrir o
+ * Assistente já com uma posição — como um analista que adiantou o trabalho.
+ */
+export interface ResumoEstrategico {
+  titulo: string;
+  itens: string[];
+}
+
+export function resumoEstrategico(ctx: ContextoAssistente): ResumoEstrategico | null {
+  const radar = analisarRadar(ctx.precos, ctx.historico, ctx.fornecedores);
+  const itens: string[] = [];
+
+  // Economia somada das substituições disponíveis
+  const altasSubst = radar.filter((r) => r.alerta === 'alta' && r.substituir);
+  let economia = 0;
+  let unid = 'kg';
+  altasSubst.forEach((r) => {
+    economia += r.substituir!.economia;
+    unid = r.unid || unid;
+    const pct = Math.round(Math.abs(r.variacao ?? 0) * 100);
+    itens.push(`${r.item} subiu ${pct}% — trocar por ${r.substituir!.item} economiza ${formatarReais(r.substituir!.economia)}/${r.unid}.`);
+  });
+
+  // Quedas — oportunidade de reforçar
+  radar.filter((r) => r.alerta === 'queda').slice(0, 1).forEach((r) => {
+    const pct = Math.round(Math.abs(r.variacao ?? 0) * 100);
+    itens.push(`${r.item} caiu ${pct}% — bom momento para reforçar o estoque.`);
+  });
+
+  // Estoque crítico
+  const baixos = alertasEstoque(ctx.estoque);
+  if (baixos.length > 0) {
+    itens.push(`${baixos.length} ${baixos.length === 1 ? 'item está' : 'itens estão'} no limite do estoque — ${baixos.slice(0, 2).map((a) => a.item).join(', ')}.`);
+  }
+
+  // Prato rejeitado no cardápio desta semana
+  const ranking = rankingAceitacao(ctx.aceitacao);
+  const pratosDaSemana = ctx.estado.dias.map((d) => normalizar(d.principal ?? '')).filter(Boolean);
+  const rejeitado = ranking.filter((r) => r.media < 2.5).find((r) => pratosDaSemana.includes(normalizar(r.prato)));
+  if (rejeitado) {
+    itens.push(`"${rejeitado.prato}" está no cardápio desta semana com nota ${rejeitado.media.toFixed(1)}★ — considere substituir.`);
+  }
+
+  if (itens.length === 0) return null;
+
+  const titulo = economia >= 0.01
+    ? `Já analisei a semana. Identifiquei ${formatarReais(economia)}/${unid} de economia possível e ${itens.length} ${itens.length === 1 ? 'frente' : 'frentes'} de ação.`
+    : `Já analisei a semana. ${itens.length} ${itens.length === 1 ? 'ponto pede' : 'pontos pedem'} sua decisão.`;
+
+  return { titulo, itens: itens.slice(0, 4) };
+}
+
 /* ------------------------------------------------------------------ */
 /* Camada async — chama /api/ia, cai em regras se offline              */
 /* ------------------------------------------------------------------ */

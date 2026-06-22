@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { PERGUNTAS_SUGERIDAS, insightProativo, responder, responderAsync, type ContextoAssistente } from '@/lib/cardapio/assistente';
+import { PERGUNTAS_SUGERIDAS, insightProativo, resumoEstrategico, responder, responderAsync, type ContextoAssistente } from '@/lib/cardapio/assistente';
 import { montarDossieCompleto } from '@/lib/cardapio/estado';
 import { Icone } from '@/components/Icones';
 import { InteligenciaCard } from './InteligenciaCard';
@@ -33,10 +33,11 @@ export function Assistente({
   const [entrada, setEntrada] = useState('');
   const [pensando, setPensando] = useState(false);
   const [falas, setFalas] = useState<Fala[]>([
-    { de: 'assistente', texto: 'Oi! Posso analisar custos, preços, aceitação e estoque. Pergunte ou use as sugestões abaixo.' },
+    { de: 'assistente', texto: 'Pode me perguntar qualquer coisa sobre a operação — ou tocar numa sugestão abaixo.' },
   ]);
 
   const proativo = useMemo(() => insightProativo(contexto), [contexto]);
+  const estrategia = useMemo(() => resumoEstrategico(contexto), [contexto]);
 
   const perguntar = async (pergunta: string) => {
     const p = pergunta.trim();
@@ -111,9 +112,26 @@ export function Assistente({
           {aba === 'chat' && (
             <>
               <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
-                {proativo && (
+                {estrategia ? (
+                  <div className="rounded-2xl bg-gradient-to-br from-carvao-900 to-brand-900 p-3.5 text-white">
+                    <p className="text-sm font-semibold leading-snug">{estrategia.titulo}</p>
+                    <ul className="mt-2 space-y-1.5">
+                      {estrategia.itens.map((it, j) => (
+                        <li key={j} className="flex gap-2 text-nota text-areia-50/90">
+                          <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-ouro-400" />
+                          <span className="leading-snug">{it}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      onClick={() => perguntar('Como reduzir o custo da próxima semana?')}
+                      className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-ouro-400 px-3.5 py-1.5 text-caption font-bold text-carvao-900 transition hover:bg-ouro-300"
+                    >
+                      Montar plano de economia <Icone nome="proximo" tam={12} />
+                    </button>
+                  </div>
+                ) : proativo ? (
                   <div className="rounded-2xl bg-ouro-300/15 p-3 ring-1 ring-ouro-400/30">
-                    <p className="mb-1 text-micro font-bold uppercase tracking-wide text-ouro-600">Destaque do momento</p>
                     <p className="text-sm text-carvao-700 dark:text-areia-100">{proativo.texto}</p>
                     {proativo.itens && (
                       <ul className="mt-1 space-y-0.5 text-nota">
@@ -126,7 +144,7 @@ export function Assistente({
                       </ul>
                     )}
                   </div>
-                )}
+                ) : null}
                 {falas.map((f, i) => (
                   <div key={i} className={f.de === 'voce' ? 'text-right' : ''}>
                     <div
