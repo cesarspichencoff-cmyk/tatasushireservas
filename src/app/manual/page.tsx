@@ -1,9 +1,8 @@
 /* =====================================================================
    Manual do Sistema — Tatá House
-   Documentação oficial alinhada à versão final do produto.
+   Documentação oficial. Versão 2026.
    ===================================================================== */
 
-import { Icone } from '@/components/Icones';
 import { BotaoBaixarManual } from './BotaoBaixarManual';
 
 export const metadata = {
@@ -15,42 +14,77 @@ export const metadata = {
 
 function Capa() {
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0a2e1a] via-[#1a5c3a] to-[#0a2e1a] px-8 py-14 text-center shadow-2xl">
+    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#071a0e] via-[#1a5c3a] to-[#071a0e] px-8 py-16 text-center shadow-2xl">
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.06]"
+        className="pointer-events-none absolute inset-0 opacity-[0.05]"
         style={{ backgroundImage: 'radial-gradient(circle, #fff 1.5px, transparent 1.5px)', backgroundSize: '28px 28px' }}
       />
-      <div className="pointer-events-none absolute left-1/2 top-0 h-72 w-80 -translate-x-1/2 rounded-full bg-white/5 blur-3xl" />
+      <div className="pointer-events-none absolute left-1/2 top-0 h-80 w-96 -translate-x-1/2 rounded-full bg-emerald-400/5 blur-3xl" />
       <div className="relative z-10">
-        {/* Logo */}
-        <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-3xl bg-white/10 shadow-xl ring-2 ring-white/20">
+        <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-3xl bg-white/10 shadow-2xl ring-2 ring-white/15">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo-tata.png"
-            alt="Tatá House"
-            className="h-14 w-14 object-contain brightness-0 invert"
-          />
+          <img src="/logo-tata.png" alt="Tatá House" className="h-14 w-14 object-contain brightness-0 invert" />
         </div>
-        <p className="mb-1 text-xs font-bold uppercase tracking-[0.3em] text-green-300/70">
+        <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.4em] text-emerald-300/60">
           Sistema de Gestão
         </p>
-        <h1 className="font-display text-4xl font-bold text-white drop-shadow-md">Tatá House</h1>
-        <p className="mt-2 text-xl font-semibold text-green-200">Manual do Sistema</p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
+        <h1 className="font-display text-5xl font-bold text-white drop-shadow-md tracking-tight">Tatá House</h1>
+        <p className="mt-3 text-xl font-light text-emerald-100">Manual do Sistema</p>
+
+        <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { num: '5', label: 'módulos' },
-            { num: '20+', label: 'funcionalidades' },
-            { num: '3 anos', label: 'de histórico' },
+            { num: '485', label: 'dias de operação' },
+            { num: '32.837+', label: 'refeições registradas' },
+            { num: '3 anos', label: 'de histórico real' },
             { num: 'IA', label: 'integrada' },
           ].map((s) => (
-            <div key={s.label} className="rounded-2xl bg-white/10 px-4 py-2 text-center ring-1 ring-white/10">
-              <p className="font-display text-lg font-bold text-white">{s.num}</p>
-              <p className="text-[10px] text-green-200">{s.label}</p>
+            <div key={s.label} className="rounded-2xl bg-white/8 px-3 py-3 ring-1 ring-white/10">
+              <p className="font-display text-xl font-bold text-white">{s.num}</p>
+              <p className="mt-0.5 text-[10px] text-emerald-200/70">{s.label}</p>
             </div>
           ))}
         </div>
-        <p className="mt-6 text-sm text-green-300/70">
-          Guia oficial para toda a equipe — cozinha, compras, recebimento e gestão
+
+        <p className="mt-8 max-w-sm mx-auto text-sm leading-relaxed text-emerald-200/60">
+          Guia oficial para toda a equipe —<br />cozinha, compras, recebimento e gestão.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ── Manifesto ──────────────────────────────────────────────── */
+
+function Manifesto() {
+  return (
+    <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
+      <div className="mb-5 flex items-start gap-3">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#1a5c3a]/8 text-2xl">✦</span>
+        <div>
+          <h2 className="font-display text-xl font-bold text-gray-800">Por que este sistema existe</h2>
+          <p className="mt-0.5 text-sm text-gray-500">A história por trás da ferramenta</p>
+        </div>
+      </div>
+      <div className="space-y-4 text-sm leading-relaxed text-gray-700">
+        <p>
+          O Tatá House serve <strong>centenas de refeições por dia</strong> com uma operação que exige
+          precisão: comprar na quantidade certa, no fornecedor mais barato, com o cardápio que a equipe
+          mais aprecia — e ainda controlar desperdício, custo por prato e estoque.
+        </p>
+        <p>
+          Este sistema foi construído <strong>de dentro para fora</strong>: partindo de 3 anos de registros
+          reais do WhatsApp, 485 dias de operação digitalizados e mais de 1.400 amostras históricas.
+          Cada número que você vê na tela tem raiz em dados reais desta casa.
+        </p>
+        <div className="rounded-2xl bg-[#1a5c3a]/5 px-4 py-4 ring-1 ring-[#1a5c3a]/10">
+          <p className="font-semibold text-[#1a5c3a]">
+            "O sistema não é uma ferramenta de relatório. É o gestor silencioso que trabalha 24h — lembra
+            o que funcionou, alerta o que está subindo de preço e sugere o que a equipe vai adorar amanhã."
+          </p>
+        </div>
+        <p>
+          Não precisamos mais adivinhar quanto frango comprar na quinta-feira. Não precisamos mais
+          descobrir depois que o fornecedor subiu 15% no tomate. <strong>O sistema já sabe — e avisa.</strong>
         </p>
       </div>
     </div>
@@ -61,7 +95,7 @@ function Capa() {
 
 function FluxoCentral() {
   const etapas = [
-    { icone: '🏠', nome: 'Início', desc: 'Briefing + KPIs' },
+    { icone: '🏠', nome: 'Início', desc: 'Briefing + decisões' },
     { icone: '📅', nome: 'Cardápio', desc: 'Centro inteligente' },
     { icone: '🛒', nome: 'Compras', desc: 'Execução e estoque' },
     { icone: '📊', nome: 'Relatórios', desc: 'Análise gerencial' },
@@ -69,7 +103,7 @@ function FluxoCentral() {
   ];
   return (
     <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
-      <p className="mb-4 text-xs font-bold uppercase tracking-widest text-gray-400">Fluxo do sistema</p>
+      <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Fluxo do sistema</p>
       <div className="flex items-start gap-1">
         {etapas.map((e, i) => (
           <div key={e.nome} className="flex flex-1 flex-col items-center gap-2">
@@ -86,9 +120,9 @@ function FluxoCentral() {
           </div>
         ))}
       </div>
-      <div className="mt-4 rounded-2xl bg-[#1a5c3a]/5 px-4 py-3">
+      <div className="mt-5 rounded-2xl bg-[#1a5c3a]/5 px-4 py-3 ring-1 ring-[#1a5c3a]/10">
         <p className="text-xs font-semibold text-[#1a5c3a]">
-          O <strong>Cardápio</strong> é o centro inteligente do sistema — é de lá que saem as decisões de compra, custo e planejamento.
+          O <strong>Cardápio</strong> é o centro inteligente do sistema — é de lá que saem as decisões de compra, custo e planejamento. Tudo parte e volta para o cardápio.
         </p>
       </div>
     </div>
@@ -98,7 +132,7 @@ function FluxoCentral() {
 function Indice() {
   const capitulos = [
     { num: '01', nome: 'Como entrar no sistema', ancora: 'acesso' },
-    { num: '02', nome: 'Início — briefing e panorama', ancora: 'inicio' },
+    { num: '02', nome: 'Início — briefing e decisões', ancora: 'inicio' },
     { num: '03', nome: 'Cardápio — o centro inteligente', ancora: 'cardapio' },
     { num: '04', nome: 'Cardápio › Como Fazer', ancora: 'comofazer' },
     { num: '05', nome: 'Cardápio › Cotação integrada', ancora: 'cotacao' },
@@ -133,7 +167,7 @@ function Indice() {
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1a5c3a] text-[9px] font-bold text-white">
               {it.num}
             </span>
-            <span className={`text-sm ${it.nome.startsWith('Cardápio ›') || it.nome.startsWith('Compras ›') || it.nome.startsWith('Relatórios ›') ? 'text-gray-500' : 'font-medium text-gray-700'}`}>
+            <span className={`text-sm ${it.nome.includes(' › ') ? 'text-gray-500' : 'font-medium text-gray-700'}`}>
               {it.nome}
             </span>
           </a>
@@ -170,7 +204,7 @@ function Secao({ id, emoji, titulo, subtitulo, badge, children }: {
 }
 
 function Destaque({ icone, texto, cor = 'green' }: {
-  icone?: string; texto: string; cor?: 'green' | 'yellow' | 'red' | 'blue' | 'purple';
+  icone?: string; texto: string; cor?: 'green' | 'yellow' | 'red' | 'blue' | 'purple' | 'dark';
 }) {
   const cores: Record<string, string> = {
     green: 'bg-green-50 border-green-200 text-green-800',
@@ -178,6 +212,7 @@ function Destaque({ icone, texto, cor = 'green' }: {
     red: 'bg-red-50 border-red-200 text-red-800',
     blue: 'bg-blue-50 border-blue-200 text-blue-800',
     purple: 'bg-purple-50 border-purple-200 text-purple-800',
+    dark: 'bg-gray-900 border-gray-700 text-white',
   };
   return (
     <div className={`flex gap-3 rounded-2xl border p-4 ${cores[cor]}`}>
@@ -217,19 +252,20 @@ function Card({ titulo, desc, cor = 'gray' }: { titulo: string; desc: string; co
     gray: 'bg-gray-50', green: 'bg-green-50 border border-green-100',
     blue: 'bg-blue-50 border border-blue-100', yellow: 'bg-yellow-50 border border-yellow-100',
     purple: 'bg-purple-50 border border-purple-100', orange: 'bg-orange-50 border border-orange-100',
+    red: 'bg-red-50 border border-red-100',
   };
   const titleCor: Record<string, string> = {
     gray: 'text-gray-800', green: 'text-green-800', blue: 'text-blue-800',
-    yellow: 'text-yellow-800', purple: 'text-purple-800', orange: 'text-orange-800',
+    yellow: 'text-yellow-800', purple: 'text-purple-800', orange: 'text-orange-800', red: 'text-red-800',
   };
   const descCor: Record<string, string> = {
     gray: 'text-gray-600', green: 'text-green-700', blue: 'text-blue-700',
-    yellow: 'text-yellow-700', purple: 'text-purple-700', orange: 'text-orange-700',
+    yellow: 'text-yellow-700', purple: 'text-purple700', orange: 'text-orange-700', red: 'text-red-700',
   };
   return (
-    <div className={`rounded-2xl p-4 ${bg[cor]}`}>
-      <p className={`mb-1 font-bold ${titleCor[cor]}`}>{titulo}</p>
-      <p className={`text-sm ${descCor[cor]}`}>{desc}</p>
+    <div className={`rounded-2xl p-4 ${bg[cor] ?? bg.gray}`}>
+      <p className={`mb-1 font-bold ${titleCor[cor] ?? titleCor.gray}`}>{titulo}</p>
+      <p className={`text-sm ${descCor[cor] ?? descCor.gray}`}>{desc}</p>
     </div>
   );
 }
@@ -255,7 +291,7 @@ function TabelaPapeis() {
     },
     {
       papel: 'Cozinha', cor: 'bg-orange-500',
-      pode: ['Ver o cardápio da semana', 'Consultar "Como Fazer" de cada prato', 'Avançar etapa "Cozinha"', 'Registrar desperdício', 'Ver e registrar refeições do dia'],
+      pode: ['Ver o cardápio da semana', 'Consultar "Como Fazer" de cada prato', 'Avançar etapa "Cozinha"', 'Registrar desperdício e refeições do dia', 'Ver contador de refeições'],
     },
     {
       papel: 'Compras', cor: 'bg-blue-600',
@@ -288,6 +324,15 @@ function TabelaPapeis() {
   );
 }
 
+function NumeroImpacto({ numero, desc }: { numero: string; desc: string }) {
+  return (
+    <div className="rounded-2xl bg-gray-50 px-4 py-3 text-center">
+      <p className="font-display text-2xl font-bold text-[#1a5c3a]">{numero}</p>
+      <p className="mt-0.5 text-xs text-gray-500">{desc}</p>
+    </div>
+  );
+}
+
 /* ── Página principal ──────────────────────────────────────── */
 
 export default function ManualPage() {
@@ -308,6 +353,7 @@ export default function ManualPage() {
 
         <Capa />
         <BotaoBaixarManual />
+        <Manifesto />
         <FluxoCentral />
         <Indice />
 
@@ -315,16 +361,16 @@ export default function ManualPage() {
             01 — ACESSO
         ════════════════════════════════════════════════════ */}
         <Secao id="acesso" emoji="🔐" titulo="Como entrar no sistema"
-          subtitulo="Celular, tablet ou computador. Sem instalar nada.">
+          subtitulo="Celular, tablet ou computador. Sem instalar nada. Sem cadastro.">
 
           <Destaque cor="green" icone="✅"
-            texto="O sistema funciona direto no navegador — Chrome, Safari ou Edge. Não precisa baixar nenhum aplicativo." />
+            texto="O sistema funciona direto no navegador — Chrome, Safari ou Edge. Não precisa baixar nenhum aplicativo nem criar conta. Abriu, entrou." />
 
           <div className="space-y-4">
             <Passo num={1} titulo="Abra o navegador do seu celular"
               texto="Use Chrome (Android) ou Safari (iPhone). Procure o ícone colorido na tela inicial." />
             <Passo num={2} titulo="Digite o endereço fornecido pelo gestor"
-              texto="O endereço fica salvo no histórico depois do primeiro acesso." />
+              texto="O endereço fica salvo no histórico depois do primeiro acesso — você não precisa digitar de novo." />
             <Passo num={3} titulo="Escolha o seu cargo"
               texto="Na tela inicial selecione: Gestor, Cozinha, Compras, Recebimento ou Administrador." />
             <Passo num={4} titulo="Pronto — você está dentro"
@@ -332,13 +378,13 @@ export default function ManualPage() {
           </div>
 
           <Destaque cor="yellow" icone="💡"
-            texto='Dica: adicione o site na tela inicial do celular. Toque em "Compartilhar" (iPhone) ou "⋮ → Adicionar à tela inicial" (Android). Fica igual a um app e abre mais rápido!' />
+            texto='Dica de ouro: adicione o site na tela inicial do celular. No iPhone: "Compartilhar → Adicionar à Tela de Início". No Android: menu "⋮ → Adicionar à tela inicial". Fica idêntico a um app e abre duas vezes mais rápido.' />
 
           <div className="rounded-2xl bg-gray-50 p-4">
             <p className="mb-1 font-bold text-gray-800">🔄 Mudar de cargo</p>
             <p className="text-sm text-gray-600">
-              Acesse <strong>Ajustes → Configurações de acesso</strong> e informe o PIN do cargo desejado.
-              Os PINs são definidos pelo gestor.
+              Vá em <strong>Ajustes → Configurações de acesso</strong> e informe o PIN do cargo desejado.
+              Os PINs são definidos pelo gestor e protegem as funções sensíveis do sistema.
             </p>
           </div>
         </Secao>
@@ -346,39 +392,45 @@ export default function ManualPage() {
         {/* ═══════════════════════════════════════════════════
             02 — INÍCIO
         ════════════════════════════════════════════════════ */}
-        <Secao id="inicio" emoji="🏠" titulo="Início — briefing e panorama"
-          subtitulo="A primeira tela ao entrar. Mostra tudo o que importa agora, em segundos.">
+        <Secao id="inicio" emoji="🏠" titulo="Início — briefing e decisões"
+          subtitulo="Não é uma tela de dados. É uma tela de decisões. Abre o sistema e você já sabe o que fazer.">
 
           <Destaque cor="green" icone="🌅"
-            texto="Abra o sistema toda manhã e leia o Briefing. Ele reúne os alertas mais importantes antes de você começar o dia." />
+            texto="Abra o sistema toda manhã e leia o Briefing primeiro. Ele reúne os alertas mais críticos antes de você começar — e é gerado pela IA com base nos dados reais da casa." />
 
           <div className="space-y-3">
-            <Card titulo="📋 Briefing do dia"
-              desc="Alertas em ordem de prioridade: urgente (vermelho), atenção (amarelo), informativo (azul). Cobre estoque baixo, pratos sem preço, desperdício alto e mais."
+            <Card titulo="🧠 Briefing do dia — IA analisa, você decide"
+              desc="Alertas em ordem de prioridade: urgente (vermelho), atenção (amarelo), informativo (azul). Cobre estoque baixo, pratos sem preço, alta de fornecedor, risco de desperdício e muito mais. A IA gera um parágrafo de contexto quando detecta algo crítico."
               cor="green" />
             <Card titulo="📊 KPIs da semana"
-              desc="Custo total, custo por refeição, aceitação média e percentual de desperdício — quatro números que resumem a semana. Atualizam em tempo real."
+              desc="Custo total, custo por refeição, aceitação média e percentual de desperdício — quatro números que resumem a semana inteira. Atualizam em tempo real conforme os dados entram."
               cor="blue" />
-            <Card titulo="⚡ Destaque da IA"
-              desc="Quando o Assistente identifica algo crítico, aparece aqui como aviso dourado. Toque para ver a análise completa."
+            <Card titulo="⚡ Destaque da IA — aviso proativo"
+              desc="Quando o sistema identifica algo importante — preço subindo, prato rejeitado no cardápio da semana, oportunidade de economia com substituto — aparece como aviso dourado. Toque para ver a análise completa."
               cor="yellow" />
             <Card titulo="🔄 Fluxo da semana"
-              desc="Barra de progresso: Rascunho → Cozinha → Compras → Recebimento → Concluído. Cada equipe vê em qual etapa está e qual é o próximo passo."
+              desc="Barra de progresso: Rascunho → Cozinha → Compras → Recebimento → Concluído. Cada equipe vê exatamente em qual etapa está e qual é o próximo passo — sem precisar perguntar."
               cor="gray" />
           </div>
 
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <NumeroImpacto numero="5s" desc="para ler os KPIs da semana" />
+            <NumeroImpacto numero="7" desc="sinais monitorados pelo briefing" />
+            <NumeroImpacto numero="24h" desc="o sistema nunca para de observar" />
+          </div>
+
           <Destaque cor="blue" icone="📱"
-            texto="O Início se adapta ao cargo. A cozinha vê o que precisa para o serviço. O gestor vê tudo. Não se preocupe se a tela de um colega parecer diferente." />
+            texto="O Início se adapta ao cargo. A cozinha vê o cardápio da semana e o próximo passo. O gestor vê tudo — KPIs, alertas e a análise da IA. Não se preocupe se a tela de um colega parecer diferente." />
         </Secao>
 
         {/* ═══════════════════════════════════════════════════
             03 — CARDÁPIO (centro inteligente)
         ════════════════════════════════════════════════════ */}
         <Secao id="cardapio" emoji="📅" titulo="Cardápio — o centro inteligente"
-          subtitulo="Aqui nascem todas as decisões. O cardápio alimenta a lista de compras, os custos e o planejamento.">
+          subtitulo="Tudo parte daqui. O cardápio define o que comprar, quanto gastar e o que a cozinha vai preparar.">
 
           <Destaque cor="green" icone="🎯"
-            texto="O Cardápio é o módulo central do sistema. Tudo parte daqui: o que vai ser servido define o que precisa comprar, o custo da semana e o que a cozinha vai preparar." />
+            texto="O Cardápio não é só uma grade de pratos. Ele é o motor de decisão da casa: cada prato escolhido gera automaticamente a lista de compras, calcula o custo estimado por refeição e informa a cozinha do que preparar." />
 
           <p>O Cardápio tem três sub-abas:</p>
 
@@ -392,72 +444,72 @@ export default function ManualPage() {
 
           <div className="space-y-4">
             <Passo num={1} titulo="Escolha a semana"
-              texto="Toque na data no topo da tela. Navegue pelas semanas disponíveis ou avance para a próxima." />
+              texto="Toque na data no topo da tela. Navegue pelas semanas disponíveis, avance para a próxima ou vá direto para uma data específica." />
             <Passo num={2} titulo="Selecione os pratos de cada dia"
-              texto="Toque em Segunda, Terça… e escolha o prato principal. A Guarnição e Salada seguem o mesmo processo." />
+              texto="Toque em Segunda, Terça… e escolha o prato principal. Guarnição e Salada seguem o mesmo processo. O sistema sugere com base no histórico real." />
             <Passo num={3} titulo="Ajuste o número de refeições"
-              texto="O sistema já sugere com base no histórico real. Altere se souber de um evento especial." />
+              texto="O sistema já sugere com base na média histórica por dia da semana — mais de 1.400 amostras reais. Altere apenas se souber de um evento especial." />
             <Passo num={4} titulo="Salve — é automático"
-              texto="Cada mudança é salva imediatamente. Não existe botão de salvar." />
+              texto="Cada mudança é salva imediatamente. Não existe botão de salvar. O sistema confirma com um gesto visual discreto." />
           </div>
 
-          <p className="font-semibold text-gray-800">Recursos inteligentes dentro do Cardápio:</p>
+          <p className="font-semibold text-gray-800">Inteligência dentro do Cardápio:</p>
 
           <div className="space-y-2">
-            <Card titulo="🤖 Chef IA"
-              desc="Sugere pratos para cada dia analisando aceitação histórica, custo e variedade. Três modos: Tradicional (pratos já aprovados), Novo (combinações inéditas), Personalizado (você define as regras)."
+            <Card titulo="🤖 Chef IA — sugestões com raciocínio"
+              desc="Analisa aceitação histórica, custo atual dos ingredientes e variedade da semana. Três modos: Tradicional (pratos aprovados pelo histórico), Novo (combinações ainda não testadas), Personalizado (você define as regras)."
               cor="green" />
             <Card titulo="🔄 Anti-monotonia"
-              desc="Detecta quando a mesma proteína aparece muitas vezes na semana e avisa. Exemplo: 'Frango 3× esta semana — considere variar'."
+              desc='Detecta quando a mesma proteína aparece muitas vezes na semana e avisa antes de você salvar. "Frango 3× esta semana — considere variar para manter a equipe satisfeita."'
               cor="yellow" />
             <Card titulo="🥗 Indicador Nutricional"
-              desc="Mostra o equilíbrio semanal entre proteína, carboidrato, verdura e fibra. Um semáforo visual indica se o cardápio está equilibrado."
+              desc="Mostra o equilíbrio semanal entre proteína, carboidrato, verdura e fibra. Um semáforo visual indica se o cardápio está equilibrado — cuidado ou aprovado."
               cor="blue" />
             <Card titulo="💰 Custo em tempo real"
-              desc="Conforme os preços são lançados na Cotação, o custo estimado por refeição aparece ao lado de cada prato e o total da semana atualiza instantaneamente."
+              desc="Conforme os preços são lançados na Cotação, o custo estimado por refeição aparece ao lado de cada prato. O total da semana atualiza instantaneamente — sem planilha, sem calculadora."
               cor="gray" />
-            <Card titulo="🔖 QR Code de avaliação"
-              desc="Gere um QR Code para colar no refeitório. A equipe escaneia e avalia o prato do dia em menos de 20 segundos."
+            <Card titulo="🖨️ Pôster da semana"
+              desc="Um card visual pronto para imprimir e colocar no refeitório. Mostra o cardápio da semana formatado profissionalmente. Toque no botão Pôster no topo."
               cor="purple" />
           </div>
 
           <Destaque cor="yellow" icone="⚠️"
-            texto='Se um prato aparecer com "!" é porque o preço ainda não foi lançado na Cotação. Sem preço, o custo da semana e a lista de compras ficam incompletos.' />
+            texto='Se um prato aparecer com "!" é porque o preço ainda não foi lançado na Cotação. Sem preço, o custo da semana e a lista de compras ficam incompletos — priorize lançar os preços antes de fechar a semana.' />
         </Secao>
 
         {/* ═══════════════════════════════════════════════════
             04 — COMO FAZER
         ════════════════════════════════════════════════════ */}
         <Secao id="comofazer" emoji="👩‍🍳" titulo="Cardápio › Como Fazer" badge="Receitas inteligentes"
-          subtitulo="Passo a passo de cada prato. Quantidades calculadas automaticamente para o dia de hoje.">
+          subtitulo="A receita certa, na quantidade certa, para o dia de hoje. A cozinha não precisa calcular nada.">
 
           <Destaque cor="green" icone="✨"
-            texto="Toque em 'Como fazer' ao lado de qualquer prato no Cardápio. A receita aparece numa janela com tudo que a cozinha precisa — inclusive as quantidades já calculadas para hoje, sem precisar fazer conta." />
+            texto="Toque em 'Como fazer' ao lado de qualquer prato no Cardápio. A receita aparece com tudo que a cozinha precisa — inclusive as quantidades calculadas para a quantidade prevista de hoje, sem precisar fazer uma conta sequer." />
 
           <div className="space-y-2">
             <Card titulo="📋 Modo de preparo"
               desc="Passo a passo numerado, linguagem simples e direta. A cozinha consulta no celular durante o preparo sem sair do cardápio."
               cor="gray" />
             <Card titulo="🎯 Para hoje — quantidades automáticas"
-              desc="Cada ingrediente com a quantidade calculada para o número médio de refeições do dia. Num Domingo: ~82 refeições. Numa Terça: ~58. Tudo automático."
+              desc="Cada ingrediente com a quantidade calculada para o número médio de refeições daquele dia. Domingo: ~82 refeições. Segunda: ~63. Terça: ~58. Quarta: ~65. Quinta: ~68. Sexta: ~70. Tudo automático."
               cor="green" />
-            <Card titulo="👤 Por pessoa — referência"
-              desc="Quantidades base por porção individual. Útil para adaptar quando o número real for diferente da média."
+            <Card titulo="👤 Por pessoa — referência base"
+              desc="Quantidades por porção individual. Útil para adaptar manualmente quando o número real for muito diferente da média."
               cor="gray" />
             <Card titulo="🥦 Nutrição por porção"
-              desc="Calorias, Proteínas, Carboidratos, Gorduras, Fibras e Sódio. Referência para manter o cardápio equilibrado."
+              desc="Calorias, Proteínas, Carboidratos, Gorduras, Fibras e Sódio. Referência para manter o cardápio equilibrado ao longo da semana."
               cor="purple" />
             <Card titulo="🔀 Substituições e dica de produção"
-              desc="Alternativas caso falte algum ingrediente e um truque específico do prato para melhor resultado."
+              desc="Alternativas caso falte algum ingrediente e um truque específico do prato para melhor resultado — baseado na experiência da casa."
               cor="yellow" />
           </div>
 
           <div className="rounded-2xl bg-[#1a5c3a]/5 p-4 ring-1 ring-[#1a5c3a]/10">
             <p className="mb-2 font-bold text-[#1a5c3a]">📊 De onde vêm as quantidades?</p>
             <p className="text-sm text-gray-700">
-              Calculadas a partir da <strong>média histórica real</strong> por dia da semana —
-              mais de 1.400 registros reais extraídos do histórico do WhatsApp ao longo de 3 anos.
-              Domingo ~82 · Segunda ~63 · Terça ~58 · Quarta ~65 · Quinta ~68 · Sexta ~70 · Sábado ~65.
+              Calculadas a partir da <strong>média histórica real por dia da semana</strong> —
+              mais de 1.400 registros extraídos do histórico do WhatsApp ao longo de 3 anos de operação.
+              Domingo: ~82 · Segunda: ~63 · Terça: ~58 · Quarta: ~65 · Quinta: ~68 · Sexta: ~70 · Sábado: ~65.
             </p>
           </div>
         </Secao>
@@ -466,36 +518,40 @@ export default function ManualPage() {
             05 — COTAÇÃO
         ════════════════════════════════════════════════════ */}
         <Secao id="cotacao" emoji="💬" titulo="Cardápio › Cotação integrada" badge="IA"
-          subtitulo="Lance preços de fornecedores direto do Cardápio. A IA lê o WhatsApp automaticamente.">
+          subtitulo="O coração financeiro do sistema. Cole a mensagem do fornecedor e a IA faz o resto.">
 
           <Destaque cor="blue" icone="🤖"
-            texto="A Cotação fica dentro do Cardápio — porque preço e prato são decisões da mesma tela. Cole a mensagem do WhatsApp do fornecedor e a IA identifica cada item e seu preço sem nenhuma digitação manual." />
+            texto="A Cotação fica dentro do Cardápio — porque preço e prato são decisões inseparáveis. Cole a mensagem do WhatsApp do fornecedor e a IA identifica cada item e preço sem nenhuma digitação manual." />
 
-          <p>A Cotação fica na sub-aba <strong>Cardápio</strong>, no final da tela, na seção "Cotação — catálogo de preços".</p>
+          <p>
+            A Cotação fica no final da sub-aba <strong>Cardápio</strong>, na seção "Cotação — catálogo de preços".
+            É o local central de todos os preços da casa.
+          </p>
 
           <div className="space-y-4">
             <Passo num={1} titulo="Copie a mensagem do fornecedor no WhatsApp"
-              texto="Toque e segure na mensagem com os preços, depois copie o texto." />
+              texto="Toque e segure na mensagem com os preços, depois copie o texto completo." />
             <Passo num={2} titulo='Cole na caixa de texto e clique em "Analisar"'
-              texto="A IA lê o texto, identifica os itens e os preços, e monta a tabela de cotação com fornecedor vinculado." />
+              texto="A IA lê o texto, identifica os itens e seus preços, e monta a tabela de cotação com fornecedor vinculado automaticamente." />
             <Passo num={3} titulo="Revise e aplique"
-              texto="Verifique se está certo e toque em 'Aplicar preços'. O custo da semana atualiza em tempo real." />
-            <Passo num={4} titulo="Compare fornecedores"
-              texto="Lance cotações de mais de um fornecedor: o sistema marca automaticamente o mais barato de cada item." />
+              texto="Verifique se está certo e toque em 'Aplicar preços'. O custo estimado da semana atualiza em tempo real no cardápio." />
+            <Passo num={4} titulo="Compare fornecedores — automaticamente"
+              texto="Lance cotações de mais de um fornecedor: o sistema marca o mais barato de cada item com um indicador visual. A economia aparece calculada." />
           </div>
 
           <div className="rounded-2xl border border-green-100 bg-green-50 p-4">
-            <p className="mb-2 font-bold text-green-800">✅ Validação histórica</p>
+            <p className="mb-2 font-bold text-green-800">🛡️ Validação histórica automática</p>
             <p className="text-sm text-green-700">
-              O sistema compara o preço cotado com o histórico do mesmo item. Se subiu mais de 15%, aparece alerta vermelho.
-              Se caiu, sugere aproveitar para comprar mais e guardar em estoque.
+              O sistema compara cada preço cotado com o histórico do mesmo item. Se subiu mais de 15%,
+              aparece alerta vermelho com a variação em %. Se caiu, sugere aproveitar para comprar mais.
+              O sistema aprende com cada cotação que você faz.
             </p>
           </div>
 
           <p className="text-sm text-gray-600">
-            A <strong>Nota Fiscal</strong> (na aba Compras) também alimenta os preços da Cotação —
-            ao aplicar uma NF, os valores entram no mesmo catálogo que a Cotação usa. O fluxo é um ciclo:
-            cota → compra → recebe a NF → preços se atualizam.
+            A <strong>Nota Fiscal</strong> (em Compras) também alimenta os preços da Cotação —
+            ao aplicar uma NF, os valores entram no mesmo catálogo. O fluxo é um ciclo inteligente:
+            cota → compra → recebe a NF → preços se atualizam → próxima cotação já tem histórico.
           </p>
         </Secao>
 
@@ -503,25 +559,25 @@ export default function ManualPage() {
             06 — OPERAÇÃO DIÁRIA
         ════════════════════════════════════════════════════ */}
         <Secao id="operacao" emoji="🍽️" titulo="Cardápio › Operação diária"
-          subtitulo="Registro de refeições, contagem e sobras. Tudo numa só sub-aba.">
+          subtitulo="Registro de refeições, contagem e sobras. O que acontece durante e após o serviço.">
 
-          <p>A sub-aba <strong>Operação</strong> no Cardápio reúne tudo que a equipe registra durante e após o serviço.</p>
+          <p>A sub-aba <strong>Operação</strong> no Cardápio reúne tudo que a equipe registra durante e após o serviço — em menos de 2 minutos por dia.</p>
 
           <div className="space-y-3">
 
-            {/* Contador */}
             <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
               <p className="mb-2 font-bold text-gray-800">🍽️ Contador de Refeições</p>
               <p className="mb-3 text-sm text-gray-600">
-                Registre almoço e jantar de cada dia. O sistema já vem com
-                <strong> 32.837 refeições pré-carregadas</strong> desde setembro de 2024 — extraídas do WhatsApp.
+                Registre almoço e jantar de cada dia. O sistema já vem com{' '}
+                <strong>32.837 refeições pré-carregadas</strong> desde setembro de 2024 — extraídas do histórico do WhatsApp.
+                Cada novo registro que você faz se soma ao histórico.
               </p>
               <div className="grid grid-cols-2 gap-2">
                 {[
                   ['Hoje', 'Almoço + Jantar com alerta de pico'],
                   ['Esta semana', 'Total de segunda a hoje'],
                   ['Este ano', 'Com % vs ano anterior'],
-                  ['Total histórico', '3 anos de dados'],
+                  ['Total histórico', '485 dias · 3 anos'],
                 ].map(([t, d]) => (
                   <div key={t} className="rounded-xl bg-white p-3 ring-1 ring-gray-100">
                     <p className="text-xs font-bold text-gray-700">{t}</p>
@@ -530,42 +586,41 @@ export default function ManualPage() {
                 ))}
               </div>
               <div className="mt-3 rounded-xl border border-orange-200 bg-orange-50 p-3">
-                <p className="text-xs font-bold text-orange-800">⚠️ Alerta de pico</p>
+                <p className="text-xs font-bold text-orange-800">⚠️ Alerta de pico automático</p>
                 <p className="mt-0.5 text-xs text-orange-700">
-                  Se o total do dia ultrapassar 120% da média histórica, o card fica dourado e avisa a equipe para revisar porções e estoque.
+                  Se o total do dia ultrapassar 120% da média histórica para aquele dia da semana,
+                  o card fica dourado e avisa a equipe para revisar porções e verificar o estoque.
                 </p>
               </div>
               <p className="mt-3 text-xs text-gray-500">
-                O gráfico de 12 meses mostra a tendência. Os placeholders nos campos já mostram a média esperada para o dia.
+                O gráfico de 12 meses mostra a tendência. Os placeholders nos campos já exibem a média esperada para cada dia da semana.
               </p>
             </div>
 
-            {/* Desperdício */}
             <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
               <p className="mb-2 font-bold text-gray-800">📉 Registro de Sobras</p>
               <p className="text-sm text-gray-600">
                 Informe o produzido e o consumido de cada prato. O sistema calcula o percentual de desperdício,
-                o custo do que foi perdido e identifica quais pratos desperdiçam mais.
+                o custo do que foi perdido e identifica quais pratos geram mais sobra — por dia da semana e por proteína.
               </p>
             </div>
 
-            {/* Fluxo */}
             <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
               <p className="mb-2 font-bold text-gray-800">🔄 Avanço de etapa</p>
               <p className="text-sm text-gray-600">
-                A equipe de Cozinha avança a semana de "Rascunho" para "Cozinha" por aqui, confirmando
-                que o cardápio foi revisado e aprovado.
+                A equipe de Cozinha confirma que o cardápio foi revisado e avança a semana de "Rascunho"
+                para "Cozinha" por aqui. Cada etapa avançada notifica o próximo responsável.
               </p>
             </div>
           </div>
 
           <div className="space-y-4">
             <Passo num={1} titulo="Após o almoço: registre o número de refeições"
-              texto='Digite no campo "Almoço" e pressione Enter ou OK.' />
+              texto='Digite no campo "Almoço" e pressione Enter ou OK. Leva menos de 10 segundos.' />
             <Passo num={2} titulo="Após o jantar: complete o registro do dia"
-              texto="Preencha o campo Jantar. O total atualiza e os stats refletem imediatamente." />
+              texto="Preencha o campo Jantar. O total atualiza e os stats refletem imediatamente — incluindo o gráfico mensal." />
             <Passo num={3} titulo="Registre as sobras do dia"
-              texto="Produzido vs. consumido de cada prato. Mesmo um número aproximado já ajuda muito." />
+              texto="Produzido vs. consumido de cada prato. Mesmo um número aproximado já alimenta o relatório de desperdício." />
           </div>
         </Secao>
 
@@ -573,15 +628,16 @@ export default function ManualPage() {
             07 — AVALIAÇÃO
         ════════════════════════════════════════════════════ */}
         <Secao id="avaliacao" emoji="⭐" titulo="Cardápio › Avaliação e Desperdício"
-          subtitulo="O que a equipe achou do prato. Dados que melhoram o cardápio automaticamente.">
+          subtitulo="O que a equipe achou. Dados que o sistema usa para melhorar o cardápio automaticamente.">
 
-          <p>A sub-aba <strong>Avaliação</strong> aparece no Cardápio quando a semana avança para Recebimento ou Conclusão.</p>
+          <p>A sub-aba <strong>Avaliação</strong> aparece no Cardápio quando a semana avança para Recebimento ou Conclusão. Quanto mais avaliações, mais inteligente o sistema fica.</p>
 
           <div className="space-y-3">
             <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-              <p className="mb-2 font-bold text-gray-800">QR Code no refeitório (recomendado)</p>
+              <p className="mb-2 font-bold text-gray-800">QR Code no refeitório (método preferido)</p>
               <p className="mb-3 text-sm text-gray-600">
-                Imprima e cole na parede. A equipe escaneia com o celular e avalia com um toque — menos de 20 segundos.
+                Imprima a plaquinha de avaliação e cole na parede. A equipe escaneia com o celular
+                e avalia o prato em menos de 20 segundos — sem abrir o sistema.
               </p>
               <div className="grid grid-cols-3 gap-2">
                 {[['😍', 'Ótimo', 'green'], ['😐', 'Regular', 'yellow'], ['😞', 'Ruim', 'red']].map(([e, r, c]) => (
@@ -595,24 +651,25 @@ export default function ManualPage() {
           </div>
 
           <Lista itens={[
-            'Cada prato acumula nota média ao longo do tempo',
-            'Pratos com nota baixa aparecem em vermelho no relatório de Aceitação',
+            'Cada prato acumula nota média ao longo do tempo — histórico permanente',
+            'Pratos com nota baixa aparecem em vermelho no DNA da casa e nos relatórios',
             'O Chef IA considera as avaliações para não sugerir pratos rejeitados',
-            'Pratos favoritos aparecem em destaque no DNA da casa',
+            'Pratos campeões (nota alta + baixo desperdício) aparecem em destaque no ranking',
+            'A IA proativa avisa quando um prato rejeitado está no cardápio desta semana',
           ]} />
 
           <Destaque cor="green" icone="💰"
-            texto="Reduzir desperdício de 18% para 8% pode economizar R$ 800 ou mais por mês. Vale muito a pena registrar toda semana — mesmo que seja um número aproximado." />
+            texto="Reduzir desperdício de 18% para 8% pode economizar R$ 800 ou mais por mês. Cada registro de sobra vale dinheiro — mesmo que seja um número aproximado." />
         </Secao>
 
         {/* ═══════════════════════════════════════════════════
             08 — COMPRAS
         ════════════════════════════════════════════════════ */}
         <Secao id="compras" emoji="🛒" titulo="Compras — lista e execução"
-          subtitulo="Lista gerada automaticamente pelo cardápio. Descontando o que já tem no estoque.">
+          subtitulo="Lista calculada automaticamente pelo cardápio. Descontando o que já tem no estoque.">
 
           <Destaque cor="green" icone="🎯"
-            texto="A lista de compras é calculada automaticamente. Você monta o cardápio, define o número de refeições, e a lista aparece pronta com cada ingrediente na quantidade certa." />
+            texto="A lista de compras é calculada automaticamente. Você monta o cardápio, define o número de refeições, e a lista aparece pronta com cada ingrediente na quantidade exata — já descontando o que está no estoque." />
 
           <p>A aba Compras tem cinco sub-abas:</p>
 
@@ -624,7 +681,7 @@ export default function ManualPage() {
             { rotulo: 'Pedido', desc: 'WhatsApp direto' },
           ]} />
 
-          <p>Três status para cada item:</p>
+          <p>Três status para cada item da lista:</p>
 
           <div className="grid grid-cols-3 gap-2 text-center">
             {[
@@ -641,27 +698,27 @@ export default function ManualPage() {
 
           <div className="space-y-4">
             <Passo num={1} titulo="Vá em Compras → Lista de compras"
-              texto="A lista já aparece calculada, descontando o que já está no estoque." />
-            <Passo num={2} titulo="Imprima se preferir papel"
-              texto="Toque no ícone de impressora. Gera PDF para imprimir ou salvar." />
+              texto="A lista já aparece calculada, descontando automaticamente o que já está no estoque." />
+            <Passo num={2} titulo="Imprima ou compartilhe se preferir"
+              texto="Toque no ícone de impressora para gerar PDF ou compartilhe direto pelo celular." />
             <Passo num={3} titulo="Marque conforme compra"
-              texto="Toque no item e marque como 'Comprado'. O progresso aparece no Início." />
+              texto="Toque no item e marque como 'Comprado'. O progresso aparece na barra do Início." />
             <Passo num={4} titulo="No recebimento, marque como recebido"
-              texto="Ao receber a entrega, marque e registre o preço real pago — isso alimenta o custo real da semana." />
+              texto="Ao receber, marque e registre o preço real pago — isso alimenta o custo real da semana e o histórico de preços." />
           </div>
 
           <Destaque cor="yellow" icone="💡"
-            texto="Se o estoque já tem 5 kg de frango e o cardápio precisa de 15 kg, a lista mostra só 10 kg. O desconto é automático." />
+            texto="Se o estoque já tem 5 kg de frango e o cardápio precisa de 15 kg, a lista mostra só 10 kg. O desconto é automático — você nunca compra o que já tem." />
         </Secao>
 
         {/* ═══════════════════════════════════════════════════
             09 — NOTA FISCAL
         ════════════════════════════════════════════════════ */}
         <Secao id="nf" emoji="🧾" titulo="Compras › Nota Fiscal com IA" badge="IA"
-          subtitulo="Fotografe a nota e a IA extrai itens e preços automaticamente — alimentando a Cotação.">
+          subtitulo="Fotografe e a IA extrai itens e preços automaticamente — sem digitar nada.">
 
           <Destaque cor="purple" icone="📸"
-            texto="A IA analisa a foto da nota e identifica produto, quantidade e preço — mesmo em notas rasgadas ou com letra pequena. Os preços extraídos entram diretamente no catálogo da Cotação." />
+            texto="A IA analisa a foto da nota e identifica produto, quantidade e preço — mesmo em notas rasgadas, dobradas ou com letra pequena. Os preços extraídos entram diretamente no catálogo da Cotação." />
 
           <div className="space-y-4">
             <Passo num={1} titulo="Compras → Nota Fiscal → Fotografar ou enviar NF"
@@ -669,13 +726,13 @@ export default function ManualPage() {
             <Passo num={2} titulo="Aguarde a leitura (5 a 15 segundos)"
               texto="A IA processa a imagem e extrai todos os itens. Uma barra de progresso mostra o andamento." />
             <Passo num={3} titulo="Revise os itens encontrados"
-              texto="Itens em amarelo não foram reconhecidos — confira e corrija antes de aplicar." />
+              texto="Itens em amarelo não foram reconhecidos com certeza — confirme antes de aplicar. Os reconhecidos com certeza ficam em verde." />
             <Passo num={4} titulo='Toque em "Aplicar preços"'
-              texto="Os valores entram no catálogo e o custo real da semana é atualizado." />
+              texto="Os valores entram no catálogo, o custo real da semana é atualizado e o histórico de preços registra a data." />
           </div>
 
           <Destaque cor="blue" icone="💡"
-            texto="Fotografe em ambiente bem iluminado, sem sombras. Notas dobradas: abra antes de fotografar. PDFs têm qualidade melhor que fotos." />
+            texto="Fotografe em ambiente bem iluminado, sem sombras. Notas dobradas: abra completamente antes de fotografar. PDFs têm qualidade melhor que fotos — prefira quando disponível." />
         </Secao>
 
         {/* ═══════════════════════════════════════════════════
@@ -685,21 +742,21 @@ export default function ManualPage() {
           subtitulo="Controle do que está na despensa. Desconta automaticamente da lista de compras.">
 
           <Lista itens={[
-            'Saber o saldo de cada ingrediente sem ir fisicamente à dispensa',
-            'Descontar automaticamente da lista o que já tem em casa',
+            'Saber o saldo de cada ingrediente sem ir fisicamente à despensa',
+            'Descontar automaticamente da lista o que já tem guardado',
             'Receber alerta quando um item cai abaixo do mínimo definido',
             'Rastrear o consumo de cada ingrediente ao longo das semanas',
           ]} />
 
           <div className="space-y-4">
             <Passo num={1} titulo="Entrada — chegou mercadoria"
-              texto='Compras → Estoque, procure o item, toque em "+" e informe a quantidade.' />
+              texto='Compras → Estoque, procure o item, toque em "+" e informe a quantidade recebida.' />
             <Passo num={2} titulo="Baixa automática ao concluir a semana"
-              texto="Quando a semana avança para 'Concluído', os ingredientes usados são descontados automaticamente." />
+              texto="Quando a semana avança para 'Concluído', os ingredientes usados são descontados automaticamente do estoque." />
             <Passo num={3} titulo="Definir estoque mínimo"
-              texto="Toque no item e defina o mínimo aceitável. Abaixo disso, aparece alerta no Briefing do Início." />
+              texto="Toque no item e defina o mínimo aceitável. Abaixo disso, aparece alerta vermelho no Briefing do Início." />
             <Passo num={4} titulo="Inventário físico mensal"
-              texto="Uma vez por mês, conte fisicamente e ajuste: Estoque → item → Ajustar saldo." />
+              texto="Uma vez por mês, conte fisicamente e ajuste: Estoque → item → Ajustar saldo. Mantém a precisão ao longo do tempo." />
           </div>
         </Secao>
 
@@ -707,35 +764,41 @@ export default function ManualPage() {
             11 — FORNECEDORES E PEDIDOS
         ════════════════════════════════════════════════════ */}
         <Secao id="fornecedores" emoji="🤝" titulo="Compras › Fornecedores e Pedidos"
-          subtitulo="Perfis, histórico e envio de pedidos diretamente pelo WhatsApp.">
+          subtitulo="Inteligência de fornecedores, histórico de entregas e envio de pedidos pelo WhatsApp.">
+
+          <Destaque cor="green" icone="🧠"
+            texto="O sistema não só cadastra fornecedores — ele os monitora. Depois de algumas avaliações, ele diz qual está melhor agora, qual tem melhor taxa de entrega e quais estão ficando mais caros." />
 
           <div className="space-y-2">
-            <Card titulo="📋 Fornecedores — perfil e histórico"
-              desc="Cada fornecedor tem uma página com histórico de preços por item, avaliações de pontualidade e qualidade, e quais produtos ele fornece melhor. WG, Apetito Foods, Vita Frango, Jampac e Frito Sul já vêm pré-cadastrados e são reconhecidos automaticamente."
+            <Card titulo="📋 Perfil e inteligência"
+              desc="Cada fornecedor tem uma página com avaliações de qualidade e pontualidade, quais itens ele fornece e a qual preço. O painel de inteligência aponta automaticamente o melhor agora — baseado em score combinado de qualidade e confiabilidade."
               cor="blue" />
-            <Card titulo="📲 Pedido — WhatsApp automático"
-              desc="Selecione quais itens vai pedir para qual fornecedor. O sistema gera o texto do pedido formatado e abre o WhatsApp do fornecedor com a mensagem pronta. Você só confirma o envio."
+            <Card titulo="📈 Histórico de preços por item"
+              desc="O sistema rastreia o histórico de preços de cada item por fornecedor. Se um fornecedor está subindo consistentemente, o radar detecta e alerta. Se outro está caindo, aponta a oportunidade."
               cor="green" />
+            <Card titulo="📲 Pedido — WhatsApp em 1 toque"
+              desc="Selecione os itens e o fornecedor desejado. O sistema gera o texto do pedido formatado profissionalmente e abre o WhatsApp com a mensagem pronta. Você só confirma o envio."
+              cor="gray" />
           </div>
 
           <Destaque cor="yellow" icone="💡"
-            texto="Fornecedores reconhecidos automaticamente nas cotações e notas fiscais: WG · Apetito Foods · Vita Frango · Jampac · Frito Sul. Para adicionar outros, vá em Compras → Fornecedores → Adicionar." />
+            texto="Fornecedores reconhecidos automaticamente nas cotações e notas fiscais: WG · Apetito Foods · Vita Frango · Jampac · Frito Sul. Para adicionar outros, vá em Compras → Fornecedores → editar perfil." />
         </Secao>
 
         {/* ═══════════════════════════════════════════════════
             12 — RELATÓRIOS
         ════════════════════════════════════════════════════ */}
         <Secao id="relatorios" emoji="📊" titulo="Relatórios — análise gerencial"
-          subtitulo="Visão financeira completa, histórico e auditoria. Acesso exclusivo do Gestor e Administrador.">
+          subtitulo="Visão financeira completa, histórico comparativo e auditoria. Para quem precisa de respostas rápidas e confiáveis.">
 
           <Destaque cor="yellow" icone="🔒"
-            texto="Relatórios é exclusivo do Gestor e Administrador. A equipe de cozinha, compras e recebimento não acessa essa área." />
+            texto="Relatórios é exclusivo do Gestor e Administrador. A equipe operacional não acessa esta área — o que preserva a confidencialidade dos números financeiros." />
 
           <p>Quatro KPIs no topo mostram a semana de relance:</p>
 
           <div className="grid grid-cols-2 gap-2">
             {[
-              ['Custo da semana', 'Total gasto ou cotado'],
+              ['Custo da semana', 'Total cotado ou real'],
               ['Custo / refeição', 'Quanto custou cada prato'],
               ['Aceitação média', 'Nota dos pratos avaliados'],
               ['Desperdício %', 'Produzido e não consumido'],
@@ -750,11 +813,11 @@ export default function ManualPage() {
           <p className="font-semibold text-gray-800">Sub-abas dos Relatórios:</p>
 
           <div className="space-y-2">
-            <Card titulo="Visão geral" desc="Central gerencial com resumo financeiro completo da semana e histórico acumulado." cor="gray" />
-            <Card titulo="Custos" desc="Detalhamento por categoria (proteína, verdura, etc.) e por dia. Custo por prato e ROI da operação." cor="blue" />
-            <Card titulo="DNA & Rankings" desc="Perfil alimentar da casa: proteínas mais usadas, campeões de aceitação, pratos a evitar." cor="purple" />
-            <Card titulo="Previsão" desc="Projeção de demanda com três cenários — pessimista, esperado e otimista. Aplique diretamente ao cardápio." cor="green" />
-            <Card titulo="Fornecedores" desc="Radar de preços: comparativo entre fornecedores, tendências e alertas de variação." cor="gray" />
+            <Card titulo="Visão geral" desc="Central gerencial com resumo financeiro completo da semana, histórico de custos e comparativo com semanas anteriores." cor="gray" />
+            <Card titulo="Custos" desc="Detalhamento por categoria (proteína, verdura, etc.) e por dia. Custo por prato, ROI da operação e onde está indo cada real gasto." cor="blue" />
+            <Card titulo="DNA & Rankings" desc="Perfil alimentar da casa: proteínas mais usadas, campeões de aceitação, pratos a evitar e o histórico de 485 dias de operação." cor="purple" />
+            <Card titulo="Previsão" desc="Projeção de demanda com três cenários — pessimista, esperado e otimista. Aplique diretamente ao cardápio para recalcular a lista de compras." cor="green" />
+            <Card titulo="Fornecedores" desc="Radar de preços: comparativo entre fornecedores, tendências de alta e queda, alertas de variação anormal." cor="gray" />
             <Card titulo="Auditoria" desc="Histórico completo de tudo que foi alterado — quem mudou, o quê e quando. Exclusivo para Administrador." cor="yellow" />
           </div>
         </Secao>
@@ -763,26 +826,31 @@ export default function ManualPage() {
             13 — DNA
         ════════════════════════════════════════════════════ */}
         <Secao id="dna" emoji="🧬" titulo="Relatórios › DNA e Rankings"
-          subtitulo="O sistema aprende o perfil do Tatá House e mostra o que funciona e o que não funciona.">
+          subtitulo="O sistema aprende o perfil do Tatá House. 3 anos de operação condensados em insights acionáveis.">
+
+          <Destaque cor="dark" icone="✦"
+            texto="O DNA não é um relatório. É a memória viva da casa — o que funcionou, o que falhou, o que a equipe mais aprecia e o que vai ao lixo toda semana. É aqui que a história da operação é contada com dados." />
 
           <div className="space-y-2">
             <Card titulo="🥩 Proteínas mais servidas"
-              desc="Ranking de qual proteína domina o cardápio. Ex: Frango 42% · Boi 28% · Peixe 15%. Útil para negociar contratos fixos." cor="blue" />
-            <Card titulo="🏆 Pratos campeões"
-              desc="Os favoritos da equipe — nota alta, consumo total, pouca sobra. Devem entrar no cardápio com frequência." cor="green" />
-            <Card titulo="❌ Pratos a evitar"
-              desc="Nota baixa e alto desperdício. O sistema sugere tirar do rodízio ou reformular a receita." cor="red" />
+              desc="Ranking de qual proteína domina o cardápio com % histórico real. Ex: Frango 42% · Boi 28% · Peixe 15%. O sistema cruza com a aceitação média de cada proteína para dizer qual vale mais a pena priorizar." cor="blue" />
+            <Card titulo="🏆 Pratos campeões — a seleção da casa"
+              desc="Os favoritos absolutos — nota alta, consumo total elevado e pouca sobra. São esses pratos que devem aparecer com frequência no cardápio. O sistema os destaca automaticamente." cor="green" />
+            <Card titulo="❌ Pratos a evitar — com rastreabilidade"
+              desc="Nota abaixo de 3 OU desperdício acima de 20%. O sistema aponta especificamente o que precisa sair do rodízio ou ter a receita reformulada." cor="red" />
+            <Card titulo="📊 O que os dados revelam"
+              desc="Um bloco de narrativa gerado pelo sistema sintetiza os insights mais importantes: qual proteína tem a maior aceitação, qual é o prato favorito, qual candidato a sair do rodízio." cor="purple" />
           </div>
 
           <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
-            <p className="mb-2 font-bold text-blue-800">🎯 Objetivo da semana</p>
-            <p className="mb-3 text-sm text-blue-700">Escolha um objetivo e o sistema monta um plano de ação concreto:</p>
+            <p className="mb-2 font-bold text-blue-800">🎯 Objetivos da semana — planos de ação concretos</p>
+            <p className="mb-3 text-sm text-blue-700">Escolha um objetivo e o sistema monta um plano de ação específico:</p>
             <div className="space-y-1.5">
               {[
-                ['Reduzir custo', 'Substitutos mais baratos e pratos econômicos'],
-                ['Reduzir desperdício', 'Quais pratos produzir menos e quando'],
-                ['Melhorar aceitação', 'Favoritos nos dias de maior frequência'],
-                ['Equilibrar proteínas', 'Distribuição entre frango, boi, peixe e alternativas'],
+                ['Reduzir custo', 'Identifica substitutos mais baratos e pratos econômicos com boa aceitação'],
+                ['Reduzir desperdício', 'Aponta quais pratos produzir em menor quantidade e em quais dias'],
+                ['Melhorar aceitação', 'Coloca os favoritos nos dias de maior frequência'],
+                ['Equilibrar proteínas', 'Distribui melhor entre frango, boi, peixe e alternativas'],
               ].map(([o, a]) => (
                 <div key={o} className="rounded-xl bg-white p-2.5">
                   <p className="text-xs font-bold text-blue-800">{o}</p>
@@ -797,13 +865,13 @@ export default function ManualPage() {
             14 — PREVISÃO
         ════════════════════════════════════════════════════ */}
         <Secao id="previsao" emoji="🔮" titulo="Relatórios › Previsão de demanda"
-          subtitulo="O sistema prevê a demanda da semana com base no histórico real.">
+          subtitulo="O sistema prevê a semana com base no histórico real. Você escolhe o cenário.">
 
           <div className="grid grid-cols-3 gap-2 text-center">
             {[
               ['😟', 'Pessimista', 'Evita desperdício'],
               ['😊', 'Esperado', 'O mais provável'],
-              ['😄', 'Otimista', 'Para eventos'],
+              ['😄', 'Otimista', 'Para eventos especiais'],
             ].map(([e, n, d]) => (
               <div key={n} className="rounded-xl bg-gray-50 p-3 ring-1 ring-gray-100">
                 <div className="text-xl">{e}</div>
@@ -823,17 +891,17 @@ export default function ManualPage() {
           </div>
 
           <Destaque cor="green" icone="📈"
-            texto="Quanto mais semanas registradas, mais precisa fica a previsão. O sistema considera sazonalidade, dia da semana e tendências recentes." />
+            texto="Quanto mais semanas registradas, mais precisa fica a previsão. O sistema considera sazonalidade por dia da semana e tendências de médio prazo — não apenas a última semana." />
         </Secao>
 
         {/* ═══════════════════════════════════════════════════
             15 — ASSISTENTE
         ════════════════════════════════════════════════════ */}
         <Secao id="assistente" emoji="🤖" titulo="Assistente de IA"
-          subtitulo="Responde perguntas sobre gestão com base nos dados reais do Tatá House.">
+          subtitulo="Responde perguntas sobre a operação com base nos dados reais do Tatá House — não é IA genérica.">
 
           <Destaque cor="blue" icone="💬"
-            texto="O Assistente analisa os dados reais — não é IA genérica. Ele conhece os pratos, fornecedores e histórico da sua casa. Toque no ícone 💬 no canto inferior direito." />
+            texto="O Assistente conhece os pratos, fornecedores, preços e histórico desta casa. Pergunte em linguagem natural — ele responde com os dados reais, não com estimativas genéricas. Toque no ícone 💬 no canto inferior direito." />
 
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {[
@@ -841,10 +909,10 @@ export default function ManualPage() {
               'Quais pratos a equipe mais gosta?',
               'Como reduzir o custo por refeição?',
               'Quais itens subiram de preço?',
-              'Qual fornecedor está mais barato?',
+              'Qual fornecedor está mais barato agora?',
               'O que está acabando no estoque?',
               'Quais pratos geram mais desperdício?',
-              'Como montar um cardápio econômico?',
+              'Como montar um cardápio mais econômico?',
             ].map((p) => (
               <div key={p} className="rounded-2xl bg-gray-100 px-3 py-2.5 text-sm text-gray-700">"{p}"</div>
             ))}
@@ -853,8 +921,9 @@ export default function ManualPage() {
           <div className="rounded-2xl bg-gray-50 p-4">
             <p className="mb-1 font-bold text-gray-800">Badge vermelho no botão do Assistente</p>
             <p className="text-sm text-gray-600">
-              Significa que algo crítico foi detectado proativamente — preço fora do normal, estoque crítico,
-              prato com nota baixa ou orçamento em risco. Toque para ver o alerta com sugestão de ação.
+              Significa que algo crítico foi detectado proativamente — preço anormal, estoque crítico,
+              prato rejeitado no cardápio, oportunidade de economia com substituto. Toque para ver o alerta
+              com a sugestão de ação.
             </p>
           </div>
         </Secao>
@@ -863,15 +932,15 @@ export default function ManualPage() {
             16 — FLUXO
         ════════════════════════════════════════════════════ */}
         <Secao id="fluxo" emoji="🔄" titulo="Etapas da semana — o Fluxo"
-          subtitulo="Cada semana passa por 5 etapas. Cada equipe cuida da sua parte.">
+          subtitulo="Cada semana passa por 5 etapas. Cada equipe cuida da sua parte. Ninguém depende de ninguém para saber o que fazer.">
 
           <div className="space-y-3">
             {[
-              { num: '1', nome: 'Rascunho', quem: 'Gestor', cor: 'bg-gray-200 text-gray-700', desc: 'O gestor monta o cardápio. Tudo pode ser alterado. A lista de compras ainda não é final.' },
-              { num: '2', nome: 'Cozinha', quem: 'Cozinha', cor: 'bg-orange-100 text-orange-700', desc: 'A cozinha revisou o cardápio e aprovou. Avança confirmando pela sub-aba Operação.' },
-              { num: '3', nome: 'Compras', quem: 'Compras', cor: 'bg-blue-100 text-blue-700', desc: 'A lista está finalizada. O responsável está comprando. Avança ao marcar todos os itens.' },
-              { num: '4', nome: 'Recebimento', quem: 'Recebimento', cor: 'bg-purple-100 text-purple-700', desc: 'As compras chegaram. Cada item é conferido e o preço real registrado.' },
-              { num: '5', nome: 'Concluído', quem: 'Gestor', cor: 'bg-green-100 text-green-700', desc: 'Semana encerrada. Custo real calculado, estoque atualizado, dados disponíveis nos relatórios.' },
+              { num: '1', nome: 'Rascunho', quem: 'Gestor', cor: 'bg-gray-200 text-gray-700', desc: 'O gestor monta o cardápio. Tudo pode ser alterado livremente. A lista de compras está sendo calculada em tempo real.' },
+              { num: '2', nome: 'Cozinha', quem: 'Cozinha', cor: 'bg-orange-100 text-orange-700', desc: 'A cozinha revisou o cardápio e aprovou. Avança pela sub-aba Operação confirmando que está pronta para executar.' },
+              { num: '3', nome: 'Compras', quem: 'Compras', cor: 'bg-blue-100 text-blue-700', desc: 'A lista está finalizada. O responsável está comprando. A etapa avança automaticamente quando todos os itens são marcados.' },
+              { num: '4', nome: 'Recebimento', quem: 'Recebimento', cor: 'bg-purple-100 text-purple-700', desc: 'As compras chegaram. Cada item é conferido fisicamente, o preço real registrado. O custo real da semana aparece aqui.' },
+              { num: '5', nome: 'Concluído', quem: 'Gestor', cor: 'bg-green-100 text-green-700', desc: 'Semana encerrada. Custo real calculado, estoque atualizado automaticamente e dados disponíveis nos relatórios.' },
             ].map((e) => (
               <div key={e.num} className="flex gap-3 rounded-2xl bg-gray-50 p-4">
                 <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold ${e.cor}`}>{e.num}</div>
@@ -891,15 +960,15 @@ export default function ManualPage() {
             17 — AJUSTES
         ════════════════════════════════════════════════════ */}
         <Secao id="ajustes" emoji="⚙️" titulo="Ajustes — equipe e acesso"
-          subtitulo="Cadastre funcionários com restrições alimentares e configure os PINs de acesso.">
+          subtitulo="Cadastre a equipe com restrições alimentares e configure os PINs de acesso.">
 
           <div className="space-y-4">
             <Passo num={1} titulo="Ajustes → Equipe e restrições alimentares"
-              texto="Cadastre nome, cargo e qualquer restrição (lactose, glúten, vegetariano, etc.)." />
-            <Passo num={2} titulo="O sistema monitora o cardápio"
-              texto="Se um prato do cardápio contém ingrediente que algum funcionário não pode comer, aparece alerta." />
-            <Passo num={3} titulo="Configurações de acesso"
-              texto="Apenas Gestor e Administrador acessam. Aqui são definidos os PINs de cada cargo." />
+              texto="Cadastre nome, cargo e qualquer restrição (lactose, glúten, vegetariano, etc.). O sistema avisa quando um prato do cardápio contém ingrediente que alguém não pode consumir." />
+            <Passo num={2} titulo="O sistema monitora o cardápio por você"
+              texto="Se um prato da semana contém ingrediente que algum funcionário não pode comer, aparece alerta automático no Cardápio." />
+            <Passo num={3} titulo="Configurações de acesso — só Gestor e Administrador"
+              texto="Aqui são definidos e alterados os PINs de cada cargo. Os PINs protegem as funções sensíveis do sistema." />
           </div>
         </Secao>
 
@@ -907,57 +976,61 @@ export default function ManualPage() {
             18 — PAPÉIS
         ════════════════════════════════════════════════════ */}
         <Secao id="papeis" emoji="🎭" titulo="Quem pode fazer o quê"
-          subtitulo="Cada cargo tem acesso exatamente ao que precisa para seu trabalho.">
+          subtitulo="Cada cargo acessa exatamente o que precisa para fazer seu trabalho. Nada a mais, nada a menos.">
 
           <TabelaPapeis />
 
           <Destaque cor="yellow" icone="🔑"
-            texto="Para trocar de cargo, vá em Ajustes → Configurações de acesso e informe o PIN. Peça ao gestor se não souber o seu." />
+            texto="Para trocar de cargo, vá em Ajustes → Configurações de acesso e informe o PIN. Peça ao gestor se não souber o seu. Trocar de cargo não apaga nenhum dado." />
         </Secao>
 
         {/* ═══════════════════════════════════════════════════
             19 — FAQ
         ════════════════════════════════════════════════════ */}
         <Secao id="faq" emoji="❓" titulo="Perguntas frequentes"
-          subtitulo="As dúvidas mais comuns — e as respostas diretas.">
+          subtitulo="As dúvidas mais comuns — com respostas diretas e sem jargão.">
 
           <div className="space-y-4">
             {[
               {
                 p: 'Apaguei algo sem querer. Perdi os dados?',
-                r: 'Não. O sistema salva automaticamente. Relatórios → Auditoria mostra o histórico completo de mudanças.',
+                r: 'Não. O sistema salva automaticamente em tempo real. Relatórios → Auditoria mostra o histórico completo de todas as alterações — quem mudou, o quê e quando.',
               },
               {
                 p: 'A lista de compras está com quantidade errada.',
-                r: 'Verifique se: (1) todos os dias têm prato preenchido, (2) o número de refeições está correto, (3) o estoque está atualizado. A lista vem dessas três informações.',
+                r: 'Verifique se: (1) todos os dias da semana têm prato preenchido, (2) o número de refeições está correto, (3) o estoque está atualizado. A lista é calculada a partir dessas três informações.',
               },
               {
-                p: 'O custo da semana está zerado.',
+                p: 'O custo da semana está zerado ou incompleto.',
                 r: 'O custo só aparece depois que os preços são lançados na Cotação, dentro do Cardápio. Lance os preços e o custo aparece em tempo real.',
               },
               {
                 p: 'A IA não encontrou os fornecedores corretos na cotação.',
-                r: 'Verifique se o fornecedor está cadastrado em Compras → Fornecedores. WG, Apetito, Vita Frango, Jampac e Frito Sul são reconhecidos automaticamente. Para outros, cadastre uma vez.',
+                r: 'Verifique se o fornecedor está cadastrado em Compras → Fornecedores. WG, Apetito, Vita Frango, Jampac e Frito Sul são reconhecidos automaticamente. Para outros, cadastre uma vez e o sistema passa a reconhecer.',
               },
               {
                 p: 'Como imprimir a lista de compras?',
-                r: 'Compras → Lista de compras → ícone de impressora. Gera PDF para imprimir ou salvar.',
+                r: 'Compras → Lista de compras → ícone de impressora. Gera PDF para imprimir ou salvar no celular.',
               },
               {
                 p: 'Posso ver semanas anteriores?',
-                r: 'Sim. Toque na data no topo para abrir o seletor de semanas e navegue por qualquer semana já registrada.',
+                r: 'Sim. Toque na data no topo para abrir o seletor de semanas e navegue por qualquer semana já registrada. O histórico completo está disponível.',
               },
               {
                 p: 'O sistema ficou lento ou travou.',
-                r: 'Feche e abra o navegador. Todos os dados ficam salvos — você não perde nada. Se continuar lento, verifique a internet.',
+                r: 'Feche e abra o navegador. Todos os dados ficam salvos — você não perde nada. Se continuar lento, verifique a conexão com a internet.',
               },
               {
                 p: 'A leitura da nota fiscal não reconheceu alguns itens.',
-                r: 'Itens em amarelo não foram reconhecidos — corrija manualmente antes de aplicar. Com o tempo o sistema aprende os itens mais comuns.',
+                r: 'Itens em amarelo não foram reconhecidos com certeza — corrija manualmente antes de aplicar. Com o tempo, o sistema aprende os itens mais comuns da sua operação.',
               },
               {
-                p: 'O contador de refeições está mostrando dados antigos?',
-                r: 'Os dados históricos vêm pré-carregados (set/2024 a jun/2026). Novos registros que você fizer ficam no topo. Os dados antigos são a base de comparação.',
+                p: 'O contador de refeições está mostrando dados muito antigos?',
+                r: 'Os dados históricos vêm pré-carregados (set/2024 a jun/2026) — são a base de comparação. Novos registros que você fizer são adicionados ao topo e ficam salvos no seu dispositivo.',
+              },
+              {
+                p: 'A busca global (⌘K) serve para quê?',
+                r: 'Para ir diretamente a qualquer prato, fornecedor, relatório ou ação do sistema sem precisar navegar pelas abas. É o atalho de poder do sistema — como uma paleta de comandos.',
               },
             ].map((item, i) => (
               <div key={i} className="rounded-2xl bg-gray-50 p-4">
@@ -971,24 +1044,31 @@ export default function ManualPage() {
         <BotaoBaixarManual />
 
         {/* Rodapé */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0a2e1a] via-[#1a5c3a] to-[#0a2e1a] p-8 text-center text-white shadow-xl">
-          <div className="pointer-events-none absolute inset-0 opacity-[0.06]"
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#071a0e] via-[#1a5c3a] to-[#071a0e] p-10 text-center text-white shadow-xl">
+          <div className="pointer-events-none absolute inset-0 opacity-[0.05]"
             style={{ backgroundImage: 'radial-gradient(circle, #fff 1.5px, transparent 1.5px)', backgroundSize: '24px 24px' }} />
           <div className="relative z-10">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo-tata.png" alt="Tatá House" className="h-10 w-10 object-contain brightness-0 invert" />
             </div>
-            <p className="font-display text-2xl font-bold">Tatá House</p>
-            <p className="mt-1 text-green-200">Sistema de Gestão — versão 2026</p>
-            <div className="mt-5 flex flex-wrap justify-center gap-4 text-sm text-green-200">
-              <span>32.837+ refeições registradas</span>
-              <span className="opacity-40">·</span>
-              <span>1.400+ amostras históricas</span>
-              <span className="opacity-40">·</span>
-              <span>3 anos de dados</span>
+            <p className="font-display text-2xl font-bold tracking-tight">Tatá House</p>
+            <p className="mt-1 text-sm text-emerald-200/70">Sistema de Gestão · versão 2026</p>
+
+            <div className="mt-6 grid grid-cols-3 gap-3">
+              {[
+                { num: '32.837+', label: 'refeições registradas' },
+                { num: '485', label: 'dias de operação' },
+                { num: '3 anos', label: 'de dados históricos' },
+              ].map((s) => (
+                <div key={s.label} className="rounded-2xl bg-white/8 px-2 py-3">
+                  <p className="font-display text-lg font-bold text-white">{s.num}</p>
+                  <p className="mt-0.5 text-[10px] text-emerald-200/60">{s.label}</p>
+                </div>
+              ))}
             </div>
-            <p className="mt-5 text-sm text-green-300/70">
+
+            <p className="mt-8 text-xs text-emerald-300/50">
               Dúvidas? Fale com o gestor responsável.
             </p>
           </div>

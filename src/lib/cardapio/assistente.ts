@@ -136,13 +136,35 @@ export function responder(pergunta: string, ctx: ContextoAssistente): RespostaAs
 }
 
 /**
- * Insight proativo: o app fala primeiro. Retorna o alerta mais relevante do
- * momento (preço, estoque ou aceitação) ou null se está tudo tranquilo.
+ * Insight proativo: o sistema fala primeiro. Varre 7 sinais em ordem de
+ * relevância e retorna o alerta mais importante — oportunidade econômica,
+ * risco operacional ou recomendação de cardápio.
  */
 export function insightProativo(ctx: ContextoAssistente): RespostaAssistente | null {
-  const altas = analisarRadar(ctx.precos, ctx.historico, ctx.fornecedores).filter((r) => r.alerta === 'alta');
-  if (altas.length > 0) return { texto: `${fraseAlerta(altas[0])}` };
+  const radar = analisarRadar(ctx.precos, ctx.historico, ctx.fornecedores);
+  const altas = radar.filter((r) => r.alerta === 'alta');
 
+  // 1. Alta de preço com substituto e economia quantificada — oportunidade real
+  const altaComSubst = altas.find((a) => a.substituir);
+  if (altaComSubst?.substituir) {
+    const pct = Math.round(Math.abs(altaComSubst.variacao ?? 0) * 100);
+    return {
+      texto: `${altaComSubst.item} subiu ${pct}% — substituir por ${altaComSubst.substituir.item} gera economia de ${formatarReais(altaComSubst.substituir.economia)}/${altaComSubst.unid}.`,
+    };
+  }
+
+  // 2. Alta de preço sem substituto
+  if (altas.length > 0) return { texto: fraseAlerta(altas[0]) };
+
+  // 3. Queda de preço — oportunidade de compra
+  const quedas = radar.filter((r) => r.alerta === 'queda');
+  if (quedas.length > 0) {
+    const q = quedas[0];
+    const pct = Math.round(Math.abs(q.variacao ?? 0) * 100);
+    return { texto: `Oportunidade: ${q.item} caiu ${pct}% — bom momento para comprar mais e reforçar o estoque.` };
+  }
+
+  // 4. Estoque crítico
   const baixos = alertasEstoque(ctx.estoque);
   if (baixos.length > 0)
     return {
@@ -150,7 +172,31 @@ export function insightProativo(ctx: ContextoAssistente): RespostaAssistente | n
       itens: baixos.slice(0, 4).map((a) => `${a.item} — ${formatarQtd(a.qtd)} ${a.unid}`),
     };
 
-  const ruins = rankingAceitacao(ctx.aceitacao).filter((r) => r.media < 2.5);
+  const ranking = rankingAceitacao(ctx.aceitacao);
+  const pratosDaSemana = ctx.estado.dias.map((d) => normalizar(d.principal ?? '')).filter(Boolean);
+
+  // 5. Prato com nota baixa no cardápio desta semana — risco operacional imediato
+  const rejeitadoNaSemana = ranking
+    .filter((r) => r.media < 2.5)
+    .find((r) => pratosDaSemana.includes(normalizar(r.prato)));
+  if (rejeitadoNaSemana) {
+    return {
+      texto: `"${rejeitadoNaSemana.prato}" está no cardápio desta semana com nota ${rejeitadoNaSemana.media.toFixed(1)}★ — historicamente rejeitado pela equipe. Considere substituir.`,
+    };
+  }
+
+  // 6. Prato campeão ausente desta semana — oportunidade de melhorar aceitação
+  const tops = ranking.filter((r) => r.media >= 4 && r.n >= 2);
+  const semanaSet = new Set(pratosDaSemana);
+  const campeaoFora = tops.find((t) => !semanaSet.has(normalizar(t.prato)));
+  if (campeaoFora) {
+    return {
+      texto: `"${campeaoFora.prato}" é um dos favoritos da equipe (${campeaoFora.media.toFixed(1)}★ em ${campeaoFora.n} avaliações) e não aparece no cardápio desta semana.`,
+    };
+  }
+
+  // 7. Nota baixa geral
+  const ruins = ranking.filter((r) => r.media < 2.5);
   if (ruins.length > 0)
     return {
       texto: `${ruins[0].prato} teve aceitação baixa (nota ${ruins[0].media.toFixed(1)}). Vale considerar tirar do cardápio.`,

@@ -11,6 +11,7 @@ import { Icone } from '@/components/Icones';
 import { useDna } from '@/lib/cardapio/estado';
 import { TOTAL_DIAS_HISTORICO } from '@/lib/cardapio/dna';
 import { DADOS } from '@/lib/cardapio/motor';
+import type { DnaAlimentar } from '@/lib/cardapio/dna';
 import type { Proteina } from '@/lib/cardapio/tipos';
 
 const COR_PROTEINA: Record<Proteina, string> = {
@@ -21,6 +22,60 @@ const COR_PROTEINA: Record<Proteina, string> = {
   ovo: '#c8a96b',
   outros: '#aab0b9',
 };
+
+/* ── Narrativa de descoberta ─────────────────────────────── */
+
+function gerarDescoberta(dna: DnaAlimentar): string[] {
+  const insights: string[] = [];
+
+  const proteinas = dna.perfilProteinas.filter((p) => p.proteina !== 'outros');
+  const top = proteinas[0];
+  const melhorProt = [...proteinas]
+    .filter((p) => p.notaMedia !== null)
+    .sort((a, b) => (b.notaMedia ?? 0) - (a.notaMedia ?? 0))[0];
+
+  if (top && melhorProt) {
+    if (top.proteina === melhorProt.proteina) {
+      insights.push(`${top.rotulo} domina ${top.pct}% do cardápio e também é a proteína mais bem avaliada (${melhorProt.notaMedia}★). Escolha sólida e aprovada.`);
+    } else {
+      insights.push(`${top.rotulo} lidera em frequência (${top.pct}%), mas ${melhorProt.rotulo} tem a maior aceitação (${melhorProt.notaMedia}★). Há espaço para equilibrar.`);
+    }
+  }
+
+  const campeaoComNota = dna.campeoes.find((c) => c.nota !== null && !c.porHistorico);
+  if (campeaoComNota) {
+    insights.push(`"${campeaoComNota.prato}" é o favorito absoluto — ${campeaoComNota.nota}★ de nota e servido ${campeaoComNota.frequencia}× na operação.`);
+  } else if (dna.campeoes.length > 0) {
+    const c = dna.campeoes[0];
+    insights.push(`"${c.prato}" é o prato mais servido da casa — ${c.frequencia}× na operação histórica.`);
+  }
+
+  if (dna.problemas.length > 0 && dna.baseAvaliacoes >= 5) {
+    const p = dna.problemas[0];
+    const desp = p.desperdicio !== null ? ` e ${Math.round(p.desperdicio * 100)}% de sobra` : '';
+    insights.push(`"${p.prato}" acumula nota ${p.nota ?? '—'}★${desp}. Candidato a sair do rodízio.`);
+  }
+
+  return insights;
+}
+
+function NarrativaDescoberta({ dna }: { dna: DnaAlimentar }) {
+  const insights = gerarDescoberta(dna);
+  if (insights.length === 0) return null;
+  return (
+    <div className="space-y-2 border-b border-carvao-100 px-5 pb-4 pt-3 dark:border-carvao-800">
+      <p className="text-micro font-bold uppercase tracking-[0.16em] text-brand-600 dark:text-brand-400">
+        O que os dados revelam
+      </p>
+      {insights.map((txt, i) => (
+        <div key={i} className="flex gap-2.5">
+          <span className="mt-[3px] h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" />
+          <p className="text-sm leading-snug text-carvao-700 dark:text-areia-200">{txt}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 /** Medalhão de posição — ouro/prata/bronze no top 3, número discreto no resto. */
 function RankBadge({ pos }: { pos: number }) {
@@ -99,6 +154,8 @@ export function DnaCard() {
           </p>
         </div>
       ) : (
+        <>
+        <NarrativaDescoberta dna={dna} />
         <div className="space-y-5 px-5 pb-5">
           {/* Perfil de proteínas */}
           <div className="space-y-2">
@@ -213,6 +270,7 @@ export function DnaCard() {
             </p>
           )}
         </div>
+        </>
       )}
     </Cartao>
   );

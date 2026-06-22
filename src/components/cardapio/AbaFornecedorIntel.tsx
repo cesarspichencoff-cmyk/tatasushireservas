@@ -143,6 +143,63 @@ function FormAvaliacao({
   );
 }
 
+/* ── Recomendação inteligente ────────────────────────────── */
+
+interface ScoreForn {
+  nome: string;
+  qualidade: number;
+  entregaOk: number;
+  nAvaliacoes: number;
+  score: number;
+}
+
+function CartaoRecomendacao({ perfis, porFornecedor }: {
+  perfis: Record<string, PerfilFornecedor>;
+  porFornecedor: Map<string, string[]>;
+}) {
+  const avaliados: ScoreForn[] = Object.values(perfis)
+    .filter((p) => p.avaliacoes.length > 0)
+    .map((p) => {
+      const q = p.avaliacoes.reduce((s, a) => s + a.qualidade, 0) / p.avaliacoes.length;
+      const e = p.avaliacoes.filter((a) => a.entregaOk).length / p.avaliacoes.length;
+      return { nome: p.nome, qualidade: q, entregaOk: e, nAvaliacoes: p.avaliacoes.length, score: q * e };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  if (avaliados.length === 0) return null;
+
+  const melhor = avaliados[0];
+  const emAlerta = avaliados.filter((f) => f.entregaOk < 0.7);
+  const inicial = melhor.nome[0]?.toUpperCase() ?? '?';
+
+  return (
+    <div className="rounded-2xl bg-brand-50 px-4 py-3 ring-1 ring-brand-200/60 dark:bg-carvao-800 dark:ring-carvao-600">
+      <p className="mb-2.5 text-micro font-bold uppercase tracking-[0.16em] text-brand-600 dark:text-brand-300">
+        Melhor fornecedor agora
+      </p>
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-sm font-bold text-white">
+          {inicial}
+        </div>
+        <div className="min-w-0">
+          <p className="font-bold text-carvao-900 dark:text-white">{melhor.nome}</p>
+          <p className="text-xs text-carvao-400">
+            {'★'.repeat(Math.round(melhor.qualidade))}{'☆'.repeat(5 - Math.round(melhor.qualidade))}
+            {' · '}{Math.round(melhor.entregaOk * 100)}% entrega ok
+            {' · '}{melhor.nAvaliacoes} aval.
+            {porFornecedor.get(melhor.nome) && ` · ${porFornecedor.get(melhor.nome)!.length} iten(s)`}
+          </p>
+        </div>
+      </div>
+      {emAlerta.length > 0 && (
+        <p className="mt-2.5 text-xs font-semibold text-ouro-700 dark:text-ouro-300">
+          ⚠️ {emAlerta.map((f) => f.nome).join(', ')} com taxa de entrega abaixo de 70%
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function AbaFornecedorIntel({
   fornecedores,
   perfis,
@@ -207,6 +264,8 @@ export function AbaFornecedorIntel({
           />
         </Modal>
       )}
+
+      <CartaoRecomendacao perfis={perfis} porFornecedor={porFornecedor} />
 
       {/* KPIs */}
       <div className="grid grid-cols-3 gap-3">
