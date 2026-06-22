@@ -135,8 +135,8 @@ export function PainelDiretor({ nome, precos, historico, fornecedores, perfis, a
 
   return (
     <div className="rounded-3xl bg-gradient-to-br from-carvao-900 via-carvao-850 to-brand-900 px-5 py-5">
-      <p className="text-sm font-semibold text-areia-100/60">
-        {saudacao()}, {nome}.
+      <p className="text-micro font-bold uppercase tracking-[0.18em] text-areia-100/40">
+        {saudacao()}, {nome}
       </p>
       <div className="mt-3.5 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
         {cards.map((c, i) => (
@@ -156,7 +156,7 @@ const DOT_COR: Record<CardItem['cor'], string> = {
 
 function DashCard({ cor, label, valor, sub }: CardItem) {
   return (
-    <div className="rounded-2xl bg-white/[0.07] p-3.5 ring-1 ring-white/10">
+    <div className="rounded-2xl bg-white/[0.06] p-3.5">
       <div className="flex items-center gap-1.5">
         <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${DOT_COR[cor]}`} />
         <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/50">{label}</p>

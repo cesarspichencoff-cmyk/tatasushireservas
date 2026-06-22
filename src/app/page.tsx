@@ -911,11 +911,7 @@ export default function PaginaCardapios() {
             {/* ── RELATÓRIOS ────────────────────────────────── */}
             {aba === 'relatorios' && (
               <div className="space-y-6">
-                <div className="border-b border-carvao-100 pb-4 dark:border-carvao-800">
-                  <h2 className="font-display text-2xl font-bold text-carvao-900 dark:text-white">Relatórios</h2>
-                  <p className="mt-1 text-sm text-carvao-400">Análise e exportação de dados da semana</p>
-                </div>
-                {/* KPIs-herói — leitura gerencial instantânea no topo */}
+                {/* KPIs — leitura gerencial em 4 blocos compactos */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   <Kpi
                     rotulo="Custo da semana"
@@ -1026,10 +1022,6 @@ export default function PaginaCardapios() {
             {/* ── AJUSTES ───────────────────────────────────── */}
             {aba === 'ajustes' && (
               <div className="space-y-8">
-                <div className="border-b border-carvao-100 pb-4 dark:border-carvao-800">
-                  <h2 className="font-display text-2xl font-bold text-carvao-900 dark:text-white">Ajustes</h2>
-                  <p className="mt-1 text-sm text-carvao-400">Equipe, restrições e configurações de acesso</p>
-                </div>
                 {/* Equipe e restrições alimentares */}
                 <SecaoAjuste titulo="Equipe e restrições alimentares">
                   <AbaFuncionarios
@@ -1130,8 +1122,8 @@ export default function PaginaCardapios() {
 function SecaoAjuste({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
     <div className="space-y-4">
-      <h2 className="text-subtitulo font-bold text-carvao-600 dark:text-carvao-300">{titulo}</h2>
-      <div className="border-t border-carvao-100 pt-4 dark:border-carvao-800">{children}</div>
+      <p className="text-micro font-bold uppercase tracking-[0.16em] text-carvao-400">{titulo}</p>
+      {children}
     </div>
   );
 }

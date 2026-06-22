@@ -177,7 +177,7 @@ export function AbaAgora({ estado, precos, aceitacao, fatores, papel, irPara }: 
                     {sugs.map((s) => (
                       <span
                         key={s.prato}
-                        className="flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-rotulo font-semibold text-brand-700 ring-1 ring-brand-200/60 dark:bg-carvao-800 dark:text-brand-300 dark:ring-carvao-600"
+                        className="flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-rotulo font-semibold text-brand-700 dark:bg-carvao-800 dark:text-brand-300"
                       >
                         {s.prato}
                         <span className="text-caption font-bold text-brand-400 dark:text-brand-500">
@@ -210,7 +210,7 @@ export function AbaAgora({ estado, precos, aceitacao, fatores, papel, irPara }: 
                 Aguardando revisão
               </h2>
             </div>
-            <div className="space-y-0 divide-y divide-carvao-100 dark:divide-carvao-800">
+            <div className="space-y-0 divide-y divide-carvao-50 dark:divide-carvao-800/40">
               {estado.dias.slice(0, 5).map((d, i) => (
                 <div key={i} className="flex items-center gap-4 py-3">
                   <span className="w-8 shrink-0 text-xs font-bold text-carvao-400">{DIAS_PT[i]}</span>

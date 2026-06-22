@@ -31,11 +31,11 @@ export function Disclosure({
   const aberta = controlado ? aberto : interno;
   const alternar = controlado ? aoAlternar : () => setInterno((a) => !a);
   return (
-    <div className="overflow-hidden rounded-2xl border border-carvao-200 dark:border-carvao-700">
+    <div className="overflow-hidden rounded-2xl bg-white dark:bg-carvao-900">
       <button
         onClick={alternar}
         aria-expanded={aberta}
-        className="flex w-full items-center justify-between gap-3 bg-white px-4 py-3 text-left transition hover:bg-areia-50 dark:bg-carvao-900 dark:hover:bg-carvao-850"
+        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-areia-50 dark:hover:bg-carvao-850"
       >
         <span className="flex items-center gap-2">
           {icone && <Icone nome={icone} tam={18} className="text-brand-500" />}
@@ -47,7 +47,7 @@ export function Disclosure({
         <Icone nome="baixo" tam={16} className={`shrink-0 text-carvao-400 transition-transform ${aberta ? 'rotate-180' : ''}`} />
       </button>
       {aberta && (
-        <div className="space-y-4 border-t border-carvao-100 bg-areia-50/40 p-3 dark:border-carvao-700 dark:bg-carvao-900/40">
+        <div className="space-y-4 border-t border-carvao-100/80 bg-areia-50/30 p-3 dark:border-carvao-800 dark:bg-carvao-900/40">
           {children}
         </div>
       )}
@@ -87,7 +87,7 @@ export function Botao({
 export function Cartao({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <div
-      className={`rounded-3xl border border-carvao-100 bg-white p-5 shadow-suave transition-shadow duration-200 dark:border-carvao-700/70 dark:bg-carvao-850 ${className}`}
+      className={`rounded-3xl bg-white p-5 dark:bg-carvao-850 dark:ring-1 dark:ring-carvao-700/60 ${className}`}
     >
       {children}
     </div>
@@ -180,24 +180,29 @@ export function Kpi({
   tom?: keyof typeof TOM_PILULA;
   icone?: ReactNode;
 }) {
-  const barra = {
-    neutro: 'from-carvao-300 to-carvao-400',
-    verde: 'from-brand-500 to-brand-600',
-    ouro: 'from-ouro-300 to-ouro-500',
-    vermelho: 'from-[#c96a5f] to-perigo',
-    azul: 'from-[#4d92b0] to-info',
+  const ponto = {
+    neutro: 'bg-carvao-300',
+    verde: 'bg-brand-500',
+    ouro: 'bg-ouro-400',
+    vermelho: 'bg-perigo',
+    azul: 'bg-info',
+  }[tom];
+  const valorCor = {
+    neutro: 'text-carvao-900 dark:text-areia-50',
+    verde: 'text-brand-700 dark:text-brand-300',
+    ouro: 'text-ouro-600 dark:text-ouro-300',
+    vermelho: 'text-perigo dark:text-perigo-claro',
+    azul: 'text-info dark:text-info-claro',
   }[tom];
   return (
-    <div className="group relative flex flex-col items-center overflow-hidden rounded-3xl border border-carvao-100 bg-white p-4 text-center shadow-suave transition-all duration-200 hover:-translate-y-0.5 hover:shadow-flutuante motion-reduce:transform-none motion-reduce:transition-none dark:border-carvao-700/70 dark:bg-carvao-850">
-      <span className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r transition-all duration-200 group-hover:h-1.5 ${barra}`} />
-      <p className="flex items-center gap-1 text-rotulo font-semibold text-carvao-500 dark:text-carvao-300">
-        {icone && <span className="leading-none opacity-70">{icone}</span>}
-        {rotulo}
-      </p>
-      <p className="mt-1.5 w-full truncate font-display text-[22px] font-bold leading-none text-carvao-900 tabular-nums dark:text-areia-50 sm:text-[26px]">
-        {valor}
-      </p>
-      {detalhe && <p className="mt-1.5 text-caption font-semibold text-carvao-400">{detalhe}</p>}
+    <div className="flex flex-col rounded-2xl bg-white p-3.5 dark:bg-carvao-850 dark:ring-1 dark:ring-carvao-700/60">
+      <div className="flex items-center gap-1.5">
+        {icone && <span className="leading-none text-carvao-400 opacity-70">{icone}</span>}
+        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${ponto}`} />
+        <p className="text-micro font-bold uppercase tracking-[0.16em] text-carvao-400">{rotulo}</p>
+      </div>
+      <p className={`mt-2 font-display text-[22px] font-bold leading-none tabular-nums ${valorCor}`}>{valor}</p>
+      {detalhe && <p className="mt-1.5 text-caption text-carvao-400">{detalhe}</p>}
     </div>
   );
 }
@@ -214,10 +219,10 @@ export function EstadoVazio({
   acao?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 rounded-3xl border border-dashed border-carvao-200 bg-white/60 px-6 py-12 text-center dark:border-carvao-700 dark:bg-carvao-850/60">
-      <span className="text-4xl">{icone}</span>
+    <div className="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
+      {icone && <span className="text-4xl opacity-60">{icone}</span>}
       <p className="font-display text-lg font-semibold text-carvao-700 dark:text-areia-100">{titulo}</p>
-      {texto && <p className="max-w-sm text-sm text-carvao-400">{texto}</p>}
+      {texto && <p className="max-w-sm text-sm leading-relaxed text-carvao-400">{texto}</p>}
       {acao && <div className="mt-2">{acao}</div>}
     </div>
   );
@@ -241,8 +246,8 @@ export function BarraMini({ valor, tom = 'verde' }: { valor: number; tom?: keyof
 export function Secao({ titulo, acao, children }: { titulo: ReactNode; acao?: ReactNode; children?: ReactNode }) {
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="font-display text-lg font-semibold text-carvao-800 dark:text-areia-100">{titulo}</h2>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-micro font-bold uppercase tracking-[0.16em] text-carvao-400">{titulo}</p>
         {acao}
       </div>
       {children}

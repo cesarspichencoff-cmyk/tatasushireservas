@@ -27,9 +27,9 @@ interface Props {
 }
 
 const NIVEL_COR: Record<NivelAlerta, string> = {
-  urgente: 'bg-red-50 ring-red-200 dark:bg-red-900/20 dark:ring-red-800/50',
-  atencao: 'bg-ouro-50 ring-ouro-200 dark:bg-ouro-900/20 dark:ring-ouro-700/40',
-  info: 'bg-brand-50 ring-brand-200/60 dark:bg-carvao-800 dark:ring-carvao-600',
+  urgente: 'bg-red-50 dark:bg-red-900/20',
+  atencao: 'bg-ouro-50 dark:bg-ouro-900/20',
+  info: 'bg-brand-50 dark:bg-carvao-800',
 };
 
 const NIVEL_TEXTO: Record<NivelAlerta, string> = {
@@ -40,7 +40,7 @@ const NIVEL_TEXTO: Record<NivelAlerta, string> = {
 
 function ItemCard({ item }: { item: ItemBriefing }) {
   return (
-    <div className={`rounded-2xl p-3 ring-1 ${NIVEL_COR[item.nivel]}`}>
+    <div className={`rounded-2xl p-3 ${NIVEL_COR[item.nivel]}`}>
       <div className="flex items-start gap-2.5">
         <span className="mt-0.5 text-lg leading-none">{item.icone}</span>
         <div className="min-w-0">
@@ -150,7 +150,7 @@ export function BriefingCard(props: Props) {
       : null;
 
     return (
-      <div className="rounded-3xl bg-brand-50 px-5 py-4 ring-1 ring-brand-200/60 dark:bg-carvao-850 dark:ring-carvao-700">
+      <div className="rounded-3xl bg-brand-50 px-5 py-4 dark:bg-carvao-850 dark:ring-1 dark:ring-carvao-700">
         <div className="flex items-start gap-3">
           <span className="mt-0.5 shrink-0 text-lg leading-none">{insightOk ? '⚡' : '✓'}</span>
           <div className="min-w-0 flex-1">
@@ -224,8 +224,8 @@ export function BriefingCard(props: Props) {
         <div className="space-y-2 border-t border-carvao-100 px-5 pb-5 pt-3 dark:border-carvao-700">
           {/* narração da IA (quando disponível) */}
           {iaTexto && !carregandoIa && (
-            <div className="mb-1 rounded-2xl bg-brand-50 p-3 ring-1 ring-brand-200/60 dark:bg-carvao-800 dark:ring-carvao-600">
-              <p className="mb-0.5 text-micro font-bold uppercase tracking-wide text-brand-500">Análise IA</p>
+            <div className="mb-1 rounded-2xl bg-brand-50 p-3 dark:bg-carvao-800">
+              <p className="mb-0.5 text-micro font-bold uppercase tracking-[0.16em] text-brand-500">Análise</p>
               <p className="text-nota text-carvao-700 dark:text-areia-200">{iaTexto}</p>
             </div>
           )}

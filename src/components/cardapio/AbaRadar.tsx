@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Cartao, EstadoVazio, Kpi, Pilula, Secao } from '@/components/ui';
+import { EstadoVazio, Pilula, Secao } from '@/components/ui';
 import { formatarReais } from '@/lib/cardapio/motor';
 import { analisarRadar, type RadarItem } from '@/lib/cardapio/radar';
 import type { HistoricoPrecos } from '@/lib/cardapio/tipos';
@@ -141,53 +141,63 @@ export function AbaRadar({
       {/* Parecer do comprador — abre com a conclusão, não com dados */}
       <ParecerComprador radar={radar} />
 
-      <div className="grid grid-cols-3 gap-3">
-        <Kpi rotulo="Itens monitorados" valor={radar.length} tom="azul" />
-        <Kpi rotulo="Alertas ativos" valor={alertas.length} tom={alertas.length ? 'vermelho' : 'verde'} />
-        <Kpi rotulo="Fornecedores" valor={fornecedoresUsados.length} tom="neutro" />
+      {/* Stats inline — sem caixas */}
+      <div className="flex flex-wrap gap-x-6 gap-y-1 px-1">
+        <span>
+          <span className="font-display text-titulo font-bold tabular-nums text-info">{radar.length}</span>
+          <span className="ml-1.5 text-rotulo text-carvao-400">itens</span>
+        </span>
+        <span>
+          <span className={`font-display text-titulo font-bold tabular-nums ${alertas.length ? 'text-perigo' : 'text-brand-600'}`}>
+            {alertas.length}
+          </span>
+          <span className="ml-1.5 text-rotulo text-carvao-400">alertas</span>
+        </span>
+        <span>
+          <span className="font-display text-titulo font-bold tabular-nums text-carvao-900 dark:text-areia-50">{fornecedoresUsados.length}</span>
+          <span className="ml-1.5 text-rotulo text-carvao-400">fornecedores</span>
+        </span>
       </div>
 
       {/* Tendência por item */}
       <Secao titulo="Tendência de preços">
-        <Cartao className="!p-0">
-          <ul className="divide-y divide-carvao-100 dark:divide-carvao-700/60">
-            {comHistorico.slice(0, 40).map((r) => (
-              <li key={r.norm} className="flex items-center justify-between gap-3 px-4 py-2.5">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold">{r.item}</p>
-                  <p className="text-caption text-carvao-400">
-                    {formatarReais(r.atual)}/{r.unid}
-                    {r.fornecedor && <span className="text-brand-600"> · ↓ {r.fornecedor}</span>}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  {r.variacao !== null && (
-                    <span
-                      className={`text-sm font-bold ${
-                        r.variacao > 0.001 ? 'text-perigo' : r.variacao < -0.001 ? 'text-brand-600' : 'text-carvao-400'
-                      }`}
-                    >
-                      {seta(r.tendencia)} {r.variacao > 0 ? '+' : ''}
-                      {Math.round(r.variacao * 100)}%
-                    </span>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </Cartao>
+        <ul className="overflow-hidden rounded-2xl bg-white divide-y divide-carvao-50 dark:divide-carvao-800/50 dark:bg-carvao-850 dark:ring-1 dark:ring-carvao-700/60">
+          {comHistorico.slice(0, 40).map((r) => (
+            <li key={r.norm} className="flex items-center justify-between gap-3 px-4 py-2.5 transition hover:bg-areia-50/70 dark:hover:bg-carvao-800/60">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">{r.item}</p>
+                <p className="text-caption text-carvao-400">
+                  {formatarReais(r.atual)}/{r.unid}
+                  {r.fornecedor && <span className="text-brand-600"> · {r.fornecedor}</span>}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                {r.variacao !== null && (
+                  <span
+                    className={`text-sm font-bold ${
+                      r.variacao > 0.001 ? 'text-perigo' : r.variacao < -0.001 ? 'text-brand-600' : 'text-carvao-400'
+                    }`}
+                  >
+                    {seta(r.tendencia)} {r.variacao > 0 ? '+' : ''}
+                    {Math.round(r.variacao * 100)}%
+                  </span>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
       </Secao>
 
       {/* Fornecedores mais usados */}
       {fornecedoresUsados.length > 0 && (
-        <Secao titulo="Fornecedores mais usados">
-          <Cartao className="flex flex-wrap gap-2">
+        <Secao titulo="Fornecedores">
+          <div className="flex flex-wrap gap-2">
             {fornecedoresUsados.map(([f, n]) => (
               <Pilula key={f} tom="verde">
                 {f} · {n} {n === 1 ? 'item' : 'itens'}
               </Pilula>
             ))}
-          </Cartao>
+          </div>
         </Secao>
       )}
     </div>
