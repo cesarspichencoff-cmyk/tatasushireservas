@@ -29,6 +29,14 @@ function mediaAceitacaoGlobal(aceitacao: Aceitacao): number | null {
   return n > 0 ? soma / n : null;
 }
 
+function sugestoesParaCardapio(aceitacao: Aceitacao): { prato: string; nota: number }[] {
+  return Object.values(aceitacao)
+    .filter((r) => r.n >= 2 && r.somaNotas / r.n >= 3.5)
+    .map((r) => ({ prato: r.prato, nota: r.somaNotas / r.n }))
+    .sort((a, b) => b.nota - a.nota)
+    .slice(0, 4);
+}
+
 /* ── Progresso de etapa — linha simples ─────────────────── */
 
 function EtapaProgress({ etapa }: { etapa: Etapa }) {
@@ -154,9 +162,34 @@ export function AbaAgora({ estado, precos, aceitacao, fatores, papel, irPara }: 
                 Monte o cardápio
               </h2>
               <p className="mt-2 text-base leading-relaxed text-carvao-500 dark:text-carvao-400">
-                Defina os pratos da semana. A lista de compras será gerada automaticamente.
+                Defina os pratos e a lista de compras é gerada automaticamente.
               </p>
             </div>
+
+            {/* Sugestões — pratos aprovados pela equipe */}
+            {(() => {
+              const sugs = sugestoesParaCardapio(aceitacao);
+              if (sugs.length === 0) return null;
+              return (
+                <div className="space-y-2">
+                  <p className="text-xs font-bold text-carvao-400">Aprovados pela equipe</p>
+                  <div className="flex flex-wrap gap-2">
+                    {sugs.map((s) => (
+                      <span
+                        key={s.prato}
+                        className="flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-rotulo font-semibold text-brand-700 ring-1 ring-brand-200/60 dark:bg-carvao-800 dark:text-brand-300 dark:ring-carvao-600"
+                      >
+                        {s.prato}
+                        <span className="text-caption font-bold text-brand-400 dark:text-brand-500">
+                          {s.nota.toFixed(1)}★
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
             {podeEditar && (
               <BotaoPrimario onClick={() => irPara('cardapio')}>
                 Montar cardápio <Icone nome="proximo" tam={15} />
@@ -245,7 +278,11 @@ export function AbaAgora({ estado, precos, aceitacao, fatores, papel, irPara }: 
                 Semana concluída
               </p>
               <h2 className="mt-2 font-display text-3xl font-bold text-carvao-900 dark:text-white">
-                Tudo certo
+                {media !== null && media >= 4
+                  ? 'Semana excelente'
+                  : (resumo.refeicoesReais || resumo.refeicoesPrevistas)
+                  ? 'Semana fechada'
+                  : 'Operação concluída'}
               </h2>
             </div>
             <div className="grid grid-cols-3 divide-x divide-carvao-100 dark:divide-carvao-800">

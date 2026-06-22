@@ -10,7 +10,9 @@ import {
   lerDesperdicio,
 } from '@/lib/cardapio/estado';
 import { alertasProspectivos } from '@/lib/cardapio/prospectivo';
-import { gerarBriefing } from '@/lib/cardapio/assistente';
+import { gerarBriefing, insightProativo } from '@/lib/cardapio/assistente';
+import { resumoSemana } from '@/lib/cardapio/indicadores';
+import { formatarReais } from '@/lib/cardapio/motor';
 import type { Aceitacao, Estoque, EstadoSemana, HistoricoPrecos } from '@/lib/cardapio/tipos';
 
 interface Props {
@@ -60,6 +62,16 @@ export function BriefingCard(props: Props) {
   const [carregandoIa, setCarregandoIa] = useState(false);
 
   const { fatores } = useAprendizado();
+
+  const resumo = useMemo(
+    () => resumoSemana(props.estado, props.precos, fatores),
+    [props.estado, props.precos, fatores],
+  );
+
+  const insightOk = useMemo(
+    () => insightProativo({ estado: props.estado, semanaId: props.semanaId, precos: props.precos, historico: props.historico, fornecedores: props.fornecedores, aceitacao: props.aceitacao, estoque: props.estoque, fatores }),
+    [props.estado, props.semanaId, props.precos, props.historico, props.fornecedores, props.aceitacao, props.estoque, fatores],
+  );
 
   const dossie = useMemo(
     () =>
@@ -128,12 +140,39 @@ export function BriefingCard(props: Props) {
   }, [briefing.tudo_ok]); // só recalcula quando muda de estado
 
   if (briefing.tudo_ok) {
+    const temPlan = props.estado.dias.some((d) => d.principal);
+    const pulseSemana = temPlan && resumo.refeicoesPrevistas > 0
+      ? resumo.custoRefEstimado
+        ? `${resumo.refeicoesPrevistas} refeições · ${formatarReais(resumo.custoRefEstimado)}/ref estimado`
+        : `${resumo.refeicoesPrevistas} refeições planejadas`
+      : null;
+
     return (
-      <div className="flex items-center gap-3 rounded-3xl bg-brand-50 px-5 py-4 ring-1 ring-brand-200/60 dark:bg-carvao-850 dark:ring-carvao-700">
-        
-        <div>
-          <p className="font-display text-sm font-bold text-brand-700 dark:text-brand-300">{briefing.saudacao}</p>
-          <p className="text-nota text-carvao-600 dark:text-areia-300">Tudo em ordem hoje. Nenhum alerta ativo.</p>
+      <div className="rounded-3xl bg-brand-50 px-5 py-4 ring-1 ring-brand-200/60 dark:bg-carvao-850 dark:ring-carvao-700">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 shrink-0 text-lg leading-none">{insightOk ? '⚡' : '✓'}</span>
+          <div className="min-w-0">
+            <p className="font-display text-sm font-bold text-brand-700 dark:text-brand-300">{briefing.saudacao}</p>
+            {insightOk ? (
+              <>
+                <p className="mt-0.5 text-nota text-carvao-600 dark:text-areia-300">{insightOk.texto}</p>
+                {insightOk.itens && (
+                  <ul className="mt-1.5 space-y-0.5">
+                    {insightOk.itens.slice(0, 3).map((item, i) => (
+                      <li key={i} className="flex items-start gap-2 text-rotulo text-carvao-500 dark:text-areia-400">
+                        <span className="mt-[5px] h-1 w-1 shrink-0 rounded-full bg-brand-400" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            ) : (
+              <p className="mt-0.5 text-nota text-carvao-600 dark:text-areia-300">
+                {pulseSemana ?? 'Semana sem alertas — boa operação para hoje.'}
+              </p>
+            )}
+          </div>
         </div>
       </div>
     );
