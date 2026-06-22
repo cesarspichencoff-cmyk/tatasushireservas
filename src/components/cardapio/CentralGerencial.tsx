@@ -12,7 +12,6 @@ import { Icone } from '@/components/Icones';
 import {
   DIAS_SEMANA,
   formatarReais,
-  formatarQtd,
   linhasDoDia,
   normalizar,
 } from '@/lib/cardapio/motor';
@@ -247,32 +246,17 @@ export function CentralGerencial({
         ))}
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {[
-          { rot: 'Semanas', val: String(kpis.semanas), desc: 'analisadas' },
-          { rot: 'Custo total', val: formatarReais(kpis.custoTotal), desc: 'compras registradas' },
-          { rot: 'Itens comprados', val: String(kpis.itensComprados), desc: `${kpis.itensRecebidos} recebidos` },
-          { rot: 'Refeições', val: String(kpis.totalRefeicoes || '—'), desc: 'refeições servidas' },
-        ].map(({ rot, val, desc }) => (
-          <Cartao key={rot} className="text-center">
-            <p className="text-micro font-bold uppercase tracking-wide text-carvao-400">{rot}</p>
-            <p className="font-display text-2xl font-black text-brand-700 dark:text-brand-300">{val}</p>
-            <p className="text-caption text-carvao-400">{desc}</p>
-          </Cartao>
-        ))}
+      {/* Stats inline */}
+      <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm">
+        <span><strong className="font-bold text-carvao-900 dark:text-white">{kpis.semanas}</strong> <span className="text-carvao-400">semana{kpis.semanas !== 1 ? 's' : ''}</span></span>
+        <span><strong className="font-bold text-carvao-900 dark:text-white">{formatarReais(kpis.custoTotal)}</strong> <span className="text-carvao-400">em compras</span></span>
+        <span><strong className="font-bold text-carvao-900 dark:text-white">{kpis.itensComprados}</strong> <span className="text-carvao-400">itens · {kpis.itensRecebidos} recebidos</span></span>
+        {kpis.totalRefeicoes > 0 && <span><strong className="font-bold text-carvao-900 dark:text-white">{kpis.totalRefeicoes}</strong> <span className="text-carvao-400">refeições</span></span>}
+        <span>
+          <strong className={`font-bold ${nutri.score >= 70 ? 'text-brand-600 dark:text-brand-400' : 'text-ouro-600 dark:text-ouro-400'}`}>{nutri.score}%</strong>
+          <span className="ml-1 text-carvao-400">nutricional</span>
+        </span>
       </div>
-
-      {/* Índice nutricional resumido */}
-      <Cartao className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-caption font-bold uppercase tracking-wide text-carvao-400">Índice Nutricional — semana atual</p>
-          <p className="font-display text-2xl font-black text-brand-700 dark:text-brand-300">{nutri.score}% {nutri.rotulo}</p>
-        </div>
-        <div className="h-3 w-32 overflow-hidden rounded-full bg-carvao-100 dark:bg-carvao-800">
-          <div className="h-full rounded-full bg-brand-500 transition-all" style={{ width: `${nutri.score}%` }} />
-        </div>
-      </Cartao>
 
       {/* Relatórios exportáveis — agrupados */}
       <div className="space-y-4">

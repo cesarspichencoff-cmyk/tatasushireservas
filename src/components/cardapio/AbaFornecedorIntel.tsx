@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Botao, Cartao, EstadoVazio, Kpi, Modal, estiloInput, estiloRotulo } from '@/components/ui';
+import { Botao, EstadoVazio, Modal, estiloInput, estiloRotulo } from '@/components/ui';
 import { Icone } from '@/components/Icones';
 import type { AvaliacaoFornecedor, PerfilFornecedor } from '@/lib/cardapio/tipos';
 
@@ -285,26 +285,21 @@ export function AbaFornecedorIntel({
 
       <CartaoRecomendacao perfis={perfis} porFornecedor={porFornecedor} />
 
-      {/* KPIs */}
-      <div className="grid grid-cols-3 gap-3">
-        <Kpi rotulo="Fornecedores" valor={todosFornecedores.length} tom="neutro" />
-        <Kpi
-          rotulo="Avaliados"
-          valor={Object.values(perfis).filter((p) => p.avaliacoes.length > 0).length}
-          tom="verde"
-        />
-        <Kpi
-          rotulo="Alertas"
-          valor={Object.values(perfis).filter((p) => {
-            const taxa = taxaEntregaOk(p.avaliacoes);
-            return taxa !== null && taxa < 0.7;
-          }).length}
-          tom="vermelho"
-        />
-      </div>
+      {/* Stats inline */}
+      {(() => {
+        const nAvaliados = Object.values(perfis).filter((p) => p.avaliacoes.length > 0).length;
+        const nAlertas = Object.values(perfis).filter((p) => { const t = taxaEntregaOk(p.avaliacoes); return t !== null && t < 0.7; }).length;
+        return (
+          <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
+            <span><strong className="font-bold text-carvao-900 dark:text-white">{todosFornecedores.length}</strong> <span className="text-carvao-400">fornecedores</span></span>
+            <span><strong className="font-bold text-brand-600 dark:text-brand-400">{nAvaliados}</strong> <span className="text-carvao-400">avaliados</span></span>
+            {nAlertas > 0 && <span><strong className="font-bold text-perigo">{nAlertas}</strong> <span className="text-carvao-400">alertas</span></span>}
+          </div>
+        );
+      })()}
 
       {/* Lista de fornecedores */}
-      <div className="space-y-3">
+      <ul className="overflow-hidden rounded-2xl bg-white divide-y divide-carvao-100 dark:divide-carvao-700/50 dark:bg-carvao-850 dark:ring-1 dark:ring-carvao-700/60">
         {todosFornecedores.map((nome) => {
           const perfil = perfis[nome];
           const avs = perfil?.avaliacoes ?? [];
@@ -314,9 +309,9 @@ export function AbaFornecedorIntel({
           const exp = expandido === nome;
 
           return (
-            <Cartao key={nome} className="!p-0">
+            <li key={nome}>
               <div
-                className="flex cursor-pointer items-start justify-between gap-3 p-4"
+                className="flex cursor-pointer items-start justify-between gap-3 px-4 py-3"
                 onClick={() => setExpandido(exp ? null : nome)}
               >
                 <div className="min-w-0 flex-1">
@@ -329,7 +324,7 @@ export function AbaFornecedorIntel({
                       </span>
                     )}
                   </div>
-                  <div className="mt-1 flex flex-wrap gap-2 text-xs text-carvao-400">
+                  <div className="mt-0.5 flex flex-wrap gap-2 text-xs text-carvao-400">
                     <span>{itens.length} item(ns)</span>
                     {perfil?.pedidoMinimo && <span>Mín. R$ {perfil.pedidoMinimo}</span>}
                     {perfil?.prazoEntregaDias && <span>{perfil.prazoEntregaDias}d prazo</span>}
@@ -347,7 +342,7 @@ export function AbaFornecedorIntel({
                     className="flex h-8 w-8 items-center justify-center rounded-lg text-ouro-500 hover:bg-ouro-50 dark:hover:bg-carvao-700"
                     title="Avaliar entrega"
                   >
-                    
+
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); setEditando(nome); }}
@@ -362,10 +357,9 @@ export function AbaFornecedorIntel({
 
               {exp && (
                 <div className="border-t border-carvao-100 px-4 pb-4 pt-3 dark:border-carvao-700">
-                  {/* Itens que fornece */}
                   {itens.length > 0 && (
                     <div className="mb-3">
-                      <p className="mb-2 text-micro font-bold uppercase tracking-widest text-carvao-400">Itens fornecidos</p>
+                      <p className="mb-1.5 text-micro font-bold uppercase tracking-widest text-carvao-400">Itens fornecidos</p>
                       <div className="flex flex-wrap gap-1.5">
                         {itens.slice(0, 12).map((it) => (
                           <span key={it} className="rounded-full bg-carvao-100 px-2 py-0.5 text-caption font-semibold text-carvao-600 dark:bg-carvao-700 dark:text-carvao-300">
@@ -377,23 +371,19 @@ export function AbaFornecedorIntel({
                     </div>
                   )}
 
-                  {/* Contato */}
                   {perfil?.whatsapp && (
-                    <p className="mb-2 text-sm text-carvao-600 dark:text-carvao-300">
-                      {perfil.whatsapp}
-                    </p>
+                    <p className="mb-2 text-sm text-carvao-600 dark:text-carvao-300">{perfil.whatsapp}</p>
                   )}
                   {perfil?.obs && (
                     <p className="mb-3 text-xs italic text-carvao-400">{perfil.obs}</p>
                   )}
 
-                  {/* Histórico de avaliações */}
                   {avs.length > 0 && (
                     <div>
-                      <p className="mb-2 text-micro font-bold uppercase tracking-widest text-carvao-400">Últimas avaliações</p>
-                      <div className="space-y-1.5">
+                      <p className="mb-1.5 text-micro font-bold uppercase tracking-widest text-carvao-400">Últimas avaliações</p>
+                      <div className="divide-y divide-carvao-100 dark:divide-carvao-700/50">
                         {avs.slice(0, 4).map((av, i) => (
-                          <div key={i} className="flex items-center gap-2 rounded-xl bg-carvao-50 px-3 py-2 dark:bg-carvao-800">
+                          <div key={i} className="flex items-center gap-2 py-1.5">
                             <span className="text-xs text-ouro-500">{'★'.repeat(av.qualidade)}</span>
                             <span className={`text-xs font-semibold ${av.entregaOk ? 'text-brand-600 dark:text-brand-400' : 'text-red-500 dark:text-red-400'}`}>
                               {av.entregaOk ? '✓ entregou' : '✗ problema'}
@@ -409,16 +399,14 @@ export function AbaFornecedorIntel({
                   )}
 
                   {avs.length === 0 && (
-                    <p className="text-center text-xs text-carvao-400">
-                      Sem avaliações ainda. Registre após cada entrega.
-                    </p>
+                    <p className="text-xs text-carvao-400">Sem avaliações ainda. Registre após cada entrega.</p>
                   )}
                 </div>
               )}
-            </Cartao>
+            </li>
           );
         })}
-      </div>
+      </ul>
     </div>
   );
 }

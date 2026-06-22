@@ -237,49 +237,40 @@ export function AbaCompras({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2 print:hidden">
-        <p className="text-sm text-carvao-500 dark:text-carvao-300">
-          Quantidades já escaladas pelo nº de pessoas de cada dia.
-        </p>
-        <Botao variante="secundario" onClick={() => window.print()} className="!min-h-10 !px-4 !py-2 text-sm">
-          Imprimir
-        </Botao>
-      </div>
-
-      {/* Alterna entre lista compacta (conferência) e visão detalhada */}
-      <div className="flex gap-1 rounded-2xl bg-carvao-100/70 p-1 print:hidden dark:bg-carvao-800/70">
-        {(
-          [
-            ['lista', 'Lista'],
-            ['detalhado', 'Detalhado'],
-          ] as const
-        ).map(([id, rot]) => (
-          <button
-            key={id}
-            onClick={() => setModo(id)}
-            className={`min-h-9 flex-1 rounded-xl px-3 text-nota font-semibold transition ${
-              modo === id
-                ? 'bg-white text-brand-700 shadow-suave dark:bg-carvao-700 dark:text-brand-300'
-                : 'text-carvao-500 dark:text-areia-200'
-            }`}
-          >
-            {rot}
-          </button>
-        ))}
-      </div>
-
-      {/* Toggle: mostrar/ocultar insumos básicos (sal, óleo, alho, etc.) */}
-      <div className="flex items-center justify-end print:hidden">
+      {/* Modo + ações */}
+      <div className="flex items-center gap-2 print:hidden">
+        <div className="flex flex-1 gap-1 rounded-2xl bg-carvao-100/70 p-1 dark:bg-carvao-800/70">
+          {(['lista', 'detalhado'] as const).map((id) => {
+            const rot = id === 'lista' ? 'Lista' : 'Detalhado';
+            return (
+              <button
+                key={id}
+                onClick={() => setModo(id)}
+                className={`min-h-9 flex-1 rounded-xl px-3 text-nota font-semibold transition ${
+                  modo === id
+                    ? 'bg-white text-brand-700 shadow-suave dark:bg-carvao-700 dark:text-brand-300'
+                    : 'text-carvao-500 dark:text-areia-200'
+                }`}
+              >
+                {rot}
+              </button>
+            );
+          })}
+        </div>
         <button
           onClick={() => setMostrarBasicos(!mostrarBasicos)}
-          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-caption font-bold uppercase tracking-wide ring-1 transition ${
+          className={`shrink-0 rounded-xl border px-3 py-2 text-caption font-bold transition ${
             mostrarBasicos
-              ? 'bg-ouro-300/20 text-ouro-700 ring-ouro-400/40 hover:bg-ouro-300/30 dark:text-ouro-300'
-              : 'bg-carvao-100/60 text-carvao-400 ring-carvao-200/60 hover:bg-carvao-100 dark:bg-carvao-800/60 dark:ring-carvao-700/60'
+              ? 'border-ouro-400/40 bg-ouro-300/15 text-ouro-700 dark:text-ouro-300'
+              : 'border-carvao-200 text-carvao-400 hover:text-carvao-600 dark:border-carvao-600'
           }`}
+          title={mostrarBasicos ? 'Ocultar sal, óleo, alho…' : 'Mostrar básicos'}
         >
-          {mostrarBasicos ? 'Ocultar básicos' : 'Mostrar básicos'}
+          {mostrarBasicos ? 'Com básicos' : '+ Básicos'}
         </button>
+        <Botao variante="secundario" onClick={() => window.print()} className="!min-h-10 shrink-0 !px-3 !py-2 text-sm">
+          <Icone nome="exportar" tam={16} />
+        </Botao>
       </div>
 
       {modo === 'lista' && (

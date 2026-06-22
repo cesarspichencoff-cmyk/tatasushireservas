@@ -217,12 +217,6 @@ export function AbaCotacao({
   return (
     <div className="space-y-4">
       <Cartao className="space-y-3">
-        <p className="text-sm text-carvao-500 dark:text-carvao-300">
-          Cole abaixo a <strong>cotação da semana</strong> do jeito que ela chega no WhatsApp (pode colar tudo
-          de uma vez: frango, bovinos, suínos, hortifrúti…). Use <strong>Ler com IA</strong> (Groq — gratuito)
-          para resultado mais preciso ou <strong>Só lógica</strong> se estiver offline.
-        </p>
-
         {/* Upload */}
         <div className="flex flex-wrap items-center gap-3">
           <label className={`cursor-pointer rounded-full border border-dashed px-4 py-2 text-rotulo font-bold transition ${pdfCarregando ? 'pointer-events-none border-carvao-200 text-carvao-300 dark:border-carvao-700' : 'border-carvao-300 text-carvao-500 hover:border-brand-400 hover:text-brand-600 dark:border-carvao-600 dark:text-carvao-400'}`}>
@@ -256,32 +250,27 @@ export function AbaCotacao({
           />
         </div>
 
-        {/* Cadastro de fornecedores */}
-        <div className="rounded-2xl border border-carvao-100 bg-carvao-50 p-3 dark:border-carvao-700 dark:bg-carvao-800/50">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold text-carvao-500 dark:text-carvao-400">
-              Fornecedores cadastrados{fornecedoresList.length > 0 ? ` (${fornecedoresList.length})` : ''}
+        {/* Fornecedores — toggle inline */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-carvao-400">
+              {fornecedoresList.length > 0 ? `${fornecedoresList.length} fornecedor${fornecedoresList.length !== 1 ? 'es' : ''}` : 'Nenhum fornecedor'}
             </span>
             <button
               onClick={() => setMostrarForn((v) => !v)}
-              className="text-xs font-bold text-brand-600 hover:underline dark:text-brand-400"
+              className="text-xs font-bold text-brand-600 dark:text-brand-400"
             >
-              {mostrarForn ? 'Fechar' : 'Gerenciar'}
+              Gerenciar {mostrarForn ? '↑' : '↓'}
             </button>
           </div>
-
           {mostrarForn && (
-            <div className="mt-3 space-y-3">
-              {fornecedoresList.length === 0 ? (
-                <p className="text-xs text-carvao-400 dark:text-carvao-500">
-                  Nenhum fornecedor cadastrado. Adicione os nomes reais dos seus fornecedores para que a leitura use os nomes corretos.
-                </p>
-              ) : (
+            <div className="space-y-2 pt-1">
+              {fornecedoresList.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {fornecedoresList.map((nome) => (
                     <span
                       key={nome}
-                      className="flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-semibold text-carvao-700 ring-1 ring-carvao-200 dark:bg-carvao-700 dark:text-carvao-200 dark:ring-carvao-600"
+                      className="flex items-center gap-1 rounded-full bg-carvao-100 px-3 py-1 text-xs font-semibold text-carvao-700 dark:bg-carvao-700 dark:text-carvao-200"
                     >
                       {nome}
                       <button
@@ -300,7 +289,7 @@ export function AbaCotacao({
                   value={novoForn}
                   onChange={(e) => setNovoForn(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && adicionarFornecedor()}
-                  placeholder="Nome do fornecedor (ex: Distribuidora ABC)"
+                  placeholder="Nome do fornecedor"
                   className="min-w-0 flex-1 rounded-xl border border-carvao-200 bg-white px-3 py-2 text-xs dark:border-carvao-600 dark:bg-carvao-900"
                 />
                 <button
@@ -314,45 +303,35 @@ export function AbaCotacao({
           )}
         </div>
 
-        {/* Configuração da chave Groq */}
-        <div className="rounded-2xl border border-carvao-100 bg-carvao-50 p-3 dark:border-carvao-700 dark:bg-carvao-800/50">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className={`h-2 w-2 rounded-full ${temKey ? 'bg-brand-500' : 'bg-carvao-300'}`} />
-              <span className="text-xs font-semibold text-carvao-500 dark:text-carvao-400">
-                {temKey ? 'IA Groq configurada' : 'IA Groq não configurada'}
-              </span>
-            </div>
+        {/* Chave Groq — toggle inline */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-xs text-carvao-400">
+              <span className={`h-1.5 w-1.5 rounded-full ${temKey ? 'bg-brand-500' : 'bg-carvao-300'}`} />
+              {temKey ? 'IA Groq ativa' : 'IA Groq não configurada'}
+            </span>
             <button
               onClick={() => setMostrarConfigIA((v) => !v)}
-              className="text-xs font-bold text-brand-600 hover:underline dark:text-brand-400"
+              className="text-xs font-bold text-brand-600 dark:text-brand-400"
             >
-              {mostrarConfigIA ? 'Fechar' : temKey ? 'Trocar chave' : 'Configurar'}
+              {temKey ? 'Trocar chave' : 'Configurar'} {mostrarConfigIA ? '↑' : '↓'}
             </button>
           </div>
-
           {mostrarConfigIA && (
-            <div className="mt-3 space-y-2">
-              <p className="text-xs text-carvao-500 dark:text-carvao-400">
-                Obtenha uma chave gratuita em{' '}
-                <span className="font-semibold text-brand-600 dark:text-brand-400">console.groq.com/keys</span>.
-                A chave fica salva somente neste dispositivo.
-              </p>
-              <div className="flex gap-2">
-                <input
-                  type="password"
-                  value={keyRascunho}
-                  onChange={(e) => setKeyRascunho(e.target.value)}
-                  placeholder="gsk_..."
-                  className="min-w-0 flex-1 rounded-xl border border-carvao-200 bg-white px-3 py-2 text-xs font-mono dark:border-carvao-600 dark:bg-carvao-900"
-                />
-                <button
-                  onClick={salvarKey}
-                  className="shrink-0 rounded-xl bg-brand-600 px-4 py-2 text-xs font-bold text-white hover:bg-brand-700"
-                >
-                  Salvar
-                </button>
-              </div>
+            <div className="flex gap-2 pt-1">
+              <input
+                type="password"
+                value={keyRascunho}
+                onChange={(e) => setKeyRascunho(e.target.value)}
+                placeholder="gsk_…"
+                className="min-w-0 flex-1 rounded-xl border border-carvao-200 bg-white px-3 py-2 text-xs font-mono dark:border-carvao-600 dark:bg-carvao-900"
+              />
+              <button
+                onClick={salvarKey}
+                className="shrink-0 rounded-xl bg-brand-600 px-4 py-2 text-xs font-bold text-white hover:bg-brand-700"
+              >
+                Salvar
+              </button>
             </div>
           )}
         </div>

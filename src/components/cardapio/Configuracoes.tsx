@@ -77,9 +77,6 @@ export function Configuracoes() {
         );
       })}
 
-      <p className="px-1 text-caption text-carvao-400">
-        Para auditoria por usuário individual, a próxima etapa é Supabase Auth.
-      </p>
     </div>
   );
 }

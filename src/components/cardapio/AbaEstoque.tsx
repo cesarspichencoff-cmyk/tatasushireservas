@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { toast } from '@/components/Toast';
-import { Botao, Cartao, EstadoVazio, Kpi, Pilula, Secao, estiloInput } from '@/components/ui';
+import { Botao, Cartao, EstadoVazio, Pilula, Secao, estiloInput } from '@/components/ui';
 import { DADOS, formatarQtd, normalizar } from '@/lib/cardapio/motor';
 import { consumoDaSemana, necessidadeDeCompra } from '@/lib/cardapio/indicadores';
 import { AbaInventario } from './AbaInventario';
@@ -36,6 +36,11 @@ export function AbaEstoque({
   const aComprar = necessidade.filter((n) => n.comprar > 0);
   const cobertos = necessidade.filter((n) => n.comprar <= 0 && n.emEstoque > 0);
 
+  const totalCriticos = useMemo(
+    () => Object.values(estoque).filter((e) => e.minimo > 0 && e.qtd <= e.minimo).length,
+    [estoque],
+  );
+
   const itensEstoque = useMemo(() => {
     const n = normalizar(busca);
     return Object.entries(estoque)
@@ -46,8 +51,6 @@ export function AbaEstoque({
       })
       .sort((a, b) => a[1].item.localeCompare(b[1].item, 'pt-BR'));
   }, [estoque, busca, apenasCriticos]);
-
-  const baixos = itensEstoque.filter(([, e]) => e.minimo > 0 && e.qtd <= e.minimo);
 
   const catalogo = useMemo(() => {
     const set = new Map<string, string>();
@@ -90,104 +93,104 @@ export function AbaEstoque({
         podeEditar={podeEditar}
       />
 
-      <div className="grid grid-cols-3 gap-3">
-        <Kpi rotulo="Itens em estoque" valor={Object.keys(estoque).length} tom="neutro" />
-        <Kpi rotulo="A comprar" valor={aComprar.length} detalhe="após descontar estoque" tom="ouro" />
-        <Kpi rotulo="No mínimo" valor={baixos.length} detalhe="estoque baixo" tom={baixos.length ? 'vermelho' : 'verde'} />
+      {/* Hero: número de críticos + stats secundários + link inventário */}
+      <div className="flex items-end justify-between gap-4">
+        <div className="flex items-baseline gap-6">
+          <div>
+            <span className={`font-display text-[2.5rem] font-black leading-none tabular-nums ${totalCriticos > 0 ? 'text-perigo' : 'text-brand-600 dark:text-brand-400'}`}>
+              {totalCriticos}
+            </span>
+            <span className="ml-1.5 text-sm font-semibold text-carvao-400">crítico{totalCriticos !== 1 ? 's' : ''}</span>
+          </div>
+          <div className="space-y-0.5 text-right">
+            <p className="text-sm tabular-nums">
+              <span className="font-bold text-carvao-700 dark:text-areia-100">{Object.keys(estoque).length}</span>
+              <span className="ml-1 text-carvao-400">itens</span>
+            </p>
+            <p className="text-sm tabular-nums">
+              <span className={`font-bold ${aComprar.length > 0 ? 'text-ouro-600 dark:text-ouro-400' : 'text-carvao-400'}`}>{aComprar.length}</span>
+              <span className="ml-1 text-carvao-400">a comprar</span>
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={() => setInvAberto(true)}
+          className="text-sm font-semibold text-brand-600 transition hover:text-brand-700 dark:text-brand-400"
+        >
+          → Inventário mensal
+        </button>
       </div>
 
-      {/* Inventário mensal — contagem física do estoque */}
-      <button
-        onClick={() => setInvAberto(true)}
-        className="flex w-full items-center justify-between gap-3 rounded-2xl border border-brand-600/30 bg-brand-50 px-4 py-3 text-left transition hover:bg-brand-100 dark:bg-carvao-800 dark:hover:bg-carvao-700"
-      >
-        <span>
-          <span className="block text-sm font-extrabold text-brand-700 dark:text-brand-300">Inventário mensal</span>
-          <span className="block text-caption text-carvao-500 dark:text-areia-200">
-            Conte o estoque do mês e veja as divergências (esperado × contado).
-          </span>
-        </span>
-        <span className="shrink-0 text-brand-600 dark:text-brand-300">→</span>
-      </button>
-
       {/* Necessidade real de compra */}
-      <Secao
-        titulo="Necessidade real de compra"
-        acao={<Pilula tom="azul">cardápio − estoque</Pilula>}
-      >
+      <Secao titulo="Necessidade de compra" acao={<Pilula tom="azul">cardápio − estoque</Pilula>}>
         {consumo.length === 0 ? (
-          <EstadoVazio titulo="Monte o cardápio da semana" texto="A necessidade de compra aparece quando há pratos definidos." />
+          <EstadoVazio titulo="Monte o cardápio da semana" texto="A lista de necessidade aparece quando há pratos definidos." />
         ) : (
-          <Cartao className="!p-0">
-            <ul className="divide-y divide-carvao-100 dark:divide-carvao-700/60">
-              {necessidade.map((n) => (
-                <li key={n.norm} className="flex items-center justify-between gap-3 px-4 py-2.5">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{n.item}</p>
-                    <p className="text-caption text-carvao-400">
-                      precisa {formatarQtd(n.qtd)} {n.unid} · em estoque {formatarQtd(n.emEstoque)} {n.unid}
-                    </p>
-                  </div>
-                  {n.comprar > 0 ? (
-                    <Pilula tom="ouro">
-                      comprar {formatarQtd(n.comprar)} {n.unid}
-                    </Pilula>
-                  ) : (
-                    <Pilula tom="verde">coberto</Pilula>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </Cartao>
+          <ul className="overflow-hidden rounded-2xl bg-white divide-y divide-carvao-100 dark:divide-carvao-700/50 dark:bg-carvao-850 dark:ring-1 dark:ring-carvao-700/60">
+            {necessidade.map((n) => (
+              <li key={n.norm} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">{n.item}</p>
+                  <p className="text-caption text-carvao-400">
+                    {formatarQtd(n.qtd)} {n.unid} · estoque {formatarQtd(n.emEstoque)}
+                  </p>
+                </div>
+                {n.comprar > 0 ? (
+                  <Pilula tom="ouro">
+                    comprar {formatarQtd(n.comprar)} {n.unid}
+                  </Pilula>
+                ) : (
+                  <Pilula tom="verde">coberto</Pilula>
+                )}
+              </li>
+            ))}
+          </ul>
         )}
         {cobertos.length > 0 && (
           <p className="text-xs font-semibold text-brand-600 dark:text-brand-300">
-            ✓ {cobertos.length} itens já cobertos pelo estoque — economia na compra desta semana.
+            ✓ {cobertos.length} itens cobertos pelo estoque.
           </p>
         )}
       </Secao>
 
       {podeEditar && (
-        <>
-          {/* Entrada de produtos */}
-          <Secao titulo="Entrada de produtos">
-            <Cartao className="space-y-3">
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <input
-                  list="catalogo-estoque"
-                  className={estiloInput}
-                  placeholder="Produto (ex.: Cenoura)"
-                  value={novoItem}
-                  onChange={(e) => setNovoItem(e.target.value)}
-                />
-                <datalist id="catalogo-estoque">
-                  {catalogo.slice(0, 400).map(([n]) => (
-                    <option key={n} value={n} />
-                  ))}
-                </datalist>
-                <input
-                  type="number"
-                  min={0}
-                  step="0.1"
-                  inputMode="decimal"
-                  className={`${estiloInput} sm:w-32`}
-                  placeholder="Qtd"
-                  value={novaQtd}
-                  onChange={(e) => setNovaQtd(e.target.value)}
-                />
-                <Botao onClick={registrarEntrada} className="sm:w-auto">
-                  Lançar
-                </Botao>
-              </div>
-              <button
-                onClick={baixaPeloCardapio}
-                className="w-full rounded-2xl border border-brand-600/40 bg-brand-50 px-4 py-2.5 text-sm font-extrabold uppercase tracking-wide text-brand-700 transition hover:bg-brand-100 dark:bg-carvao-800 dark:text-brand-300"
-              >
-                ↧ Dar baixa do consumo do cardápio
-              </button>
-            </Cartao>
-          </Secao>
-        </>
+        <Secao titulo="Entrada de produtos">
+          <div className="space-y-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <input
+                list="catalogo-estoque"
+                className={estiloInput}
+                placeholder="Produto (ex.: Cenoura)"
+                value={novoItem}
+                onChange={(e) => setNovoItem(e.target.value)}
+              />
+              <datalist id="catalogo-estoque">
+                {catalogo.slice(0, 400).map(([n]) => (
+                  <option key={n} value={n} />
+                ))}
+              </datalist>
+              <input
+                type="number"
+                min={0}
+                step="0.1"
+                inputMode="decimal"
+                className={`${estiloInput} sm:w-32`}
+                placeholder="Qtd"
+                value={novaQtd}
+                onChange={(e) => setNovaQtd(e.target.value)}
+              />
+              <Botao onClick={registrarEntrada} className="sm:w-auto">
+                Lançar
+              </Botao>
+            </div>
+            <button
+              onClick={baixaPeloCardapio}
+              className="w-full rounded-2xl border border-brand-600/40 bg-brand-50 px-4 py-2.5 text-sm font-extrabold uppercase tracking-wide text-brand-700 transition hover:bg-brand-100 dark:bg-carvao-800 dark:text-brand-300"
+            >
+              ↧ Dar baixa do consumo do cardápio
+            </button>
+          </div>
+        </Secao>
       )}
 
       {/* Saldo atual */}
@@ -195,11 +198,11 @@ export function AbaEstoque({
         <div className="mb-2 flex gap-2">
           <input
             className={`${estiloInput} flex-1`}
-            placeholder="Buscar item no estoque…"
+            placeholder="Buscar…"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
           />
-          {baixos.length > 0 && (
+          {totalCriticos > 0 && (
             <button
               onClick={() => setApenasCriticos((v) => !v)}
               className={`shrink-0 rounded-xl border px-3 py-2 text-caption font-bold transition ${
@@ -208,58 +211,56 @@ export function AbaEstoque({
                   : 'border-carvao-200 bg-white text-carvao-500 hover:border-perigo/40 hover:text-perigo dark:border-carvao-600 dark:bg-carvao-800'
               }`}
             >
-              {apenasCriticos ? '✕ ' : ''}Só críticos ({baixos.length})
+              {apenasCriticos ? '✕ ' : ''}Críticos ({totalCriticos})
             </button>
           )}
         </div>
         {itensEstoque.length === 0 ? (
-          <EstadoVazio titulo="Estoque vazio" texto="Lance entradas de produtos para começar a controlar o estoque." />
+          <EstadoVazio titulo="Estoque vazio" texto="Lance entradas de produtos para começar." />
         ) : (
-          <Cartao className="!p-0">
-            <ul className="divide-y divide-carvao-100 dark:divide-carvao-700/60">
-              {itensEstoque.map(([norm, e]) => {
-                const baixo = e.minimo > 0 && e.qtd <= e.minimo;
-                return (
-                  <li key={norm} className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5">
-                    <div className="min-w-0 flex-1">
-                      <p className="flex items-center gap-2 truncate text-sm font-semibold">
-                        {e.item}
-                        {baixo && <Pilula tom="vermelho">baixo</Pilula>}
-                      </p>
-                      <p className="text-caption text-carvao-400">unidade: {e.unid}</p>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <label className="flex items-center gap-1">
-                        <span className="text-micro uppercase text-carvao-400">saldo</span>
-                        <input
-                          type="number"
-                          min={0}
-                          step="0.1"
-                          disabled={!podeEditar}
-                          value={e.qtd}
-                          onChange={(ev) => definirSaldo(norm, e.item, e.unid, Number(ev.target.value))}
-                          className="w-20 rounded-xl border border-carvao-200 bg-white px-2 py-1.5 text-right font-bold disabled:opacity-50 dark:border-carvao-600 dark:bg-carvao-900"
-                        />
-                      </label>
-                      <label className="flex items-center gap-1">
-                        <span className="text-micro uppercase text-carvao-400">mín.</span>
-                        <input
-                          type="number"
-                          min={0}
-                          step="0.1"
-                          disabled={!podeEditar}
-                          value={e.minimo || ''}
-                          placeholder="0"
-                          onChange={(ev) => definirMinimo(norm, e.item, e.unid, Number(ev.target.value))}
-                          className="w-16 rounded-xl border border-carvao-200 bg-white px-2 py-1.5 text-right font-bold disabled:opacity-50 dark:border-carvao-600 dark:bg-carvao-900"
-                        />
-                      </label>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </Cartao>
+          <ul className="overflow-hidden rounded-2xl bg-white divide-y divide-carvao-100 dark:divide-carvao-700/50 dark:bg-carvao-850 dark:ring-1 dark:ring-carvao-700/60">
+            {itensEstoque.map(([norm, e]) => {
+              const baixo = e.minimo > 0 && e.qtd <= e.minimo;
+              return (
+                <li key={norm} className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="flex items-center gap-2 truncate text-sm font-semibold">
+                      {baixo && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-perigo" />}
+                      {e.item}
+                    </p>
+                    <p className="text-caption text-carvao-400">{e.unid}</p>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <label className="flex items-center gap-1">
+                      <span className="text-micro uppercase text-carvao-400">saldo</span>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.1"
+                        disabled={!podeEditar}
+                        value={e.qtd}
+                        onChange={(ev) => definirSaldo(norm, e.item, e.unid, Number(ev.target.value))}
+                        className="w-20 rounded-xl border border-carvao-200 bg-white px-2 py-1.5 text-right font-bold disabled:opacity-50 dark:border-carvao-600 dark:bg-carvao-900"
+                      />
+                    </label>
+                    <label className="flex items-center gap-1">
+                      <span className="text-micro uppercase text-carvao-400">mín.</span>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.1"
+                        disabled={!podeEditar}
+                        value={e.minimo || ''}
+                        placeholder="0"
+                        onChange={(ev) => definirMinimo(norm, e.item, e.unid, Number(ev.target.value))}
+                        className="w-16 rounded-xl border border-carvao-200 bg-white px-2 py-1.5 text-right font-bold disabled:opacity-50 dark:border-carvao-600 dark:bg-carvao-900"
+                      />
+                    </label>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         )}
       </Secao>
     </div>

@@ -122,10 +122,6 @@ export function AbaNF({
 
       {/* Upload */}
       <Cartao>
-        <p className="mb-4 text-sm font-extrabold uppercase tracking-widest text-carvao-400">
-          Nota fiscal — leitura por IA
-        </p>
-
         <div
           className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-carvao-200 bg-carvao-50 px-4 py-10 text-center transition hover:border-brand-400 hover:bg-brand-50 dark:border-carvao-700 dark:bg-carvao-800/50 dark:hover:bg-carvao-800 cursor-pointer"
           onClick={() => inputRef.current?.click()}
@@ -152,8 +148,7 @@ export function AbaNF({
           ) : (
             <>
               <Icone nome="imagem" tam={36} className="mb-3 text-carvao-300" />
-              <p className="text-sm font-semibold text-carvao-600 dark:text-carvao-300">Toque para fotografar ou carregar NF</p>
-              <p className="mt-1 text-xs text-carvao-400">JPG, PNG ou PDF · arrastar e soltar</p>
+              <p className="text-xs text-carvao-400">JPG, PNG ou PDF · toque ou arraste</p>
             </>
           )}
         </div>
@@ -299,15 +294,6 @@ export function AbaNF({
         </Cartao>
       )}
 
-      <div className="rounded-2xl bg-carvao-50 px-4 py-4 dark:bg-carvao-800/50">
-        <p className="text-xs font-semibold text-carvao-500">Como funciona</p>
-        <ul className="mt-2 space-y-1.5 text-xs text-carvao-400">
-          <li>1. Fotografe ou carregue uma imagem da nota fiscal.</li>
-          <li>2. O Groq (Llama Vision) extrai automaticamente: fornecedor, data, itens, quantidades e preços.</li>
-          <li>3. Selecione os itens que deseja importar e clique em &quot;Aplicar preços&quot;.</li>
-          <li>4. Os preços unitários alimentam o catálogo e o radar de preços.</li>
-        </ul>
-      </div>
     </div>
   );
 }
