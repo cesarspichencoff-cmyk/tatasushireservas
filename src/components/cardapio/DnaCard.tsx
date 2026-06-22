@@ -87,25 +87,26 @@ function NarrativaDescoberta({ dna }: { dna: DnaAlimentar }) {
   const d = gerarDescoberta(dna);
   if (!d) return null;
   return (
-    <div className="space-y-3 border-b border-carvao-100 px-5 pb-4 pt-4 dark:border-carvao-800">
+    <div className="border-b border-carvao-100 px-5 pb-4 pt-4 dark:border-carvao-800">
+      {/* Frase principal — destaque visual */}
       <p className="text-base font-bold leading-snug text-carvao-900 dark:text-white">{d.conclusao}</p>
+
+      {/* Insights como chips/cartões pequenos */}
       {d.insights.length > 0 && (
-        <div className="space-y-1.5">
+        <div className="mt-3 space-y-2">
           {d.insights.map((txt, i) => (
-            <div key={i} className="flex gap-2.5">
-              <span className="mt-[6px] h-1.5 w-1.5 shrink-0 rounded-full bg-carvao-300 dark:bg-carvao-600" />
-              <p className="text-sm leading-snug text-carvao-600 dark:text-areia-300">{txt}</p>
+            <div key={i} className="rounded-xl bg-carvao-50 px-3 py-2 dark:bg-carvao-800/60">
+              <p className="text-rotulo leading-snug text-carvao-700 dark:text-areia-200">{txt}</p>
             </div>
           ))}
         </div>
       )}
+
+      {/* Recomendação — bloco de ação destacado */}
       {d.recomendacao && (
-        <div className="flex gap-2.5 rounded-2xl bg-brand-50 px-3.5 py-3 ring-1 ring-brand-200/50 dark:bg-carvao-800 dark:ring-carvao-700">
-          <span className="text-sm">→</span>
-          <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-brand-600 dark:text-brand-400">Recomendação</p>
-            <p className="mt-0.5 text-sm font-medium leading-snug text-carvao-800 dark:text-areia-100">{d.recomendacao}</p>
-          </div>
+        <div className="mt-3 rounded-2xl bg-brand-600 px-4 py-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-brand-100/70">O que fazer agora</p>
+          <p className="mt-1 text-sm font-semibold leading-snug text-white">{d.recomendacao}</p>
         </div>
       )}
     </div>

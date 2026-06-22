@@ -85,7 +85,7 @@ export function AbaAceitacao({
       {/* Pesquisa por QR — funcionários avaliam o prato do dia */}
       <Secao titulo="Pesquisa por QR">
         <Cartao className="flex flex-col items-center gap-4 sm:flex-row">
-          <QrCode url={urlAvaliar} size={132} className="shrink-0 ring-1 ring-carvao-200" />
+          <QrCode url={urlAvaliar} size={88} className="shrink-0 rounded-xl ring-1 ring-carvao-200" />
           <div className="min-w-0 space-y-1.5 text-center sm:text-left">
             <p className="text-sm text-carvao-600 dark:text-areia-200">
               Imprima no pôster ou deixe num tablet na saída do refeitório. A equipe aponta a câmera e avalia o{' '}
@@ -212,29 +212,33 @@ export function AbaAceitacao({
       <Secao titulo="Eventos e feriados (previsão)">
         {podeEditar && (
           <Cartao className="space-y-3">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <div>
-                <label className={estiloRotulo}>Data</label>
-                <input type="date" className={estiloInput} value={data} onChange={(e) => setData(e.target.value)} />
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <div className="w-36 shrink-0">
+                  <label className={estiloRotulo}>Data</label>
+                  <input type="date" className={estiloInput} value={data} onChange={(e) => setData(e.target.value)} />
+                </div>
+                <div className="flex-1">
+                  <label className={estiloRotulo}>Evento</label>
+                  <input className={estiloInput} placeholder="ex.: Feriado nacional" value={rotulo} onChange={(e) => setRotulo(e.target.value)} />
+                </div>
               </div>
-              <div className="col-span-2">
-                <label className={estiloRotulo}>Evento</label>
-                <input className={estiloInput} placeholder="ex.: Feriado, evento da empresa" value={rotulo} onChange={(e) => setRotulo(e.target.value)} />
-              </div>
-              <div>
-                <label className={estiloRotulo}>Fator</label>
-                <select className={estiloInput} value={fator} onChange={(e) => setFator(e.target.value)}>
-                  <option value="0">Fechado (0%)</option>
-                  <option value="0.5">Reduzido (−50%)</option>
-                  <option value="0.8">Menos (−20%)</option>
-                  <option value="1.2">Mais (+20%)</option>
-                  <option value="1.5">Pico (+50%)</option>
-                </select>
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <label className={estiloRotulo}>Impacto na demanda</label>
+                  <select className={estiloInput} value={fator} onChange={(e) => setFator(e.target.value)}>
+                    <option value="0">Fechado — sem refeições</option>
+                    <option value="0.5">Reduzido (−50%)</option>
+                    <option value="0.8">Abaixo do normal (−20%)</option>
+                    <option value="1.2">Acima do normal (+20%)</option>
+                    <option value="1.5">Pico de demanda (+50%)</option>
+                  </select>
+                </div>
+                <Botao onClick={lancarEvento} className="!min-h-[42px] shrink-0 !px-4">
+                  Adicionar
+                </Botao>
               </div>
             </div>
-            <Botao onClick={lancarEvento} className="w-full">
-              Adicionar evento
-            </Botao>
           </Cartao>
         )}
         {eventos.length > 0 && (

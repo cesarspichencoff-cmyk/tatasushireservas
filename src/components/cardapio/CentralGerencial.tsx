@@ -196,14 +196,29 @@ export function CentralGerencial({
     baixarCsv('custos', rows);
   };
 
-  const RELATORIOS = [
-    { id: 'cardapios', icone: '', titulo: 'Cardápios', desc: 'Pratos planejados por dia e semana', fn: exportarCardapios },
-    { id: 'compras', icone: '', titulo: 'Compras e Recebimento', desc: 'Itens comprados, preços pagos e quantidades recebidas', fn: exportarCompras },
-    { id: 'custos', icone: '', titulo: 'Custos', desc: 'Custo estimado vs. real, refeições e custo por refeição', fn: exportarCustos },
-    { id: 'precos', icone: '', titulo: 'Tabela de Preços', desc: 'Preços atuais, fornecedores e histórico por item', fn: exportarPrecos },
-    { id: 'aceitacao', icone: '', titulo: 'Aceitação dos Pratos', desc: 'Votos bom/ok/ruim e nota média por prato', fn: exportarAceitacao },
-    { id: 'nutricional', icone: '', titulo: 'Desempenho Nutricional', desc: 'Índice Nutricional Tata House por semana', fn: exportarNutricional },
-    { id: 'auditoria', icone: '', titulo: 'Auditoria', desc: 'Histórico de todas as ações realizadas no sistema', fn: exportarAuditoria },
+  const GRUPOS_RELATORIOS = [
+    {
+      grupo: 'Cardápio & Operação',
+      itens: [
+        { id: 'cardapios', icone: '🍽️', titulo: 'Cardápios', desc: 'Pratos planejados por dia e semana', fn: exportarCardapios },
+        { id: 'aceitacao', icone: '⭐', titulo: 'Aceitação dos Pratos', desc: 'Votos bom/ok/ruim e nota média por prato', fn: exportarAceitacao },
+        { id: 'nutricional', icone: '🥗', titulo: 'Desempenho Nutricional', desc: 'Índice Nutricional Tata House por semana', fn: exportarNutricional },
+      ],
+    },
+    {
+      grupo: 'Compras & Custos',
+      itens: [
+        { id: 'compras', icone: '🛒', titulo: 'Compras e Recebimento', desc: 'Itens comprados, preços pagos e quantidades recebidas', fn: exportarCompras },
+        { id: 'custos', icone: '💰', titulo: 'Custos', desc: 'Custo estimado vs. real, refeições e custo por refeição', fn: exportarCustos },
+        { id: 'precos', icone: '📊', titulo: 'Tabela de Preços', desc: 'Preços atuais, fornecedores e histórico por item', fn: exportarPrecos },
+      ],
+    },
+    {
+      grupo: 'Auditoria',
+      itens: [
+        { id: 'auditoria', icone: '🔍', titulo: 'Auditoria', desc: 'Histórico de todas as ações realizadas no sistema', fn: exportarAuditoria },
+      ],
+    },
   ];
 
   return (
@@ -259,25 +274,30 @@ export function CentralGerencial({
         </div>
       </Cartao>
 
-      {/* Relatórios exportáveis */}
-      <div className="space-y-2">
+      {/* Relatórios exportáveis — agrupados */}
+      <div className="space-y-4">
         <h3 className="text-caption font-extrabold uppercase tracking-[0.2em] text-carvao-400">Exportar relatórios (CSV)</h3>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {RELATORIOS.map((r) => (
-            <button
-              key={r.id}
-              onClick={r.fn}
-              className="flex items-center gap-3 rounded-2xl bg-white p-4 text-left ring-1 ring-carvao-200 transition hover:bg-brand-50 hover:ring-brand-400/40 dark:bg-carvao-800 dark:ring-carvao-600 dark:hover:bg-carvao-700"
-            >
-              <span className="shrink-0 text-2xl">{r.icone}</span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold">{r.titulo}</p>
-                <p className="text-caption text-carvao-400">{r.desc}</p>
-              </div>
-              <Icone nome="exportar" tam={18} className="shrink-0 text-brand-500" />
-            </button>
-          ))}
-        </div>
+        {GRUPOS_RELATORIOS.map((g) => (
+          <div key={g.grupo}>
+            <p className="mb-2 px-1 text-micro font-bold uppercase tracking-[0.16em] text-carvao-400">{g.grupo}</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {g.itens.map((r) => (
+                <button
+                  key={r.id}
+                  onClick={r.fn}
+                  className="flex items-center gap-3 rounded-2xl bg-white p-4 text-left ring-1 ring-carvao-200 transition hover:bg-brand-50 hover:ring-brand-400/40 dark:bg-carvao-800 dark:ring-carvao-600 dark:hover:bg-carvao-700"
+                >
+                  <span className="shrink-0 text-xl leading-none">{r.icone}</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold">{r.titulo}</p>
+                    <p className="text-caption text-carvao-400">{r.desc}</p>
+                  </div>
+                  <Icone nome="exportar" tam={16} className="shrink-0 text-brand-400" />
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Últimas ações (auditoria resumida) */}

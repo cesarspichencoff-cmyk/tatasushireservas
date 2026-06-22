@@ -690,15 +690,18 @@ export default function PaginaCardapios() {
               <div className="space-y-4">
                 {/* Painel do Diretor — leitura de 5s, só para gestão */}
                 {(papel === 'gestor' || papel === 'administrador') && (
-                  <PainelDiretor
-                    nome={perfil?.rotulo ?? 'Gestor'}
-                    precos={precos}
-                    historico={historico}
-                    fornecedores={fornecedores}
-                    perfis={perfisFornecedores}
-                    aceitacao={aceitacao}
-                    estoque={estoque}
-                  />
+                  <>
+                    <PainelDiretor
+                      nome={perfil?.rotulo ?? 'Gestor'}
+                      precos={precos}
+                      historico={historico}
+                      fornecedores={fornecedores}
+                      perfis={perfisFornecedores}
+                      aceitacao={aceitacao}
+                      estoque={estoque}
+                    />
+                    <div className="h-px bg-gradient-to-r from-transparent via-carvao-200 to-transparent dark:via-carvao-700" />
+                  </>
                 )}
                 <BriefingCard
                   estado={estado}

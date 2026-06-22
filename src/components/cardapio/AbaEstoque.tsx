@@ -39,9 +39,13 @@ export function AbaEstoque({
   const itensEstoque = useMemo(() => {
     const n = normalizar(busca);
     return Object.entries(estoque)
-      .filter(([, e]) => (n ? normalizar(e.item).includes(n) : true))
+      .filter(([, e]) => {
+        if (n && !normalizar(e.item).includes(n)) return false;
+        if (apenasCriticos && !(e.minimo > 0 && e.qtd <= e.minimo)) return false;
+        return true;
+      })
       .sort((a, b) => a[1].item.localeCompare(b[1].item, 'pt-BR'));
-  }, [estoque, busca]);
+  }, [estoque, busca, apenasCriticos]);
 
   const baixos = itensEstoque.filter(([, e]) => e.minimo > 0 && e.qtd <= e.minimo);
 
@@ -188,12 +192,26 @@ export function AbaEstoque({
 
       {/* Saldo atual */}
       <Secao titulo="Estoque atual">
-        <input
-          className={`${estiloInput} mb-1`}
-          placeholder="Buscar item no estoque…"
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-        />
+        <div className="mb-2 flex gap-2">
+          <input
+            className={`${estiloInput} flex-1`}
+            placeholder="Buscar item no estoque…"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
+          {baixos.length > 0 && (
+            <button
+              onClick={() => setApenasCriticos((v) => !v)}
+              className={`shrink-0 rounded-xl border px-3 py-2 text-caption font-bold transition ${
+                apenasCriticos
+                  ? 'border-perigo/40 bg-perigo/10 text-perigo'
+                  : 'border-carvao-200 bg-white text-carvao-500 hover:border-perigo/40 hover:text-perigo dark:border-carvao-600 dark:bg-carvao-800'
+              }`}
+            >
+              {apenasCriticos ? '✕ ' : ''}Só críticos ({baixos.length})
+            </button>
+          )}
+        </div>
         {itensEstoque.length === 0 ? (
           <EstadoVazio titulo="Estoque vazio" texto="Lance entradas de produtos para começar a controlar o estoque." />
         ) : (

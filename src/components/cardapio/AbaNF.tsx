@@ -192,6 +192,27 @@ export function AbaNF({
       )}
 
       {/* Resultado */}
+      {resultado && (() => {
+        const criticos = resultado.itens
+          .map((it, i) => ({ it, i, alerta: alerteVariacao(it.produto, it.precoUnit, precos) }))
+          .filter(({ alerta }) => alerta && alerta.cor.includes('red'));
+        return criticos.length > 0 ? (
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800/40 dark:bg-red-950/30">
+            <p className="mb-2 text-caption font-bold uppercase tracking-[0.14em] text-red-700 dark:text-red-400">
+              {criticos.length} variação{criticos.length > 1 ? 'ões' : ''} crítica{criticos.length > 1 ? 's' : ''} (&gt;15%)
+            </p>
+            <ul className="space-y-1">
+              {criticos.map(({ it, alerta }) => (
+                <li key={it.produto} className="flex items-center justify-between gap-2 text-sm">
+                  <span className="font-semibold capitalize text-red-800 dark:text-red-300">{it.produto}</span>
+                  <span className="font-bold text-red-600 dark:text-red-400">{alerta!.label}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null;
+      })()}
+
       {resultado && (
         <Cartao>
           <div className="mb-4 flex items-start justify-between gap-3">
