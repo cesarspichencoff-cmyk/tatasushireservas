@@ -49,20 +49,47 @@ export function BootNuvem() {
       (window as unknown as { __nuvemRecentes?: Map<string, number> }).__nuvemRecentes ??
       ((window as unknown as { __nuvemRecentes?: Map<string, number> }).__nuvemRecentes = new Map());
 
+    // Outbox offline: chaves cuja última subida à nuvem FALHOU (wifi caiu).
+    // Persistem no localStorage e são reenviadas ao reconectar — sem isso,
+    // uma edição feita offline nunca chegaria aos outros aparelhos.
+    const PENDENTES = '__pending';
+    const lerPendentes = (): string[] => {
+      try { return JSON.parse(localStorage.getItem(PREFIXO + PENDENTES) || '[]'); } catch { return []; }
+    };
+    const marcarPendente = (k: string, pendente: boolean) => {
+      const arr = lerPendentes().filter((x) => x !== k);
+      if (pendente) arr.push(k);
+      try { orig(PREFIXO + PENDENTES, JSON.stringify(arr)); } catch { /* cheio */ }
+    };
+
+    // Sobe um valor à nuvem, atualizando status e a fila offline.
+    const subir = (k: string, valor: unknown) => {
+      definirStatusNuvem('sincronizando');
+      return armazenamentoSupabase
+        .gravar(k, valor)
+        .then(() => { marcarPendente(k, false); definirStatusNuvem('online'); })
+        .catch(() => { marcarPendente(k, true); definirStatusNuvem('erro'); });
+    };
+
+    // Reenvia tudo que ficou pendente (chamado ao reconectar / voltar à aba).
+    const flush = () => {
+      for (const k of lerPendentes()) {
+        const raw = localStorage.getItem(PREFIXO + k);
+        if (raw == null) { marcarPendente(k, false); continue; }
+        try { subir(k, JSON.parse(raw)); } catch { marcarPendente(k, false); }
+      }
+    };
+
     // 1) Espelha toda gravação local (cardapio.v1.*) na nuvem.
     if (!(window as unknown as { __nuvemPatched?: boolean }).__nuvemPatched) {
       localStorage.setItem = (chave: string, valor: string) => {
         orig(chave, valor);
         if (typeof chave === 'string' && chave.startsWith(PREFIXO)) {
           const k = chave.slice(PREFIXO.length);
-          if (k.startsWith('__base.')) return; // marcador local de merge — não vai à nuvem
+          if (k.startsWith('__')) return; // marcadores locais (base/pending) — não vão à nuvem
           recentes.set(k, Date.now());
           try {
-            definirStatusNuvem('sincronizando');
-            armazenamentoSupabase
-              .gravar(k, JSON.parse(valor))
-              .then(() => definirStatusNuvem('online'))
-              .catch(() => definirStatusNuvem('erro'));
+            subir(k, JSON.parse(valor));
           } catch {
             /* valor não-JSON: ignora */
           }
@@ -107,11 +134,7 @@ export function BootNuvem() {
       // Se o merge difere do que a nuvem tem, devolve o merge para convergir.
       if (!ig(merged, remote)) {
         recentes.set(chave, Date.now());
-        definirStatusNuvem('sincronizando');
-        armazenamentoSupabase
-          .gravar(chave, merged)
-          .then(() => definirStatusNuvem('online'))
-          .catch(() => definirStatusNuvem('erro'));
+        subir(chave, merged);
       }
       return mudouLocal;
     };
@@ -141,6 +164,7 @@ export function BootNuvem() {
             aplicarLocal(chave, valorNuvem);
           }
           definirStatusNuvem('online');
+          flush(); // reenvia o que ficou pendente de sessões offline anteriores
         } catch {
           /* offline/erro: segue com os dados locais */
           definirStatusNuvem('erro');
@@ -178,12 +202,20 @@ export function BootNuvem() {
       }
     })();
 
+    // 4) Reenvia a fila offline ao reconectar ou voltar para a aba.
+    const aoReconectar = () => flush();
+    const aoVoltar = () => { if (document.visibilityState === 'visible') flush(); };
+    window.addEventListener('online', aoReconectar);
+    document.addEventListener('visibilitychange', aoVoltar);
+
     return () => {
       try {
         canal?.unsubscribe();
       } catch {
         /* ignore */
       }
+      window.removeEventListener('online', aoReconectar);
+      document.removeEventListener('visibilitychange', aoVoltar);
     };
   }, []);
 
