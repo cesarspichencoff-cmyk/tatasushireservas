@@ -913,27 +913,26 @@ export default function PaginaCardapios() {
             {/* ── COMPRAS ───────────────────────────────────── */}
             {aba === 'compras' && (
               <div className="space-y-4">
-                {/* segmento Lista / Preços / Estoque / NF */}
-                <div className="flex gap-4 border-b border-carvao-100 dark:border-carvao-800">
+                {/* segmento Lista / Estoque / NF / Fornecedores / Pedido */}
+                <div className="flex gap-4 overflow-x-auto border-b border-carvao-100 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden dark:border-carvao-800">
                   {(['lista', 'estoque', 'nf', 'fornecedores', 'pedido'] as const).map((seg) => (
                     <button
                       key={seg}
                       onClick={() => setAbaCompras(seg)}
-                      className={`relative whitespace-nowrap pb-3 text-sm font-semibold transition ${
+                      className={`relative shrink-0 whitespace-nowrap pb-3 text-sm font-semibold transition ${
                         abaCompras === seg
                           ? 'text-brand-600 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-brand-600 dark:text-brand-400'
                           : 'text-texto-suave hover:text-carvao-600 dark:text-carvao-500'
                       }`}
                     >
-                      {seg === 'lista'
-                        ? 'Lista de compras'
-                        : seg === 'estoque'
-                        ? 'Estoque'
-                        : seg === 'nf'
-                        ? 'Nota fiscal'
-                        : seg === 'fornecedores'
-                        ? 'Fornecedores'
-                        : 'Pedido'}
+                      {seg === 'lista' ? (
+                        <><span className="sm:hidden">Lista</span><span className="hidden sm:inline">Lista de compras</span></>
+                      ) : seg === 'estoque' ? 'Estoque'
+                      : seg === 'nf' ? (
+                        <><span className="sm:hidden">NF</span><span className="hidden sm:inline">Nota fiscal</span></>
+                      ) : seg === 'fornecedores' ? (
+                        <><span className="sm:hidden">Forn.</span><span className="hidden sm:inline">Fornecedores</span></>
+                      ) : 'Pedido'}
                     </button>
                   ))}
                 </div>
@@ -1030,25 +1029,26 @@ export default function PaginaCardapios() {
                   />
                 </div>
                 {/* sub-abas por TEMA — navegação por assunto, não dump vertical */}
-                <div className="flex gap-1 overflow-x-auto rounded-2xl bg-carvao-100 p-1 dark:bg-carvao-800">
+                <div className="flex gap-1 overflow-x-auto rounded-2xl bg-carvao-100 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden dark:bg-carvao-800">
                   {([
-                    { id: 'gerencial',    rotulo: 'Visão geral' },
-                    { id: 'custos',       rotulo: 'Custos' },
-                    { id: 'rankings',     rotulo: 'DNA & Rankings' },
-                    { id: 'previsao',     rotulo: 'Previsão' },
-                    { id: 'fornecedores', rotulo: 'Fornecedores' },
-                    ...(pode(papel, 'auditoria:ver') ? [{ id: 'auditoria', rotulo: 'Auditoria' }] : []),
-                  ] as { id: typeof abaRelatorios; rotulo: string }[]).map((s) => (
+                    { id: 'gerencial',    rotulo: 'Visão geral',   curto: 'Visão' },
+                    { id: 'custos',       rotulo: 'Custos',         curto: 'Custos' },
+                    { id: 'rankings',     rotulo: 'DNA & Rankings', curto: 'DNA' },
+                    { id: 'previsao',     rotulo: 'Previsão',       curto: 'Prev.' },
+                    { id: 'fornecedores', rotulo: 'Fornecedores',   curto: 'Forn.' },
+                    ...(pode(papel, 'auditoria:ver') ? [{ id: 'auditoria', rotulo: 'Auditoria', curto: 'Audit.' }] : []),
+                  ] as { id: typeof abaRelatorios; rotulo: string; curto: string }[]).map((s) => (
                     <button
                       key={s.id}
                       onClick={() => setAbaRelatorios(s.id)}
-                      className={`flex-1 whitespace-nowrap rounded-xl px-3 py-2 text-rotulo font-semibold transition ${
+                      className={`shrink-0 whitespace-nowrap rounded-xl px-3 py-2 text-rotulo font-semibold transition ${
                         abaRelatorios === s.id
                           ? 'bg-white shadow-sm dark:bg-carvao-700'
                           : 'text-carvao-500 hover:text-carvao-700 dark:text-texto-suave'
                       }`}
                     >
-                      {s.rotulo}
+                      <span className="sm:hidden">{s.curto}</span>
+                      <span className="hidden sm:inline">{s.rotulo}</span>
                     </button>
                   ))}
                 </div>
