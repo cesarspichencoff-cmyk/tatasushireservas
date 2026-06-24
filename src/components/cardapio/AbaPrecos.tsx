@@ -78,8 +78,8 @@ export function AbaPrecos({
           </Botao>
         </div>
         <p className="text-sm text-carvao-500 dark:text-carvao-300">
-          Preço <strong>real</strong> vem da cotação/nota. Sem preço real, o app pode usar uma{' '}
-          <strong>estimativa</strong> de mercado (confirme depois). Toque no item para ver o histórico.
+          O número em cinza no campo é a referência de base ou histórico — não está confirmado.
+          Digite para confirmar o preço real. Preço <strong>real</strong> vem da cotação/nota aplicada.
         </p>
         <input
           className={estiloInput}
@@ -134,8 +134,8 @@ export function AbaPrecos({
                       min={0}
                       step="0.01"
                       inputMode="decimal"
-                      value={precos[k] ?? ''}
-                      placeholder="0,00"
+                      value={precos[k] > 0 ? precos[k] : ''}
+                      placeholder={pr.tipo !== 'sem' ? pr.valor.toFixed(2) : '0,00'}
                       onFocus={() => { precoBefore.current[k] = precos[k]; }}
                       onChange={(e) => definirPreco(k, e.target.value === '' ? null : Number(e.target.value), i.n)}
                       onBlur={() => {
@@ -145,7 +145,13 @@ export function AbaPrecos({
                           setContextoItem({ norm: k, nome: i.n });
                         }
                       }}
-                      className="w-20 rounded-xl border border-carvao-200 bg-white px-2 py-1.5 text-right font-bold tabular-nums dark:border-carvao-600 dark:bg-carvao-900"
+                      className={`w-20 rounded-xl border bg-white px-2 py-1.5 text-right font-bold tabular-nums dark:bg-carvao-900 ${
+                        precos[k] > 0
+                          ? 'border-carvao-200 dark:border-carvao-600'
+                          : pr.tipo !== 'sem'
+                          ? 'border-ouro-300 dark:border-ouro-800/60'
+                          : 'border-carvao-200 dark:border-carvao-600'
+                      }`}
                     />
                     <span className="w-6 text-caption text-texto-suave">/{i.u}</span>
                   </div>
