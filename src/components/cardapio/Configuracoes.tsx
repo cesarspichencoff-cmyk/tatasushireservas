@@ -61,7 +61,7 @@ export function Configuracoes() {
                   onChange={(e) => setPins((s) => ({ ...s, [p.id]: e.target.value }))}
                   onKeyDown={(e) => e.key === 'Enter' && salvar(p.id, p.rotulo)}
                   placeholder="mínimo 4 dígitos"
-                  className="w-full rounded-xl border border-carvao-200 bg-white px-3 py-2.5 text-sm font-bold tracking-widest placeholder:font-normal placeholder:tracking-normal dark:border-carvao-600 dark:bg-carvao-900"
+                  className="w-full rounded-xl border border-carvao-200 bg-white px-3 py-2.5 text-base font-bold tracking-widest placeholder:font-normal placeholder:tracking-normal dark:border-carvao-600 dark:bg-carvao-900"
                 />
               </div>
               <div className="flex items-end">

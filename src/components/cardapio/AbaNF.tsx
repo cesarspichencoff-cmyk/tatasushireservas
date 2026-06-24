@@ -144,7 +144,7 @@ export function AbaNF({
           />
           {preview ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={preview} alt="NF" className="max-h-52 w-auto rounded-xl object-contain shadow-sm" />
+            <img src={preview} alt="NF" loading="lazy" className="max-h-52 w-auto rounded-xl object-contain shadow-sm" />
           ) : (
             <>
               <Icone nome="imagem" tam={36} className="mb-3 text-carvao-300" />

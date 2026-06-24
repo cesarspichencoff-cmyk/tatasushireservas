@@ -50,13 +50,31 @@ body {
   background-image:
     radial-gradient(1100px 480px at 85% -8%, rgba(0, 177, 79, 0.12), transparent 60%),
     radial-gradient(900px 460px at -10% 110%, rgba(44, 196, 104, 0.1), transparent 55%);
-  background-attachment: fixed;
+  /* background-attachment: fixed forçaria repaint em cada scroll no iOS/Android.
+     Usamos scroll (padrão) no mobile e fixed apenas em viewport largo. */
+  background-attachment: scroll;
 }
 
 .dark body {
   background-image:
     radial-gradient(1100px 480px at 85% -8%, rgba(0, 177, 79, 0.14), transparent 60%),
     radial-gradient(900px 460px at -10% 110%, rgba(44, 196, 104, 0.1), transparent 55%);
+}
+
+@media (min-width: 768px) {
+  body {
+    background-attachment: fixed;
+  }
+}
+
+/* iOS Safari amplia a tela quando um input tem font-size < 16px. Prevenimos
+   forçando 1rem nos inputs apenas no mobile; desktop herda do className. */
+@media (max-width: 767px) {
+  input:not([type='range']):not([type='checkbox']):not([type='radio']),
+  textarea,
+  select {
+    font-size: max(1rem, 1em);
+  }
 }
 
 /* Identidade TATÁ: títulos com presença. Caixa-alta agora é opcional —

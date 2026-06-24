@@ -620,7 +620,7 @@ export default function PaginaCardapios() {
           <div className="flex min-w-0 items-center gap-3">
             {logo ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={logo} alt="" className="h-8 w-auto max-w-[110px] shrink-0 object-contain" />
+              <img src={logo} alt="" height={32} className="h-8 w-auto max-w-[110px] shrink-0 object-contain" fetchPriority="high" />
             ) : (
               <span className="h-7 w-0.5 shrink-0 rounded-full bg-brand-600" aria-hidden />
             )}

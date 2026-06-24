@@ -388,7 +388,7 @@ export function AbaCompras({
                 >
                   <a href={n.foto} target="_blank" rel="noreferrer" title="Abrir nota fiscal">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={n.foto} alt="Nota fiscal" className="h-14 w-14 rounded-xl object-cover ring-2 ring-brand-500/50" />
+                    <img src={n.foto} alt="Nota fiscal" width={56} height={56} loading="lazy" className="h-14 w-14 rounded-xl object-cover ring-2 ring-brand-500/50" />
                   </a>
                   <span>
                     <span className="block text-caption font-bold uppercase text-brand-600">
@@ -425,7 +425,7 @@ export function AbaCompras({
         {fotoPendente && (
           <div className="space-y-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={fotoPendente} alt="Nota fiscal" className="mx-auto max-h-36 rounded-2xl object-contain ring-1 ring-carvao-200" />
+            <img src={fotoPendente} alt="Nota fiscal" loading="lazy" className="mx-auto max-h-36 rounded-2xl object-contain ring-1 ring-carvao-200" />
 
             {etapaModal === 'dias' ? (
               <>

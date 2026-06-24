@@ -154,7 +154,7 @@ export function AbaPrecos({
                 {estaAberto && (
                   <div className="space-y-3 bg-areia-50/60 px-4 py-3 dark:bg-carvao-900/40">
                     {valores.length > 0 ? (
-                      <div className="grid grid-cols-4 gap-2 text-center">
+                      <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
                         {[
                           { r: 'Atual', v: atual },
                           { r: 'Último', v: anterior },

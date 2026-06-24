@@ -7,12 +7,14 @@ const manrope = Manrope({
   subsets: ['latin'],
   variable: '--font-sans',
   weight: ['400', '500', '600', '700', '800'],
+  display: 'swap',
 });
 
 const fraunces = Fraunces({
   subsets: ['latin'],
   variable: '--font-display',
   weight: ['500', '600', '700'],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -34,8 +36,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  // Cromo do navegador acompanha a superfície do app (claro/escuro).
+  // Não limitamos maximumScale — o usuário tem o direito de dar zoom (WCAG 1.4.4).
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
     { media: '(prefers-color-scheme: dark)', color: '#15171b' },

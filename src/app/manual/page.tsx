@@ -23,7 +23,7 @@ function Capa() {
       <div className="relative z-10">
         <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-3xl bg-white/10 shadow-2xl ring-2 ring-white/15">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-tata.png" alt="Tatá House" className="h-14 w-14 object-contain brightness-0 invert" />
+          <img src="/logo-tata.png" alt="Tatá House" width={56} height={56} className="h-14 w-14 object-contain brightness-0 invert" fetchPriority="high" />
         </div>
         <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.4em] text-emerald-300/60">
           Sistema de Gestão
@@ -1115,7 +1115,7 @@ export default function ManualPage() {
           <div className="relative z-10">
             <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo-tata.png" alt="Tatá House" className="h-10 w-10 object-contain brightness-0 invert" />
+              <img src="/logo-tata.png" alt="Tatá House" width={40} height={40} className="h-10 w-10 object-contain brightness-0 invert" loading="lazy" />
             </div>
             <p className="font-display text-2xl font-bold tracking-tight">Tatá House</p>
             <p className="mt-1 text-sm text-emerald-200/70">Sistema de Gestão · versão 2026</p>

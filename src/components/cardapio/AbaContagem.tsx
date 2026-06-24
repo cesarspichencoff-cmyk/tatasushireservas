@@ -300,7 +300,7 @@ export function AbaContagem({
                 Dia acima da média histórica ({mediaDiaAtivo.total}). Revise porções e estoque.
               </p>
             )}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div>
                 <label className={estiloRotulo}>Almoço</label>
                 <input type="number" min={0} className={estiloInput} value={almoco}
