@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { AlternadorTema } from '@/components/AlternadorTema';
 import { IndicadorNuvem } from '@/components/IndicadorNuvem';
@@ -61,6 +61,7 @@ import {
   useDesperdicio,
   useEstoque,
   useEventos,
+  useMudancaExterna,
   useFuncionarios,
   useFornecedores,
   useFornecedorPerfis,
@@ -568,6 +569,21 @@ export default function PaginaCardapios() {
     window.addEventListener('keydown', fn);
     return () => window.removeEventListener('keydown', fn);
   }, []);
+
+  // Aviso de colaboração: a semana ativa mudou em outro aparelho. A mudança já
+  // foi mesclada (merge 3-vias) e reconciliada na tela; aqui só damos ciência.
+  const montadoEm = useRef(Date.now());
+  const ultimoAvisoSync = useRef(0);
+  useMudancaExterna(
+    'semana.' + semanaId,
+    useCallback(() => {
+      const agora = Date.now();
+      if (agora - montadoEm.current < 3000) return;   // ignora a sincronização inicial
+      if (agora - ultimoAvisoSync.current < 6000) return; // sem repetição em rajada
+      ultimoAvisoSync.current = agora;
+      toast('Cardápio atualizado em outro aparelho');
+    }, []),
+  );
 
   // redireciona para primeira aba permitida se a atual for bloqueada
   useEffect(() => {

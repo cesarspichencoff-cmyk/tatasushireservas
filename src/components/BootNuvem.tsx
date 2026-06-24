@@ -20,8 +20,11 @@ import {
   definirStatusNuvem,
 } from '@/lib/cardapio/supabase';
 import { notificarChaveExterna } from '@/lib/cardapio/estado';
+import { mesclarSemana } from '@/lib/cardapio/merge-semana';
+import type { EstadoSemana } from '@/lib/cardapio/tipos';
 
 const PREFIXO = 'cardapio.v1.';
+const ig = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
 export function BootNuvem() {
   useEffect(() => {
@@ -52,6 +55,7 @@ export function BootNuvem() {
         orig(chave, valor);
         if (typeof chave === 'string' && chave.startsWith(PREFIXO)) {
           const k = chave.slice(PREFIXO.length);
+          if (k.startsWith('__base.')) return; // marcador local de merge — não vai à nuvem
           recentes.set(k, Date.now());
           try {
             definirStatusNuvem('sincronizando');
@@ -67,10 +71,56 @@ export function BootNuvem() {
       (window as unknown as { __nuvemPatched?: boolean }).__nuvemPatched = true;
     }
 
-    // Aplica um valor vindo da nuvem ao local (sem reenviar) e avisa os hooks
-    // para que re-leiam e atualizem o estado React in-place. Retorna se mudou.
+    // Base (ancestral comum) do merge de cada semana. SÓ avança quando algo
+    // chega da nuvem — nunca nas gravações locais — senão o merge descartaria
+    // a edição local. Persiste no localStorage (sobrevive entre sessões).
+    const lerBase = (chave: string): EstadoSemana | null => {
+      try {
+        const r = localStorage.getItem(PREFIXO + '__base.' + chave);
+        return r ? (JSON.parse(r) as EstadoSemana) : null;
+      } catch {
+        return null;
+      }
+    };
+    const gravarBase = (chave: string, valor: unknown) => {
+      try { orig(PREFIXO + '__base.' + chave, JSON.stringify(valor)); } catch { /* cheio */ }
+    };
+
+    // Semana: merge 3-vias (base, local, remote) em vez de sobrescrever.
+    const aplicarSemana = (chave: string, remote: EstadoSemana): boolean => {
+      const localRaw = localStorage.getItem(PREFIXO + chave);
+      let local: EstadoSemana | null = null;
+      try { local = localRaw ? (JSON.parse(localRaw) as EstadoSemana) : null; } catch { local = null; }
+      if (!local) {
+        orig(PREFIXO + chave, JSON.stringify(remote));
+        gravarBase(chave, remote);
+        notificarChaveExterna(chave);
+        return true;
+      }
+      const merged = mesclarSemana(lerBase(chave), local, remote);
+      gravarBase(chave, remote); // a base passa a ser o que a nuvem mandou
+      const mudouLocal = !ig(merged, local);
+      if (mudouLocal) {
+        orig(PREFIXO + chave, JSON.stringify(merged));
+        notificarChaveExterna(chave);
+      }
+      // Se o merge difere do que a nuvem tem, devolve o merge para convergir.
+      if (!ig(merged, remote)) {
+        recentes.set(chave, Date.now());
+        definirStatusNuvem('sincronizando');
+        armazenamentoSupabase
+          .gravar(chave, merged)
+          .then(() => definirStatusNuvem('online'))
+          .catch(() => definirStatusNuvem('erro'));
+      }
+      return mudouLocal;
+    };
+
+    // Aplica um valor vindo da nuvem ao local e avisa os hooks para re-lerem,
+    // atualizando o estado React in-place. Semanas passam pelo merge 3-vias.
     const aplicarLocal = (chave: string, valorNuvem: unknown): boolean => {
       if (valorNuvem === null || valorNuvem === undefined) return false;
+      if (chave.startsWith('semana.')) return aplicarSemana(chave, valorNuvem as EstadoSemana);
       const novo = JSON.stringify(valorNuvem);
       if (novo !== localStorage.getItem(PREFIXO + chave)) {
         orig(PREFIXO + chave, novo); // grava sem reenviar à nuvem

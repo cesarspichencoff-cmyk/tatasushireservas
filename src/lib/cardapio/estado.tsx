@@ -102,6 +102,13 @@ export function notificarChaveExterna(chave: string) {
   window.dispatchEvent(new CustomEvent(EVENTO_CHAVE, { detail: { chave } }));
 }
 
+/** Público: roda um efeito quando a chave muda por fora (nuvem/outra aba).
+   Útil para avisar o usuário ("atualizado em outro aparelho") sem mexer no
+   estado — a reconciliação do valor já é feita pelos hooks de dados. */
+export function useMudancaExterna(chave: string, aoMudar: () => void) {
+  useReleituraExterna(chave, aoMudar);
+}
+
 /** Re-executa `recarregar` quando a `chave` muda por fora (nuvem/outra aba).
    O evento nativo `storage` só dispara em OUTRAS abas, então a aba que está
    editando nunca re-lê o próprio texto — o foco e o cursor ficam intactos. */
