@@ -14,16 +14,22 @@ export function Login() {
   const [sel, setSel] = useState<PerfilLogin | null>(null);
   const [pin, setPin] = useState('');
   const [erro, setErro] = useState(false);
+  const [verificando, setVerificando] = useState(false);
 
   const perfil = PERFIS.find((p) => p.id === sel) ?? null;
 
   const confirmar = async () => {
-    if (!sel) return;
-    if (await entrar(sel, pin)) {
-      if (typeof window !== 'undefined') window.location.reload();
-    } else {
-      setErro(true);
-      setPin('');
+    if (!sel || verificando) return;
+    setVerificando(true);
+    try {
+      if (await entrar(sel, pin)) {
+        if (typeof window !== 'undefined') window.location.reload();
+      } else {
+        setErro(true);
+        setPin('');
+      }
+    } finally {
+      setVerificando(false);
     }
   };
 
@@ -84,16 +90,18 @@ export function Login() {
                   setErro(false);
                 }}
                 onKeyDown={(e) => e.key === 'Enter' && confirmar()}
+                disabled={verificando}
                 placeholder="••••"
-                className="mt-1 w-full rounded-xl border-0 bg-white/90 px-4 py-3 text-center text-lg font-bold tracking-[0.4em] text-carvao-900 outline-none ring-2 ring-transparent focus:ring-ouro-300"
+                className="mt-1 w-full rounded-xl border-0 bg-white/90 px-4 py-3 text-center text-lg font-bold tracking-[0.4em] text-carvao-900 outline-none ring-2 ring-transparent focus:ring-ouro-300 disabled:opacity-60"
               />
               {erro && <p className="mt-2 text-center text-xs font-semibold text-ouro-200">PIN incorreto. Tente de novo.</p>}
             </div>
             <button
               onClick={confirmar}
-              className="w-full rounded-2xl bg-gradient-to-r from-ouro-400 to-ouro-500 px-4 py-3.5 text-sm font-extrabold uppercase tracking-wide text-carvao-900 shadow-suave transition hover:from-ouro-300 hover:to-ouro-400"
+              disabled={verificando}
+              className="w-full rounded-2xl bg-gradient-to-r from-ouro-400 to-ouro-500 px-4 py-3.5 text-sm font-extrabold uppercase tracking-wide text-carvao-900 shadow-suave transition hover:from-ouro-300 hover:to-ouro-400 disabled:opacity-60"
             >
-              Entrar
+              {verificando ? '…' : 'Entrar'}
             </button>
           </div>
         )}

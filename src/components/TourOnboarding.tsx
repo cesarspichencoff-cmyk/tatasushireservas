@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Icone, type NomeIcone } from '@/components/Icones';
 
 const CHAVE = 'tata:tour-completo';
@@ -55,17 +55,20 @@ const PASSOS: Passo[] = [
 export function TourOnboarding() {
   const [passo, setPasso] = useState(0);
   const [saindo, setSaindo] = useState(false);
-  const [visivel, setVisivel] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    return !localStorage.getItem(CHAVE);
-  });
+  const [visivel, setVisivel] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!localStorage.getItem(CHAVE)) setVisivel(true);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, []);
 
   if (!visivel) return null;
 
   const fechar = () => {
     setSaindo(true);
     localStorage.setItem(CHAVE, '1');
-    setTimeout(() => setVisivel(false), 250);
+    timerRef.current = setTimeout(() => setVisivel(false), 250);
   };
 
   const avancar = () => {
@@ -77,7 +80,6 @@ export function TourOnboarding() {
 
   const atual = PASSOS[passo];
   const isUltimo = passo === PASSOS.length - 1;
-  const isIntro = passo === 0;
 
   return (
     <div
@@ -90,7 +92,7 @@ export function TourOnboarding() {
 
         <div className="p-6">
           {/* Ícone da etapa */}
-          <div className={`mb-4 flex h-14 w-14 items-center justify-center rounded-2xl ${isIntro ? 'bg-brand-50 dark:bg-carvao-800' : 'bg-brand-50 dark:bg-carvao-800'}`}>
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 dark:bg-carvao-800">
             {atual.emoji ? (
               <span className="text-3xl leading-none">{atual.emoji}</span>
             ) : atual.icone ? (

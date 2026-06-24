@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import QRCode from 'qrcode';
 import { QrCode } from '@/components/QrCode';
 import { Botao } from '@/components/ui';
 import { Icone } from '@/components/Icones';
@@ -130,12 +131,12 @@ export function PosterSemana({
 
       // Logo + QR no canto superior direito
       try {
+        const qrDataUrl = await QRCode.toDataURL(urlAvaliar, { width: 170, margin: 1, color: { dark: '#000000ff', light: '#ffffffff' } });
         const qr = new Image();
-        qr.crossOrigin = 'anonymous';
         await new Promise<void>((res, rej) => {
           qr.onload = () => res();
           qr.onerror = () => rej(new Error('qr'));
-          qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=170x170&margin=1&data=${encodeURIComponent(urlAvaliar)}`;
+          qr.src = qrDataUrl;
         });
 
         const qrAreaX = W - M - 170;

@@ -7,6 +7,7 @@
    ===================================================================== */
 
 import { useEffect } from 'react';
+import QRCode from 'qrcode';
 import { QrCode } from '@/components/QrCode';
 import { Botao } from '@/components/ui';
 import { Icone } from '@/components/Icones';
@@ -91,12 +92,12 @@ export function PlaquinhaQR({
       ctx.font = `500 25px ${SANS}, sans-serif`;
       ctx.fillText('Aponte a câmera e diga o que achou', L / 2, 428);
 
+      const qrDataUrl = await QRCode.toDataURL(url, { width: 460, margin: 2, color: { dark: '#000000ff', light: '#ffffffff' } });
       const qr = new Image();
-      qr.crossOrigin = 'anonymous';
       await new Promise<void>((res, rej) => {
         qr.onload = () => res();
         qr.onerror = () => rej(new Error('qr'));
-        qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=460x460&margin=2&data=${encodeURIComponent(url)}`;
+        qr.src = qrDataUrl;
       });
       const s = 460;
       const qx = (L - s) / 2;

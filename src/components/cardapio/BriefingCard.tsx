@@ -150,8 +150,7 @@ export function BriefingCard(props: Props) {
 
   if (briefing.tudo_ok) {
     const temPlan = props.estado.dias.some((d) => d.principal);
-    const temPrecos = Object.keys(props.precos).length > 0;
-    const primeiroUso = !temPlan && !temPrecos;
+    const primeiroUso = !temPlan;
 
     const pulseSemana = temPlan && resumo.refeicoesPrevistas > 0
       ? resumo.custoRefEstimado
