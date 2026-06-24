@@ -699,11 +699,11 @@ export function montarDnaAlimentar(): DnaAlimentar {
 export function useDna() {
   const [dna, setDna] = useState<DnaAlimentar | null>(null);
 
-  useEffect(() => {
-    setDna(montarDnaAlimentar());
-  }, []);
-
   const recalcular = useCallback(() => setDna(montarDnaAlimentar()), []);
+
+  useEffect(() => { recalcular(); }, [recalcular]);
+  // votos do QR e mudanças de aceitação chegam por fora — recalcula o DNA
+  useReleituraExterna('aceitacao', recalcular);
 
   return { dna, recalcular };
 }

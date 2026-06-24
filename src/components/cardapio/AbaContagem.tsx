@@ -367,7 +367,7 @@ export function AbaContagem({
                     <div className="space-y-1">
                       <MiniBar valor={m.almoco} max={maxMedMedia} cor="bg-brand-500" />
                       <MiniBar valor={m.jantar} max={maxMedMedia} cor="bg-ouro-400" />
-                      <MiniBar valor={m.marmitas} max={maxMedMedia} cor="bg-[#2d6f8e]" />
+                      <MiniBar valor={m.marmitas} max={maxMedMedia} cor="bg-info" />
                     </div>
                   </div>
                 );
@@ -376,7 +376,7 @@ export function AbaContagem({
             <div className="mt-4 flex gap-4 text-caption text-carvao-400">
               <span className="flex items-center gap-1"><span className="h-2 w-4 rounded bg-brand-500" />Almoço</span>
               <span className="flex items-center gap-1"><span className="h-2 w-4 rounded bg-ouro-400" />Jantar</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-4 rounded bg-[#2d6f8e]" />Marmitas</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-4 rounded bg-info" />Marmitas</span>
             </div>
           </Cartao>
 

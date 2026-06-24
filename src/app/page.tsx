@@ -103,7 +103,7 @@ const ROTULO_ETAPA: Record<Etapa, string> = {
 const COR_ETAPA_TEXTO: Record<Etapa, string> = {
   rascunho:    'text-carvao-400',
   cozinha:     'text-ouro-600 dark:text-ouro-400',
-  compras:     'text-[#2d6f8e] dark:text-[#7cb8d4]',
+  compras:     'text-info dark:text-info-claro',
   recebimento: 'text-ouro-600 dark:text-ouro-400',
   concluido:   'text-brand-600 dark:text-brand-400',
 };
