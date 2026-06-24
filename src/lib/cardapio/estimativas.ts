@@ -49,14 +49,14 @@ export function useEstimativas() {
   }, []);
 
   /** Gera estimativa de mercado para itens sem preço real e sem estimativa. */
-  const gerarEstimativas = useCallback((norms: string[], precos: Record<string, number>) => {
+  const gerarEstimativas = useCallback((itens: { norm: string; u?: string }[], precos: Record<string, number>) => {
     const historico = ler<HistoricoPrecos>('historicoPrecos', {});
     setEstimativas((atual) => {
       const novo = { ...atual };
       let mudou = false;
-      norms.forEach((norm) => {
+      itens.forEach(({ norm, u }) => {
         if (precos[norm] > 0 || novo[norm] > 0) return;
-        const est = estimarPreco(norm, precos, historico);
+        const est = estimarPreco(norm, precos, historico, u);
         if (est) {
           novo[norm] = est;
           mudou = true;

@@ -90,6 +90,14 @@ const ALIASES_HISTORICO: Record<string, string> = {
   'sobrecoxa': 'coxa e sobre coxa',
   'coxa e sobrecoxa': 'coxa e sobre coxa',
   'coxa sobre coxa': 'coxa e sobre coxa',
+  // asas e cortes pequenos → frango a passarinho (mesmo corte, preço real disponível)
+  'asa': 'frango a passarinho',
+  'asa de frango': 'frango a passarinho',
+  'coxinha da asa': 'frango a passarinho',
+  'coxinha de asa': 'frango a passarinho',
+  'meio da asa': 'frango a passarinho',
+  'flat de asa': 'frango a passarinho',
+  'drumette': 'frango a passarinho',
   // bovinos
   'bife': 'acem',
   'bife acem': 'acem',
@@ -330,13 +338,15 @@ export function estimarPreco(
   norm: string,
   precos: Record<string, number>,
   historico: HistoricoPrecos,
+  unidadeHint?: string,
 ): number | null {
   // 1. Histórico de preços registrado manualmente
   const serie = historico[norm];
   if (serie && serie.length) return Math.round(media(serie.map((p) => p.valor)) * 100) / 100;
 
   // 2. Média de itens com mesma unidade (combinando planilhas + entradas manuais)
-  const u = unidadeDe.get(norm);
+  // unidadeHint cobre itens extras (não presentes em DADOS.itens) que têm unidade conhecida
+  const u = unidadeDe.get(norm) ?? unidadeHint;
   if (u) {
     const ub = unidadeBase(u);
     const dasCompras = Object.entries(PRECOS_COMPRAS)

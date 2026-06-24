@@ -72,7 +72,7 @@ export function AbaPrecos({
           <Botao
             variante="secundario"
             className="ml-auto !min-h-9 !px-3 !py-1.5 text-rotulo"
-            onClick={() => gerarEstimativas(itens.map((i) => normalizar(i.n)), precos)}
+            onClick={() => gerarEstimativas(itens.map((i) => ({ norm: normalizar(i.n), u: i.u })), precos)}
           >
             <Icone nome="raio" tam={15} /> Estimar sem preço
           </Botao>

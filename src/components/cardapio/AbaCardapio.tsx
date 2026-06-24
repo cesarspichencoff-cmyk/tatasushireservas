@@ -737,7 +737,7 @@ export function AbaCardapio({
                 <Botao
                   variante="secundario"
                   className="!min-h-8 !px-3 !py-1 text-caption"
-                  onClick={() => gerarEstimativas(normsSemana, precos)}
+                  onClick={() => gerarEstimativas(normsSemana.map((n) => ({ norm: n })), precos)}
                 >
                   <Icone nome="raio" tam={13} /> Estimar por mercado
                 </Botao>
