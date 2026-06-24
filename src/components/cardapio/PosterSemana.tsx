@@ -80,6 +80,17 @@ export function PosterSemana({
   // funciona em qualquer aparelho, sem depender da impressão do navegador.
   const baixarImagem = async () => {
     try {
+      // Aguarda fontes carregadas e resolve os nomes reais usados pelo Next.js
+      await document.fonts.ready;
+      const getCSSFont = (varName: string, fallback: string): string => {
+        const val = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+        if (!val) return fallback;
+        const first = val.split(',')[0].replace(/['”]/g, '').trim();
+        return first ? `'${first}'` : fallback;
+      };
+      const SANS = getCSSFont('--font-sans', 'Helvetica Neue');
+      const DISPLAY = getCSSFont('--font-display', 'Georgia');
+
       const W = 1000, H = 1500, M = 56;
       const c = document.createElement('canvas');
       c.width = W; c.height = H;
@@ -97,44 +108,72 @@ export function PosterSemana({
         return t + '…';
       };
 
-      ctx.fillStyle = '#ffffff';
+      // Fundo quente (não branco puro)
+      ctx.fillStyle = '#fefef8';
       ctx.fillRect(0, 0, W, H);
 
       // Cabeçalho
       ctx.textAlign = 'left';
       ctx.fillStyle = '#92713a';
-      ctx.font = 'bold 20px sans-serif';
+      ctx.font = `700 20px ${SANS}, sans-serif`;
       ctx.fillText('TATÁ HOUSE', M, 74);
       ctx.fillStyle = '#055d2f';
-      ctx.font = '900 52px Georgia, serif';
+      ctx.font = `700 52px ${DISPLAY}, serif`;
       ctx.fillText('Cardápio da semana', M, 130);
       // pílula do período
-      ctx.font = 'bold 20px sans-serif';
+      ctx.font = `700 20px ${SANS}, sans-serif`;
       const pw = ctx.measureText(periodo.toUpperCase()).width + 36;
       ctx.fillStyle = '#007638';
       rrect(M, 152, pw, 38, 19); ctx.fill();
       ctx.fillStyle = '#ffffff';
       ctx.fillText(periodo.toUpperCase(), M + 18, 178);
 
-      // QR no canto superior direito
+      // Logo + QR no canto superior direito
       try {
         const qr = new Image();
         qr.crossOrigin = 'anonymous';
         await new Promise<void>((res, rej) => {
           qr.onload = () => res();
           qr.onerror = () => rej(new Error('qr'));
-          qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=1&data=${encodeURIComponent(urlAvaliar)}`;
+          qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=170x170&margin=1&data=${encodeURIComponent(urlAvaliar)}`;
         });
-        ctx.drawImage(qr, W - M - 150, 50, 150, 150);
-        ctx.fillStyle = '#7c828c';
-        ctx.font = 'bold 12px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('Avalie o prato', W - M - 75, 218);
-        ctx.textAlign = 'left';
-      } catch { /* segue sem QR */ }
 
-      // régua
-      ctx.fillStyle = '#c8a96b';
+        const qrAreaX = W - M - 170;
+        let nextY = 44;
+
+        // Logo acima do QR quando enviada pelo usuário
+        if (logo) {
+          const logoImg = new Image();
+          logoImg.src = logo;
+          await new Promise<void>((res) => {
+            if (logoImg.complete) { res(); return; }
+            logoImg.onload = () => res();
+            logoImg.onerror = () => res();
+          });
+          if (logoImg.naturalWidth) {
+            const maxH = 54, maxW = 160;
+            const scale = Math.min(maxH / logoImg.naturalHeight, maxW / logoImg.naturalWidth);
+            const lw = logoImg.naturalWidth * scale, lh = logoImg.naturalHeight * scale;
+            ctx.drawImage(logoImg, qrAreaX + (170 - lw) / 2, nextY, lw, lh);
+            nextY += Math.round(lh) + 10;
+          }
+        }
+
+        const qrSize = logo ? 110 : 170;
+        ctx.drawImage(qr, qrAreaX + (170 - qrSize) / 2, nextY, qrSize, qrSize);
+        ctx.fillStyle = '#7c828c';
+        ctx.font = `600 12px ${SANS}, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText('Avalie o prato', qrAreaX + 85, nextY + qrSize + 18);
+        ctx.textAlign = 'left';
+      } catch { /* segue sem QR / logo */ }
+
+      // régua dourada gradiente
+      const regraG = ctx.createLinearGradient(M, 0, W - M, 0);
+      regraG.addColorStop(0, 'rgba(200,169,107,0.4)');
+      regraG.addColorStop(0.5, '#c8a96b');
+      regraG.addColorStop(1, 'rgba(200,169,107,0.4)');
+      ctx.fillStyle = regraG;
       ctx.fillRect(M, 238, W - 2 * M, 4);
 
       // Dias
@@ -149,16 +188,16 @@ export function PosterSemana({
         // Acento dourado à esquerda nos fins de semana
         if (fim) {
           ctx.fillStyle = '#c8a96b';
-          ctx.fillRect(x0, y + 18, 5, cardH - 36);
+          ctx.fillRect(x0, y + 18, 6, cardH - 36);
         }
 
         // dia + data
         ctx.textAlign = 'center';
         ctx.fillStyle = '#ffffff';
-        ctx.font = '900 22px Georgia, serif';
+        ctx.font = `700 22px ${DISPLAY}, serif`;
         ctx.fillText(DIAS_POSTER[i], x0 + 78, y + cardH / 2 - 4);
         ctx.fillStyle = '#c9f5da';
-        ctx.font = 'bold 15px sans-serif';
+        ctx.font = `600 15px ${SANS}, sans-serif`;
         ctx.fillText(ddmm(datas[i]), x0 + 78, y + cardH / 2 + 22);
 
         // separador
@@ -168,18 +207,18 @@ export function PosterSemana({
 
         const dx = x0 + 178;
         const nut = infosDia[i];
-        const colDir = 150; // largura reservada à nutrição
+        const colDir = 150;
         const maxTexto = cw - 178 - colDir;
 
         if (dia.principal) {
           ctx.textAlign = 'left';
           ctx.fillStyle = '#ffffff';
-          ctx.font = '800 25px sans-serif';
+          ctx.font = `800 25px ${SANS}, sans-serif`;
           ctx.fillText(fit(dia.principal, maxTexto), dx, y + 44);
           const guarn = [dia.guarnicaoFixa, dia.guarnicao].filter(Boolean).join(' · ');
           if (guarn) {
             ctx.fillStyle = '#c9f5da';
-            ctx.font = '600 17px sans-serif';
+            ctx.font = `600 17px ${SANS}, sans-serif`;
             ctx.fillText(fit(guarn, maxTexto), dx, y + 72);
           }
           const extras: string[] = [];
@@ -187,26 +226,26 @@ export function PosterSemana({
           if (dia.sobremesa) extras.push('Sobremesa ' + dia.sobremesa);
           if (extras.length) {
             ctx.fillStyle = 'rgba(255,255,255,0.85)';
-            ctx.font = '500 15px sans-serif';
+            ctx.font = `500 15px ${SANS}, sans-serif`;
             ctx.fillText(fit(extras.join('   •   '), maxTexto), dx, y + 98);
           }
           // nutrição
           if (nut) {
             ctx.textAlign = 'right';
             ctx.fillStyle = '#e3b45c';
-            ctx.font = '900 32px Georgia, serif';
+            ctx.font = `700 32px ${DISPLAY}, serif`;
             ctx.fillText(String(nut.kcal), x0 + cw - 24, y + cardH / 2 - 2);
             ctx.fillStyle = 'rgba(255,255,255,0.6)';
-            ctx.font = 'bold 12px sans-serif';
+            ctx.font = `700 12px ${SANS}, sans-serif`;
             ctx.fillText('KCAL', x0 + cw - 24, y + cardH / 2 + 16);
             ctx.fillStyle = 'rgba(255,255,255,0.85)';
-            ctx.font = '600 14px sans-serif';
+            ctx.font = `600 14px ${SANS}, sans-serif`;
             ctx.fillText(`${nut.proteinas}g prot.`, x0 + cw - 24, y + cardH / 2 + 38);
           }
         } else {
           ctx.textAlign = 'left';
           ctx.fillStyle = 'rgba(255,255,255,0.55)';
-          ctx.font = 'italic 700 18px sans-serif';
+          ctx.font = `italic 700 18px ${SANS}, sans-serif`;
           ctx.fillText('A definir', dx, y + cardH / 2 + 6);
         }
         y += cardH + gap;
@@ -214,18 +253,18 @@ export function PosterSemana({
 
       // Faixa nutricional
       if (mediaNutri) {
-        const bandH = 132;
+        const bandH = 140;
         ctx.fillStyle = '#e9fbf0';
         rrect(x0, y, cw, bandH, 18); ctx.fill();
         ctx.strokeStyle = '#96eab7'; ctx.lineWidth = 1.5;
         rrect(x0, y, cw, bandH, 18); ctx.stroke();
         ctx.textAlign = 'left';
         ctx.fillStyle = '#055d2f';
-        ctx.font = '900 22px sans-serif';
-        ctx.fillText('Informação nutricional', x0 + 28, y + 38);
+        ctx.font = `800 22px ${SANS}, sans-serif`;
+        ctx.fillText('Informação nutricional', x0 + 28, y + 40);
         ctx.fillStyle = '#007638';
-        ctx.font = '600 14px sans-serif';
-        ctx.fillText('Média por prato principal · cuidamos do que você come', x0 + 28, y + 60);
+        ctx.font = `600 14px ${SANS}, sans-serif`;
+        ctx.fillText('Média por prato principal · cuidamos do que você come', x0 + 28, y + 62);
         const macros: [string, string, string][] = [
           [`${mediaNutri.kcal}`, 'Calorias', '#92713a'],
           [`${mediaNutri.proteinas}g`, 'Proteína', '#007638'],
@@ -236,28 +275,35 @@ export function PosterSemana({
         const bw = (cw - 56 - 4 * 12) / 5;
         macros.forEach(([val, rot, cor], j) => {
           const bx = x0 + 28 + j * (bw + 12);
-          const by = y + 74;
+          const by = y + 78;
           ctx.fillStyle = '#ffffff';
-          rrect(bx, by, bw, 46, 14); ctx.fill();
+          rrect(bx, by, bw, 48, 14); ctx.fill();
           ctx.textAlign = 'center';
           ctx.fillStyle = cor;
-          ctx.font = '900 20px Georgia, serif';
-          ctx.fillText(val, bx + bw / 2, by + 24);
+          ctx.font = `700 20px ${DISPLAY}, serif`;
+          ctx.fillText(val, bx + bw / 2, by + 26);
           ctx.fillStyle = '#7c828c';
-          ctx.font = 'bold 11px sans-serif';
-          ctx.fillText(rot.toUpperCase(), bx + bw / 2, by + 39);
+          ctx.font = `700 11px ${SANS}, sans-serif`;
+          ctx.fillText(rot.toUpperCase(), bx + bw / 2, by + 41);
         });
         y += bandH;
       }
 
       // Rodapé
+      const sepY = y + 20;
+      const lineG = ctx.createLinearGradient(M, 0, W - M, 0);
+      lineG.addColorStop(0, 'rgba(210,215,220,0)');
+      lineG.addColorStop(0.5, '#d2d8dc');
+      lineG.addColorStop(1, 'rgba(210,215,220,0)');
+      ctx.fillStyle = lineG;
+      ctx.fillRect(M, sepY, W - 2 * M, 1);
       ctx.textAlign = 'center';
-      ctx.fillStyle = '#055d2f';
-      ctx.font = 'bold 18px Georgia, serif';
-      ctx.fillText('BOM APETITE', W / 2, H - 46);
+      ctx.fillStyle = '#92713a';
+      ctx.font = `700 22px ${DISPLAY}, serif`;
+      ctx.fillText('BOM APETITE', W / 2, sepY + 44);
       ctx.fillStyle = '#aab0b9';
-      ctx.font = '600 12px sans-serif';
-      ctx.fillText('Tatá House · cozinha com propósito', W / 2, H - 24);
+      ctx.font = `600 13px ${SANS}, sans-serif`;
+      ctx.fillText('Tatá House · cozinha com propósito', W / 2, sepY + 66);
 
       const a = document.createElement('a');
       a.href = c.toDataURL('image/png');
@@ -303,7 +349,7 @@ export function PosterSemana({
       </p>
 
       {/* Folha A4 */}
-      <div className="poster mx-auto flex min-h-[287mm] w-full max-w-[210mm] flex-col overflow-hidden bg-white text-carvao-900 shadow-flutuante print:min-h-[275mm] print:max-w-none print:shadow-none">
+      <div className="poster mx-auto flex min-h-[287mm] w-full max-w-[210mm] flex-col overflow-hidden bg-[#fefef8] text-carvao-900 shadow-flutuante print:min-h-[275mm] print:max-w-none print:shadow-none">
         {/* Cabeçalho */}
         <header className="px-10 pb-6 pt-9">
           <div className="flex items-start justify-between gap-6">
@@ -414,8 +460,8 @@ export function PosterSemana({
         </main>
 
         {/* Legenda de proteínas */}
-        <div className="mx-10 mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
-          <p className="text-[9px] font-bold uppercase tracking-wide text-carvao-400">Proteína:</p>
+        <div className="mx-10 mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-carvao-400">Proteína:</p>
           {([
             { rot: 'Bovina', cor: '#e0867c' },
             { rot: 'Frango', cor: '#e3b45c' },
@@ -424,9 +470,9 @@ export function PosterSemana({
             { rot: 'Ovo', cor: '#dcc492' },
             { rot: 'Outros', cor: '#cdd6cf' },
           ] as { rot: string; cor: string }[]).map((item) => (
-            <span key={item.rot} className="flex items-center gap-1">
-              <span className="h-2.5 w-2.5 rounded-full ring-1 ring-carvao-200/60" style={{ backgroundColor: item.cor }} aria-hidden />
-              <span className="text-[9px] font-semibold text-carvao-400">{item.rot}</span>
+            <span key={item.rot} className="flex items-center gap-1.5">
+              <span className="h-3 w-3 shrink-0 rounded-full ring-1 ring-carvao-200/60" style={{ backgroundColor: item.cor }} aria-hidden />
+              <span className="text-[10px] font-semibold text-carvao-400">{item.rot}</span>
             </span>
           ))}
         </div>
@@ -464,12 +510,12 @@ export function PosterSemana({
         )}
 
         {/* Rodapé */}
-        <footer className="px-10 pb-7 pt-5">
+        <footer className="px-10 pb-8 pt-5">
           <div className="mx-auto h-px w-full max-w-[150mm] bg-gradient-to-r from-transparent via-carvao-200 to-transparent" />
-          <p className="mt-3 text-center font-display text-[13px] font-bold uppercase tracking-[0.28em] text-brand-800">
+          <p className="mt-4 text-center font-display text-[17px] font-bold uppercase tracking-[0.28em] text-ouro-600">
             Bom apetite
           </p>
-          <p className="mt-1 text-center text-[9px] font-semibold uppercase tracking-[0.16em] text-carvao-400">
+          <p className="mt-1.5 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-carvao-400">
             Tatá House · cozinha com propósito
           </p>
         </footer>

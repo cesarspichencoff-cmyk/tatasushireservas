@@ -30,6 +30,17 @@ export function PlaquinhaQR({
 
   const baixarImagem = async () => {
     try {
+      // Aguarda fontes carregadas e resolve os nomes reais usados pelo Next.js
+      await document.fonts.ready;
+      const getCSSFont = (varName: string, fallback: string): string => {
+        const val = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+        if (!val) return fallback;
+        const first = val.split(',')[0].replace(/['"]/g, '').trim();
+        return first ? `'${first}'` : fallback;
+      };
+      const SANS = getCSSFont('--font-sans', 'Helvetica Neue');
+      const DISPLAY = getCSSFont('--font-display', 'Georgia');
+
       const L = 720;
       const A = 1180;
       const c = document.createElement('canvas');
@@ -46,34 +57,38 @@ export function PlaquinhaQR({
 
       const g = ctx.createLinearGradient(0, 0, 0, A);
       g.addColorStop(0, '#055d2f');
-      g.addColorStop(1, '#064c29');
+      g.addColorStop(1, '#053d1f');
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, L, A);
+      // Régua dourada mais robusta
       ctx.fillStyle = '#c8a96b';
-      ctx.fillRect(0, 0, L, 14);
+      ctx.fillRect(0, 0, L, 16);
 
       ctx.textAlign = 'center';
       ctx.fillStyle = '#ffffff';
-      ctx.font = '800 70px Georgia, serif';
-      ctx.fillText('TATÁ HOUSE', L / 2, 150);
+      ctx.font = `700 70px ${DISPLAY}, serif`;
+      ctx.fillText('TATÁ HOUSE', L / 2, 152);
       ctx.fillStyle = '#dcc492';
-      ctx.font = 'bold 22px sans-serif';
-      ctx.fillText('REFEITÓRIO DO TATÁ SUSHI', L / 2, 190);
+      ctx.font = `700 22px ${SANS}, sans-serif`;
+      ctx.fillText('REFEITÓRIO DO TATÁ SUSHI', L / 2, 192);
 
       // Separador dourado
-      const sepG = ctx.createLinearGradient(160, 0, L - 160, 0);
+      const sepG = ctx.createLinearGradient(120, 0, L - 120, 0);
       sepG.addColorStop(0, 'rgba(200,169,107,0)');
       sepG.addColorStop(0.5, 'rgba(200,169,107,0.8)');
       sepG.addColorStop(1, 'rgba(200,169,107,0)');
       ctx.fillStyle = sepG;
-      ctx.fillRect(160, 218, L - 320, 2);
+      ctx.fillRect(120, 222, L - 240, 2);
 
+      // "AVALIE O PRATO" em duas linhas com hierarquia visual
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.font = `600 34px ${SANS}, sans-serif`;
+      ctx.fillText('AVALIE O PRATO', L / 2, 298);
       ctx.fillStyle = '#ffffff';
-      ctx.font = '800 56px Georgia, serif';
-      ctx.fillText('AVALIE O PRATO', L / 2, 310);
+      ctx.font = `700 68px ${DISPLAY}, serif`;
       ctx.fillText('DO DIA', L / 2, 374);
       ctx.fillStyle = '#c9f5da';
-      ctx.font = '500 26px sans-serif';
+      ctx.font = `500 25px ${SANS}, sans-serif`;
       ctx.fillText('Aponte a câmera e diga o que achou', L / 2, 428);
 
       const qr = new Image();
@@ -115,19 +130,19 @@ export function PlaquinhaQR({
         ctx.strokeStyle = o.border;
         ctx.lineWidth = 1.5;
         rrect(chipX, chipY, chipW, chipH, 18); ctx.stroke();
-        // Emoji
+        // Emoji (fonte do sistema — renderiza o próprio emoji do OS)
         ctx.fillStyle = '#ffffff';
         ctx.font = '40px sans-serif';
         ctx.fillText(o.e, cx, chipY + 54);
         // Rótulo
         ctx.fillStyle = '#c9f5da';
-        ctx.font = 'bold 19px sans-serif';
+        ctx.font = `700 19px ${SANS}, sans-serif`;
         ctx.fillText(o.r.toUpperCase(), cx, chipY + 90);
       });
 
       // Rodapé
       ctx.fillStyle = 'rgba(255,255,255,0.2)';
-      ctx.font = 'bold 15px sans-serif';
+      ctx.font = `700 15px ${SANS}, sans-serif`;
       ctx.fillText('SUA OPINIÃO TRANSFORMA O CARDÁPIO', L / 2, A - 20);
 
       const a = document.createElement('a');
@@ -174,9 +189,10 @@ export function PlaquinhaQR({
           <div className="h-px w-2/3 rounded-full bg-gradient-to-r from-transparent via-ouro-400/60 to-transparent" aria-hidden />
 
           <div>
-            <div className="font-display text-[28px] font-black leading-tight tracking-tight">
+            <p className="text-[12px] font-bold uppercase tracking-[0.22em] text-white/50">
               Avalie o prato
-              <br />
+            </p>
+            <div className="font-display text-[40px] font-black leading-none tracking-tight text-ouro-200">
               do dia
             </div>
             <p className="mt-2 text-sm font-medium text-brand-100">Aponte a câmera e diga o que achou</p>
