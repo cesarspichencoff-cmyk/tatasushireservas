@@ -146,6 +146,12 @@ export function PosterSemana({
         ctx.fillStyle = fim ? '#055d2f' : '#007638';
         rrect(x0, y, cw, cardH, 18); ctx.fill();
 
+        // Acento dourado à esquerda nos fins de semana
+        if (fim) {
+          ctx.fillStyle = '#c8a96b';
+          ctx.fillRect(x0, y + 18, 5, cardH - 36);
+        }
+
         // dia + data
         ctx.textAlign = 'center';
         ctx.fillStyle = '#ffffff';
@@ -188,7 +194,7 @@ export function PosterSemana({
           if (nut) {
             ctx.textAlign = 'right';
             ctx.fillStyle = '#e3b45c';
-            ctx.font = '900 30px Georgia, serif';
+            ctx.font = '900 32px Georgia, serif';
             ctx.fillText(String(nut.kcal), x0 + cw - 24, y + cardH / 2 - 2);
             ctx.fillStyle = 'rgba(255,255,255,0.6)';
             ctx.font = 'bold 12px sans-serif';
@@ -220,26 +226,26 @@ export function PosterSemana({
         ctx.fillStyle = '#007638';
         ctx.font = '600 14px sans-serif';
         ctx.fillText('Média por prato principal · cuidamos do que você come', x0 + 28, y + 60);
-        const macros: [string, string][] = [
-          [`${mediaNutri.kcal}`, 'Calorias'],
-          [`${mediaNutri.proteinas}g`, 'Proteína'],
-          [`${mediaNutri.carboidratos}g`, 'Carboidrato'],
-          [`${mediaNutri.gorduras}g`, 'Gordura'],
-          [`${mediaNutri.fibras}g`, 'Fibras'],
+        const macros: [string, string, string][] = [
+          [`${mediaNutri.kcal}`, 'Calorias', '#92713a'],
+          [`${mediaNutri.proteinas}g`, 'Proteína', '#007638'],
+          [`${mediaNutri.carboidratos}g`, 'Carbo', '#b45309'],
+          [`${mediaNutri.gorduras}g`, 'Gordura', '#be123c'],
+          [`${mediaNutri.fibras}g`, 'Fibras', '#047857'],
         ];
         const bw = (cw - 56 - 4 * 12) / 5;
-        macros.forEach(([val, rot], j) => {
+        macros.forEach(([val, rot, cor], j) => {
           const bx = x0 + 28 + j * (bw + 12);
           const by = y + 74;
           ctx.fillStyle = '#ffffff';
-          rrect(bx, by, bw, 44, 12); ctx.fill();
+          rrect(bx, by, bw, 46, 14); ctx.fill();
           ctx.textAlign = 'center';
-          ctx.fillStyle = '#23262c';
+          ctx.fillStyle = cor;
           ctx.font = '900 20px Georgia, serif';
-          ctx.fillText(val, bx + bw / 2, by + 22);
+          ctx.fillText(val, bx + bw / 2, by + 24);
           ctx.fillStyle = '#7c828c';
           ctx.font = 'bold 11px sans-serif';
-          ctx.fillText(rot.toUpperCase(), bx + bw / 2, by + 38);
+          ctx.fillText(rot.toUpperCase(), bx + bw / 2, by + 39);
         });
         y += bandH;
       }
@@ -336,12 +342,15 @@ export function PosterSemana({
             return (
               <section
                 key={i}
-                className={`grid grid-cols-[96px_1fr_auto] items-stretch gap-5 rounded-2xl px-5 py-3 text-white ${
+                className={`relative grid grid-cols-[96px_1fr_auto] items-stretch gap-5 overflow-hidden rounded-2xl px-5 py-3 text-white ${
                   fimDeSemana
                     ? 'bg-brand-800 ring-1 ring-ouro-400/70'
                     : 'bg-brand-700'
                 }`}
               >
+                {fimDeSemana && (
+                  <div className="absolute left-0 top-0 h-full w-1 bg-ouro-400" aria-hidden />
+                )}
                 {/* Coluna 1 — dia + data */}
                 <div className="flex flex-col items-center justify-center border-r border-white/20 pr-4 text-center">
                   <span className="font-display text-[15px] font-black leading-tight">{DIAS_POSTER[i]}</span>
@@ -384,14 +393,14 @@ export function PosterSemana({
                 </div>
 
                 {/* Coluna 3 — nutrição do dia (kcal + proteína) */}
-                <div className="flex w-[78px] flex-col items-end justify-center text-right">
+                <div className="flex w-[80px] flex-col items-end justify-center text-right">
                   {dia.principal && nut ? (
                     <>
-                      <span className="font-display text-[18px] font-black leading-none text-ouro-300 tabular-nums">
+                      <span className="font-display text-[22px] font-black leading-none text-ouro-300 tabular-nums">
                         {nut.kcal}
                       </span>
                       <span className="text-[9px] font-bold uppercase tracking-wide text-white/60">kcal</span>
-                      <span className="mt-1 text-[10px] font-semibold text-white/85 tabular-nums">
+                      <span className="mt-1 text-[11px] font-semibold text-white/85 tabular-nums">
                         {nut.proteinas}g prot.
                       </span>
                     </>
@@ -404,9 +413,27 @@ export function PosterSemana({
           })}
         </main>
 
+        {/* Legenda de proteínas */}
+        <div className="mx-10 mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+          <p className="text-[9px] font-bold uppercase tracking-wide text-carvao-400">Proteína:</p>
+          {([
+            { rot: 'Bovina', cor: '#e0867c' },
+            { rot: 'Frango', cor: '#e3b45c' },
+            { rot: 'Suína', cor: '#dd92b4' },
+            { rot: 'Peixe', cor: '#7cb8d4' },
+            { rot: 'Ovo', cor: '#dcc492' },
+            { rot: 'Outros', cor: '#cdd6cf' },
+          ] as { rot: string; cor: string }[]).map((item) => (
+            <span key={item.rot} className="flex items-center gap-1">
+              <span className="h-2.5 w-2.5 rounded-full ring-1 ring-carvao-200/60" style={{ backgroundColor: item.cor }} aria-hidden />
+              <span className="text-[9px] font-semibold text-carvao-400">{item.rot}</span>
+            </span>
+          ))}
+        </div>
+
         {/* Informação nutricional média — só os números, sem score */}
         {mediaNutri && (
-          <section className="mx-10 mt-4 rounded-2xl border border-brand-200 bg-brand-50/70 px-5 py-4">
+          <section className="mx-10 mt-3 rounded-2xl border border-brand-200 bg-brand-50/70 px-5 py-4">
             <div className="mb-3 flex items-center gap-2.5">
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-700 text-white">
                 <Icone nome="nutricao" tam={16} />
@@ -418,14 +445,14 @@ export function PosterSemana({
             </div>
             <div className="grid grid-cols-5 gap-2">
               {[
-                { rot: 'Calorias', val: `${mediaNutri.kcal}`, un: 'kcal' },
-                { rot: 'Proteína', val: `${mediaNutri.proteinas}`, un: 'g' },
-                { rot: 'Carboidrato', val: `${mediaNutri.carboidratos}`, un: 'g' },
-                { rot: 'Gordura', val: `${mediaNutri.gorduras}`, un: 'g' },
-                { rot: 'Fibras', val: `${mediaNutri.fibras}`, un: 'g' },
+                { rot: 'Calorias', val: `${mediaNutri.kcal}`, un: 'kcal', cor: 'text-ouro-600' },
+                { rot: 'Proteína', val: `${mediaNutri.proteinas}`, un: 'g', cor: 'text-brand-700' },
+                { rot: 'Carbo', val: `${mediaNutri.carboidratos}`, un: 'g', cor: 'text-amber-600' },
+                { rot: 'Gordura', val: `${mediaNutri.gorduras}`, un: 'g', cor: 'text-rose-700' },
+                { rot: 'Fibras', val: `${mediaNutri.fibras}`, un: 'g', cor: 'text-emerald-700' },
               ].map((m) => (
                 <div key={m.rot} className="rounded-xl bg-white px-1 py-2 text-center ring-1 ring-brand-100">
-                  <p className="font-display text-[18px] font-black leading-none text-carvao-800 tabular-nums">
+                  <p className={`font-display text-[18px] font-black leading-none tabular-nums ${m.cor}`}>
                     {m.val}
                     <span className="ml-0.5 text-[9px] font-bold text-carvao-400">{m.un}</span>
                   </p>
@@ -438,8 +465,8 @@ export function PosterSemana({
 
         {/* Rodapé */}
         <footer className="px-10 pb-7 pt-5">
-          <div className="mx-auto h-px w-full max-w-[150mm] bg-carvao-200" />
-          <p className="mt-3 text-center font-display text-[12px] font-bold uppercase tracking-[0.24em] text-brand-800">
+          <div className="mx-auto h-px w-full max-w-[150mm] bg-gradient-to-r from-transparent via-carvao-200 to-transparent" />
+          <p className="mt-3 text-center font-display text-[13px] font-bold uppercase tracking-[0.28em] text-brand-800">
             Bom apetite
           </p>
           <p className="mt-1 text-center text-[9px] font-semibold uppercase tracking-[0.16em] text-carvao-400">
