@@ -418,7 +418,25 @@ export function useFornecedores() {
     });
   }, []);
 
-  return { fornecedores, definirFornecedor };
+  /** Renomeia um fornecedor em todos os itens de uma vez (inclui localStorage raw). */
+  const renomearFornecedor = useCallback((antigo: string, novo: string) => {
+    const novoNome = novo.trim();
+    if (!novoNome || ehRemetenteInterno(novoNome)) return;
+    setFornecedores((atual) => {
+      const atualizado = { ...atual };
+      Object.keys(atualizado).forEach((k) => {
+        if (atualizado[k] === antigo) atualizado[k] = novoNome;
+      });
+      // Também corrige os itens que estavam salvos com "Erika" no localStorage bruto.
+      const raw = lerLocal<Record<string, string>>('fornecedores', {});
+      Object.keys(raw).forEach((k) => { if (raw[k] === antigo) raw[k] = novoNome; });
+      gravarLocal('fornecedores', raw);
+      registrarAuditoria({ acao: 'renomeou fornecedor', alvo: antigo, para: novoNome });
+      return atualizado;
+    });
+  }, []);
+
+  return { fornecedores, definirFornecedor, renomearFornecedor };
 }
 
 /* ------------------- ofertas por fornecedor --------------------------- */

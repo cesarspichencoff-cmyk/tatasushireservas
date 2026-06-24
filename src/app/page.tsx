@@ -475,7 +475,7 @@ export default function PaginaCardapios() {
 
   const { estado, atualizar, pronto } = useSemana(semanaId);
   const { precos, definirPreco } = usePrecos();
-  const { fornecedores, definirFornecedor } = useFornecedores();
+  const { fornecedores, definirFornecedor, renomearFornecedor } = useFornecedores();
   const { ofertas, registrarOferta } = useOfertas();
   const { itensExtras, cadastrarItem } = useItensExtras();
   const { fatores, aprenderDeSemana } = useAprendizado();
@@ -986,6 +986,7 @@ export default function PaginaCardapios() {
                     precos={precos}
                     onSalvarPerfil={salvarPerfilFornecedor}
                     onAdicionarAvaliacao={adicionarAvaliacaoFornecedor}
+                    onRenomear={renomearFornecedor}
                   />
                 )}
 

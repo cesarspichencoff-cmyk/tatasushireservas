@@ -143,6 +143,50 @@ function FormAvaliacao({
   );
 }
 
+/* ── Renomear fornecedor ─────────────────────────────────── */
+
+function FormRenomear({
+  nomeAtual,
+  aoSalvar,
+  aoFechar,
+}: {
+  nomeAtual: string;
+  aoSalvar: (novoNome: string) => void;
+  aoFechar: () => void;
+}) {
+  const [nome, setNome] = useState(nomeAtual);
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-texto-suave">
+        O novo nome será aplicado a <strong>todos os itens</strong> atribuídos a <em>{nomeAtual}</em>.
+      </p>
+      <div>
+        <label className={estiloRotulo}>Novo nome do fornecedor</label>
+        <input
+          className={estiloInput}
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+          placeholder="Ex.: Hortifrúti, FLD, Mercado Central…"
+          autoFocus
+        />
+      </div>
+      <div className="flex gap-3 pt-2">
+        <Botao variante="secundario" className="flex-1" onClick={aoFechar}>Cancelar</Botao>
+        <Botao
+          className="flex-1"
+          onClick={() => {
+            const n = nome.trim();
+            if (n && n !== nomeAtual) { aoSalvar(n); aoFechar(); }
+          }}
+        >
+          Renomear
+        </Botao>
+      </div>
+    </div>
+  );
+}
+
 /* ── Recomendação inteligente ────────────────────────────── */
 
 interface ScoreForn {
@@ -224,16 +268,19 @@ export function AbaFornecedorIntel({
   precos,
   onSalvarPerfil,
   onAdicionarAvaliacao,
+  onRenomear,
 }: {
   fornecedores: Record<string, string>; // item → fornecedor
   perfis: Record<string, PerfilFornecedor>;
   precos: Record<string, number>;
   onSalvarPerfil: (nome: string, dados: Partial<Omit<PerfilFornecedor, 'nome' | 'avaliacoes'>>) => void;
   onAdicionarAvaliacao: (nome: string, av: Omit<AvaliacaoFornecedor, 'em'>) => void;
+  onRenomear?: (antigo: string, novo: string) => void;
 }) {
   const [editando, setEditando] = useState<string | null>(null);
   const [avaliando, setAvaliando] = useState<string | null>(null);
   const [expandido, setExpandido] = useState<string | null>(null);
+  const [renomeando, setRenomeando] = useState<string | null>(null);
 
   // Agrupa itens por fornecedor
   const porFornecedor = useMemo(() => {
@@ -279,6 +326,15 @@ export function AbaFornecedorIntel({
           <FormAvaliacao
             onSalvar={(av) => onAdicionarAvaliacao(avaliando, av)}
             aoFechar={() => setAvaliando(null)}
+          />
+        </Modal>
+      )}
+      {renomeando && onRenomear && (
+        <Modal titulo={`Renomear: ${renomeando}`} aberto aoFechar={() => setRenomeando(null)}>
+          <FormRenomear
+            nomeAtual={renomeando}
+            aoSalvar={(novoNome) => onRenomear(renomeando, novoNome)}
+            aoFechar={() => setRenomeando(null)}
           />
         </Modal>
       )}
@@ -344,6 +400,15 @@ export function AbaFornecedorIntel({
                   >
 
                   </button>
+                  {onRenomear && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setRenomeando(nome); }}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-texto-suave hover:bg-carvao-100 dark:hover:bg-carvao-700"
+                      title="Renomear fornecedor"
+                    >
+                      <Icone nome="renomear" tam={14} />
+                    </button>
+                  )}
                   <button
                     onClick={(e) => { e.stopPropagation(); setEditando(nome); }}
                     className="flex h-8 w-8 items-center justify-center rounded-lg text-texto-suave hover:bg-carvao-100 dark:hover:bg-carvao-700"
