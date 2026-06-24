@@ -391,21 +391,84 @@ function BuscaGlobal({
   );
 }
 
+/* ── navegação sincronizada com a URL (deep-link + botão Voltar) ────────
+   A aba ativa e a sub-aba vivem no hash (#aba=cardapio&sub=operacao). Trocar
+   de aba dá pushState (vira entrada no histórico → Voltar volta de aba);
+   trocar de sub-aba dá replaceState (não polui o histórico). Recarregar a
+   página mantém onde você estava; é possível compartilhar o link de uma aba.
+   ───────────────────────────────────────────────────────────────────── */
+
+type CardapioSeg = 'montar' | 'operacao' | 'avaliacao';
+type ComprasSeg = 'lista' | 'estoque' | 'nf' | 'fornecedores' | 'pedido';
+type RelatoriosSeg = 'gerencial' | 'custos' | 'rankings' | 'previsao' | 'fornecedores' | 'auditoria';
+
+function lerHashNav(): { aba?: AbaId; sub?: string } {
+  if (typeof window === 'undefined') return {};
+  const p = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  return { aba: (p.get('aba') as AbaId) || undefined, sub: p.get('sub') || undefined };
+}
+
+function subInicial(qualAba: AbaId, padrao: string): string {
+  const { aba, sub } = lerHashNav();
+  return aba === qualAba && sub ? sub : padrao;
+}
+
+function useNavegacao() {
+  const [aba, setAba] = useState<AbaId>(() => lerHashNav().aba || 'agora');
+  const [abaCardapioSeg, setAbaCardapioSeg] = useState<CardapioSeg>(() => subInicial('cardapio', 'montar') as CardapioSeg);
+  const [abaCompras, setAbaCompras] = useState<ComprasSeg>(() => subInicial('compras', 'lista') as ComprasSeg);
+  const [abaRelatorios, setAbaRelatorios] = useState<RelatoriosSeg>(() => subInicial('relatorios', 'gerencial') as RelatoriosSeg);
+
+  const subAtual =
+    aba === 'cardapio' ? abaCardapioSeg : aba === 'compras' ? abaCompras : aba === 'relatorios' ? abaRelatorios : '';
+
+  // Voltar/Avançar do navegador: aplica o estado vindo do hash.
+  useEffect(() => {
+    const aplicar = () => {
+      const { aba: a, sub } = lerHashNav();
+      if (a) setAba(a);
+      if (sub) {
+        const alvo = a ?? 'agora';
+        if (alvo === 'cardapio') setAbaCardapioSeg(sub as CardapioSeg);
+        else if (alvo === 'compras') setAbaCompras(sub as ComprasSeg);
+        else if (alvo === 'relatorios') setAbaRelatorios(sub as RelatoriosSeg);
+      }
+    };
+    window.addEventListener('popstate', aplicar);
+    return () => window.removeEventListener('popstate', aplicar);
+  }, []);
+
+  // Estado → URL. Troca de aba empurra histórico; sub-aba só substitui.
+  const abaAnterior = useRef<AbaId | null>(null);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams();
+    params.set('aba', aba);
+    if (subAtual) params.set('sub', subAtual);
+    const novoHash = '#' + params.toString();
+    if (novoHash !== window.location.hash) {
+      if (abaAnterior.current !== null && aba !== abaAnterior.current) {
+        window.history.pushState(null, '', novoHash);
+      } else {
+        window.history.replaceState(null, '', novoHash);
+      }
+    }
+    abaAnterior.current = aba;
+  }, [aba, subAtual]);
+
+  return { aba, setAba, abaCardapioSeg, setAbaCardapioSeg, abaCompras, setAbaCompras, abaRelatorios, setAbaRelatorios };
+}
+
 /* ── componente principal ────────────────────────────────── */
 
 export default function PaginaCardapios() {
   const [semanaId, setSemanaId] = useState(() => idSemanaIso(new Date()));
-  const [aba, setAba] = useState<AbaId>('agora');
+  const { aba, setAba, abaCardapioSeg, setAbaCardapioSeg, abaCompras, setAbaCompras, abaRelatorios, setAbaRelatorios } = useNavegacao();
   const [posterAberto, setPosterAberto] = useState(false);
   const [plaquinhaAberta, setPlaquinhaAberta] = useState(false);
   const [semanaSheet, setSemanaSheet] = useState(false);
   const [buscaAberta, setBuscaAberta] = useState(false);
   const [iaAberta, setIaAberta] = useState(false);
-  const [abaCardapioSeg, setAbaCardapioSeg] = useState<'montar' | 'operacao' | 'avaliacao'>('montar');
-  const [abaCompras, setAbaCompras] = useState<'lista' | 'estoque' | 'nf' | 'fornecedores' | 'pedido'>('lista');
-  const [abaRelatorios, setAbaRelatorios] = useState<
-    'gerencial' | 'custos' | 'rankings' | 'previsao' | 'fornecedores' | 'auditoria'
-  >('gerencial');
 
   const { estado, atualizar, pronto } = useSemana(semanaId);
   const { precos, definirPreco } = usePrecos();
