@@ -840,6 +840,14 @@ export function lerSatisfacao(): RegistroSatisfacao[] {
   return lerLocal<RegistroSatisfacao[]>('satisfacao', []);
 }
 
+export function useSatisfacao() {
+  const [lista, setLista] = useState<RegistroSatisfacao[]>([]);
+  const recarregar = useCallback(() => setLista(lerLocal('satisfacao', [])), []);
+  useEffect(() => { recarregar(); }, [recarregar]);
+  useReleituraExterna('satisfacao', recarregar);
+  return lista;
+}
+
 /* =====================================================================
    Módulo 6 — Eventos de demanda (manuais / feriados configuráveis).
    ===================================================================== */

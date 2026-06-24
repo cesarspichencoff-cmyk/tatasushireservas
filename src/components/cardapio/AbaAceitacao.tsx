@@ -7,6 +7,8 @@ import { PlaquinhaQR } from './PlaquinhaQR';
 import { BarraMini, Botao, Cartao, EstadoVazio, Pilula, Secao, estiloInput, estiloRotulo } from '@/components/ui';
 import { Icone } from '@/components/Icones';
 import { DIAS_SEMANA, formatarQtd, normalizar } from '@/lib/cardapio/motor';
+import { useSatisfacao } from '@/lib/cardapio/estado';
+import { supabaseHabilitado } from '@/lib/cardapio/supabase';
 import type { Aceitacao, EstadoSemana, EventoDemanda, RegistroDesperdicio } from '@/lib/cardapio/tipos';
 
 function media(a: { somaNotas: number; n: number }) {
@@ -36,6 +38,8 @@ export function AbaAceitacao({
   const [rotulo, setRotulo] = useState('');
   const [fator, setFator] = useState('1.2');
   const [plaquinhaAberta, setPlaquinhaAberta] = useState(false);
+  const satisfacao = useSatisfacao();
+  const nuvemAtiva = supabaseHabilitado();
 
   const ranking = useMemo(
     () =>
@@ -104,6 +108,11 @@ export function AbaAceitacao({
             </Botao>
           </div>
         </Cartao>
+        {!nuvemAtiva && (
+          <p className="rounded-2xl bg-ouro-50 px-4 py-3 text-xs font-semibold text-ouro-700 dark:bg-ouro-900/20 dark:text-ouro-300">
+            ⚠️ Nuvem desligada — votos do QR ficam no celular de quem avaliou e não chegam aqui. Configure o Supabase em Ajustes para sincronizar entre aparelhos.
+          </p>
+        )}
       </Secao>
 
       {/* Avaliação dos pratos da semana */}
@@ -205,6 +214,34 @@ export function AbaAceitacao({
           <p className="text-xs font-semibold text-texto-suave">
             Pratos que a equipe não curtiu e ainda sobraram: bons candidatos a substituir no cardápio.
           </p>
+        </Secao>
+      )}
+
+      {/* Comentários do QR */}
+      {satisfacao.filter((r) => r.comentario).length > 0 && (
+        <Secao titulo="Comentários recentes (QR)">
+          <Cartao className="!p-0">
+            <ul className="divide-y divide-carvao-100 dark:divide-carvao-700/60">
+              {satisfacao
+                .filter((r) => r.comentario)
+                .slice(0, 20)
+                .map((r) => (
+                  <li key={r.id} className="px-4 py-3">
+                    <div className="flex items-start gap-2.5">
+                      <span className="mt-0.5 text-lg leading-none">
+                        {r.qualidade === 'bom' ? '😋' : r.qualidade === 'ok' ? '😐' : '👎'}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm text-carvao-800 dark:text-areia-100">{r.comentario}</p>
+                        <p className="mt-0.5 text-caption text-texto-suave">
+                          {r.prato} · {new Date(r.em).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+            </ul>
+          </Cartao>
         </Secao>
       )}
 
