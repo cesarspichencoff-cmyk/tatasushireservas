@@ -1,10 +1,12 @@
 /* =====================================================================
    Dados operacionais semeados a partir de 3 anos de conversas reais
-   (WhatsApp grupo Tatá House + conversa Maria + conversa César)
-   e varredura de 624 fotos de NF/entrega (ago/2023 – jun/2026).
+   (WhatsApp grupo Tatá House + conversa Maria + conversa César),
+   varredura de 624 fotos de NF/entrega (ago/2023 – jun/2026) e
+   planilha "Alimentação de Funcionário jan-mai 2026" (263 produtos,
+   1 229 linhas de compra, 23 fornecedores).
 
    Cobertura: set/2023 – jun/2026
-   Fornecedores: 14 | Funcionários com restrição: 29 | Cotações: abr/2026
+   Fornecedores: 17 | Funcionários com restrição: 29 | Cotações: mai/2026
    ===================================================================== */
 
 import type { Funcionario, PerfilFornecedor } from './tipos';
@@ -83,6 +85,21 @@ export const PERFIS_FORNECEDORES_SEED: Record<string, PerfilFornecedor> = {
     obs: 'Lider Comercio de Pescados EIRELI. CNPJ 18.952.282/0001-71. Av. Autonomista 896, Sala 170, Torre Mykonos, Vila Yara, Osasco-SP. Tel: (11) 3624-7678. Importador do filé de panga TPSCO (Pangasius hypophthalmus, Vietnã). Pode ser contato direto alternativo ao Mar Fish.',
     avaliacoes: [],
   },
+  'Frango da Nonna': {
+    nome: 'Frango da Nonna',
+    obs: 'Frango da Nonna Comercial Avícola Ltda. Melhor preço de coxa e sobre coxa (R$6,00/kg) e frango inteiro (R$6,90/kg) conforme planilha jan–mai/2026. Concorre com Vita Frango para aves resfriadas.',
+    avaliacoes: [],
+  },
+  'Jonaldo': {
+    nome: 'Jonaldo',
+    obs: '52940425 Jonaldo Francisco de Santana. Temperos a granel: alho descascado, chimichurri, colorau, caldo de carne/galinha, ervas finas, salsa desidratada, tempero baiano. Preço padrão R$25,00/kg. Fonte: planilha jan–mai/2026.',
+    avaliacoes: [],
+  },
+  'Irmãos Avelino': {
+    nome: 'Irmãos Avelino',
+    obs: 'DISTRIB. E IMP. IRMAOS AVELINO S.A. Distribuidor diversificado: carnes, laticínios, secos e molhados. 42 produtos na planilha jan–mai/2026. Atenção: preços por vezes acima de supermercados — comparar antes de fechar pedido.',
+    avaliacoes: [],
+  },
 };
 
 /* item normalizado → fornecedor */
@@ -99,8 +116,11 @@ export const MAPA_FORNECEDORES_SEED: Record<string, string> = {
   'linguica toscana': 'WG',
   'linguica calabresa': 'WG',
   'copa lombo': 'WG',
-  // Vita Frango — frango
-  'frango inteiro': 'Vita Frango',
+  // Frango da Nonna — melhor preço para aves inteiras e coxa (planilha jan-mai/2026)
+  'frango inteiro': 'Frango da Nonna',
+  'coxa e sobre coxa': 'Frango da Nonna',
+  'frango a passarinho': 'WG',
+  // Vita Frango — frango desossado e cortes especiais
   'sobrecoxa': 'Vita Frango',
   'coxa de frango': 'Vita Frango',
   'sobre coxa': 'Vita Frango',
@@ -112,6 +132,7 @@ export const MAPA_FORNECEDORES_SEED: Record<string, string> = {
   'figado de frango': 'Vita Frango',
   'moela': 'Vita Frango',
   'file de frango sem osso': 'Vita Frango',
+  'file de frango': 'Vita Frango',
   // JAMPAC — bovinos, suínos extras e frango congelado
   'acem': 'JAMPAC Alimentos',
   'paleta bovina': 'JAMPAC Alimentos',
@@ -127,42 +148,67 @@ export const MAPA_FORNECEDORES_SEED: Record<string, string> = {
   'cupim': 'JAMPAC Alimentos',
   'pernil': 'JAMPAC Alimentos',
   'barriga suina': 'JAMPAC Alimentos',
-  // Hortifrúti — FLD (NF confirmada abr/2026) e Princesa do Oeste (pedido mai/2026)
+  // Hortifrúti — FLD é o fornecedor principal confirmado (planilha jan-mai/2026, 61 itens)
   'tomate': 'FLD',
   'cenoura': 'FLD',
   'cebola': 'FLD',
+  'cebola branca': 'FLD',
+  'cebola roxa': 'FLD',
   'batata': 'FLD',
+  'batata doce': 'FLD',
   'chuchu': 'FLD',
   'couve manteiga': 'FLD',
+  'couve flor': 'FLD',
   'pepino': 'FLD',
   'abacaxi': 'FLD',
-  'banana': 'Princesa do Oeste',
-  'batata doce': 'Princesa do Oeste',
-  'alface': 'Princesa do Oeste',
-  'repolho': 'Princesa do Oeste',
-  'beterraba': 'Princesa do Oeste',
+  'abobrinha italiana': 'FLD',
+  'abobrinha': 'FLD',
+  'abobora': 'FLD',
+  'abobora japonesa': 'FLD',
+  'acelga': 'FLD',
+  'alface': 'FLD',
+  'alface americana': 'FLD',
+  'alface crespa': 'FLD',
+  'alface lisa': 'FLD',
+  'beterraba': 'FLD',
+  'brocolis': 'FLD',
+  'goiaba': 'FLD',
+  'laranja': 'FLD',
+  'limao': 'FLD',
+  'mandioca': 'FLD',
+  'melancia': 'FLD',
+  'melao': 'FLD',
+  'pimentao': 'FLD',
+  'pimentao verde': 'FLD',
+  'pimentao amarelo': 'FLD',
+  'pimentao vermelho': 'FLD',
+  'repolho': 'FLD',
+  'repolho branco': 'FLD',
+  'repolho roxo': 'FLD',
+  'banana': 'FLD',
   'espinafre': 'Princesa do Oeste',
-  'brocolis': 'Princesa do Oeste',
-  'melancia': 'Princesa do Oeste',
-  'melao': 'Princesa do Oeste',
-  'laranja': 'Princesa do Oeste',
-  'limao': 'Princesa do Oeste',
-  'salsa': 'Princesa do Oeste',
-  'abobrinha': 'Princesa do Oeste',
-  'pimentao': 'Princesa do Oeste',
   'berinjela': 'Princesa do Oeste',
-  'mandioca': 'Princesa do Oeste',
-  'abobora': 'Princesa do Oeste',
   'vagem': 'Princesa do Oeste',
   'maca': 'Princesa do Oeste',
+  'salsa': 'Princesa do Oeste',
   // Kenai — ovos
   'ovos': 'Kenai',
   'ovo': 'Kenai',
+  // Jonaldo — temperos a granel (planilha jan-mai/2026)
+  'alho descascado': 'Jonaldo',
+  'caldo de carne': 'Jonaldo',
+  'caldo de galinha': 'Jonaldo',
+  'chimichurri': 'Jonaldo',
+  'colorau': 'Jonaldo',
+  'ervas finas': 'Jonaldo',
+  'salsa desidratada': 'Jonaldo',
+  'tempero baiano': 'Jonaldo',
   // Malte — secos
   'arroz': 'Malte',
   'feijao': 'Malte',
   'feijao preto': 'Malte',
   'feijao carioca': 'Malte',
+  'feijao fradinho': 'Malte',
   'oleo': 'Malte',
   'leite': 'Malte',
   'acucar': 'Malte',
@@ -182,23 +228,52 @@ export const MAPA_FORNECEDORES_SEED: Record<string, string> = {
   'merluza': 'Mar Fish',
 };
 
-/* preços mais recentes por item (fonte: NFs + cotações + tabela comparativa)
-   FLD hortifrúti: NF 13/04/2026
-   WG + Vita Frango + JAMPAC: cotações mar/2026
-   Malte: ago/2024 (desatualizado — atualizar ao renovar pedido) */
+/* preços mais recentes por item — melhor preço identificado entre fornecedores
+   Fonte primária: planilha "Alimentação Funcionário jan–mai/2026" (263 produtos)
+   Complemento: NFs + cotações mar-abr/2026 para itens ausentes na planilha */
 export const PRECOS_COTACAO_SEED: Record<string, number> = {
-  // WG (cotação mar/2026)
+  // ── Carnes bovinas ───────────────────────────────────────────────────────
+  // Frigosul (planilha jan-mai/2026)
+  'acem em cubo': 30.90,
+  'aranha alcatra': 31.50,
+  // JAMPAC (planilha jan-mai/2026 e cotação mar/2026)
+  'acem': 29.8,
+  'alcatra': 30.5,
+  'coxao mole': 35.8,
+  'coxao duro': 33.99,
+  'lagarto': 33.9,
+  'musculo': 25.9,
+  'patinho': 36.5,
+  'costela bovina': 17.99,
+  'cupim': 32.0,
+  // Apetito Foods (planilha jan-mai/2026)
+  'carne moida': 18.49,
+  'carne seca': 36.58,
+  // ── Carnes suínas ────────────────────────────────────────────────────────
+  // Apetito Foods (planilha jan-mai/2026)
+  'bisteca suina': 14.88,
+  'lombo suino': 18.49,
+  // WG (planilha jan-mai/2026)
+  'costelinha suina': 22.0,
+  'costela': 10.98,
+  'pernil suino': 15.98,
+  // WG (cotação mar/2026 — sem alteração na planilha)
   'tiras de carnes': 41.0,
-  'tiras de frango': 19.9,
   'bife': 44.0,
-  'costelinha suina': 24.9,
-  'lombo suino': 19.5,
-  'bisteca suina': 16.99,
   'bife a role': 42.0,
-  'acem moido': 19.8,
-  'linguica toscana': 19.9,
-  // Vita Frango (16/03/2026)
-  'frango inteiro': 6.8,
+  'copa lombo': 24.0,
+  // Apetito Foods (planilha jan-mai/2026)
+  'linguica toscana': 13.89,
+  // Irmãos Avelino (planilha jan-mai/2026)
+  'linguica calabresa': 50.14,
+  // ── Aves ─────────────────────────────────────────────────────────────────
+  // Frango da Nonna (planilha jan-mai/2026 — melhor preço)
+  'frango inteiro': 6.9,
+  'coxa e sobre coxa': 6.0,
+  // WG (planilha jan-mai/2026)
+  'frango a passarinho': 9.98,
+  'tiras de frango': 19.9,
+  // Vita Frango (cotação mar/2026)
   'coxa de frango': 6.2,
   'sobre coxa': 7.8,
   'sobrecoxa': 7.8,
@@ -208,41 +283,86 @@ export const PRECOS_COTACAO_SEED: Record<string, number> = {
   'coracao de frango': 24.5,
   'figado de frango': 2.9,
   'moela': 11.9,
-  'file de frango sem osso': 11.8,
-  // JAMPAC bovinos (02/03/2026)
-  'acem': 29.8,
-  'musculo': 25.9,
-  'lagarto': 33.9,
-  'coxao mole': 35.8,
-  'coxao duro': 33.99,
-  'patinho': 36.5,
-  'carne moida': 19.8,
-  'costela bovina': 17.99,
-  'pernil': 15.9,
-  // FLD hortifrúti (NF 13/04/2026 — preço por kg)
+  // Apetito Foods / Korisko (planilha jan-mai/2026)
+  'file de frango': 11.99,
+  'file de frango sem osso': 11.99,
+  'acem moido': 32.0,
+  // ── Hortifrúti — FLD (planilha jan-mai/2026) ─────────────────────────────
   'abacaxi': 7.4,
-  'banana': 9.69,
-  'batata': 7.1,
+  'abobora japonesa': 4.93,
+  'abobrinha italiana': 7.4,
+  'acelga': 7.6,
+  'alface americana': 16.88,
+  'alface crespa': 15.3,
+  'alface lisa': 16.88,
+  'banana': 6.95,
+  'banana da terra': 9.69,
+  'batata': 11.84,
+  'batata doce': 7.4,
+  'beterraba': 6.99,
+  'brocolis': 20.0,
   'cebola': 4.67,
-  'cenoura': 8.14,
-  'chuchu': 4.93,
+  'cebola branca': 4.2,
+  'cebola roxa': 10.61,
+  'cenoura': 4.47,
+  'chuchu': 6.58,
+  'couve flor': 26.25,
   'couve manteiga': 15.0,
-  'pepino': 12.33,
-  'tomate': 14.8,
-  // Princesa do Oeste / tabela mai/2024 (referência — verificar atual)
-  'batata doce': 14.5,
-  'beterraba': 5.76,
-  'repolho': 4.95,
-  'alface': 12.95,
-  'laranja': 6.53,
-  'limao': 4.35,
-  'melancia': 3.95,
-  // Malte (ago/2024 — desatualizado)
-  'oleo': 5.99,
-  'feijao preto': 6.9,
-  'acucar': 3.99,
-  'sal': 0.99,
+  'goiaba': 14.5,
+  'laranja': 4.32,
+  'limao': 5.22,
+  'mandioca': 7.0,
+  'melancia': 4.9,
+  'melao': 7.97,
+  'pepino': 11.1,
+  'pimentao amarelo': 26.5,
+  'pimentao verde': 12.5,
+  'pimentao vermelho': 26.5,
+  'repolho branco': 5.0,
+  'repolho roxo': 7.6,
+  'tomate': 19.15,
+  // Massaru Hortifruti (planilha jan-mai/2026 — melhor preço de cebola)
+  // ── Grãos / Massas ───────────────────────────────────────────────────────
+  // Roldão / Sendas (planilha jan-mai/2026 — melhor preço)
+  'arroz': 15.9,
+  'feijao': 5.24,
+  'feijao preto': 5.19,
+  'feijao fradinho': 7.65,
+  'farinha de trigo': 4.69,
+  'farinha de rosca': 15.31,
+  // Irmãos Avelino (planilha jan-mai/2026)
+  'farinha para empanar': 18.72,
+  // BIG/WMS (planilha jan-mai/2026)
+  'macarrao espaguete': 2.61,
+  'macarrao parafuso': 3.3,
+  // ── Laticínios ───────────────────────────────────────────────────────────
+  // Roldão (planilha jan-mai/2026)
+  'creme de leite': 9.59,
+  'leite condensado': 37.49,
   'leite': 4.99,
+  // Irmãos Avelino / BIG/WMS
+  'leite de coco': 3.99,
+  // ── Temperos ─────────────────────────────────────────────────────────────
+  // FLD (planilha jan-mai/2026)
+  'alho descascado': 26.82,
+  'coentro': 39.0,
+  // Jonaldo (planilha jan-mai/2026)
+  'caldo de carne': 25.0,
+  'caldo de galinha': 25.0,
+  'chimichurri': 25.0,
+  'colorau': 25.0,
+  'ervas finas': 25.0,
+  'salsa desidratada': 25.0,
+  'tempero baiano': 25.0,
+  // Irmãos Avelino (planilha jan-mai/2026)
+  'molho de pimenta': 12.51,
+  // WMS (planilha jan-mai/2026)
+  'vinagre': 1.35,
+  // Atacadão (planilha jan-mai/2026)
+  'sal': 2.17,
+  // Malte / Roldão (referência)
+  'oleo': 5.99,
+  'acucar': 3.99,
 };
 
 /* ─────────────────────────────────────────── FUNCIONÁRIOS + RESTRIÇÕES */

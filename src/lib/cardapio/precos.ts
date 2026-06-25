@@ -105,11 +105,17 @@ const ALIASES_HISTORICO: Record<string, string> = {
   'bife role': 'acem',
   'bife de patinho': 'acem',
   'carne moida': 'acem moido',
-  'carne em cubos': 'acem',
+  'carne bovina moida': 'acem moido',
+  'carne em cubos': 'acem em cubo',
+  'acem em cubo': 'acem',
   'tiras de carne': 'acem',
   'tiras de carnes': 'acem',
+  'strogonofe': 'tiras de carnes',
+  'strogonofe/tiras de carnes': 'tiras de carnes',
   'patinho': 'acem',
   'aranha': 'acem',
+  'aranha alcatra': 'alcatra',
+  'aranha da alcatra': 'alcatra',
   'chuleta bovina': 'acem',
   'chuleta paulista': 'acem',
   // suínos
@@ -189,8 +195,7 @@ const ALIASES_HISTORICO: Record<string, string> = {
   'almondega': 'acem moido',
   'almondegas': 'acem moido',
   // alcatra e rabada → referência bovina disponível
-  'aranha da alcatra': 'acem',
-  'aranha de alcatra': 'acem',
+  'aranha de alcatra': 'alcatra',
   'rabada bovina': 'costela',
   'osso': 'costela',
   // ervas frescas → herb mais próximo nas compras
