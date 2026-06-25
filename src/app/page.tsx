@@ -48,6 +48,7 @@ const AbaCustoPrato = dynamic(() => import('@/components/cardapio/AbaCustoPrato'
 const AbaFornecedorIntel = dynamic(() => import('@/components/cardapio/AbaFornecedorIntel').then((m) => ({ default: m.AbaFornecedorIntel })), { ssr: false, loading: () => <Carregando h="h-64" /> });
 const AbaPedido = dynamic(() => import('@/components/cardapio/AbaPedido').then((m) => ({ default: m.AbaPedido })), { ssr: false, loading: () => <Carregando h="h-64" /> });
 const CardapioOrientadoDados = dynamic(() => import('@/components/cardapio/CardapioOrientadoDados').then((m) => ({ default: m.CardapioOrientadoDados })), { ssr: false, loading: () => <Carregando h="h-64" /> });
+const AbaGastos = dynamic(() => import('@/components/cardapio/AbaGastos').then((m) => ({ default: m.AbaGastos })), { ssr: false, loading: () => <Carregando h="h-64" /> });
 import {
   deslocarSemana,
   idSemanaIso,
@@ -403,7 +404,7 @@ function BuscaGlobal({
 
 type CardapioSeg = 'montar' | 'operacao' | 'avaliacao';
 type ComprasSeg = 'lista' | 'estoque' | 'nf' | 'fornecedores' | 'pedido';
-type RelatoriosSeg = 'gerencial' | 'custos' | 'rankings' | 'previsao' | 'fornecedores' | 'auditoria';
+type RelatoriosSeg = 'gerencial' | 'custos' | 'rankings' | 'previsao' | 'fornecedores' | 'auditoria' | 'gastos';
 
 function lerHashNav(): { aba?: AbaId; sub?: string } {
   if (typeof window === 'undefined') return {};
@@ -1038,6 +1039,7 @@ export default function PaginaCardapios() {
                     { id: 'rankings',     rotulo: 'DNA & Rankings', curto: 'DNA' },
                     { id: 'previsao',     rotulo: 'Previsão',       curto: 'Prev.' },
                     { id: 'fornecedores', rotulo: 'Fornecedores',   curto: 'Forn.' },
+                    { id: 'gastos', rotulo: 'Gastos reais', curto: 'Gastos' },
                     ...(pode(papel, 'auditoria:ver') ? [{ id: 'auditoria', rotulo: 'Auditoria', curto: 'Audit.' }] : []),
                   ] as { id: typeof abaRelatorios; rotulo: string; curto: string }[]).map((s) => (
                     <button
@@ -1109,6 +1111,8 @@ export default function PaginaCardapios() {
                 {abaRelatorios === 'fornecedores' && (
                   <AbaRadar precos={precos} historico={historico} fornecedores={fornecedores} />
                 )}
+
+                {abaRelatorios === 'gastos' && <AbaGastos />}
 
                 {abaRelatorios === 'auditoria' && pode(papel, 'auditoria:ver') && (
                   <AbaAuditoria papel={papel} />

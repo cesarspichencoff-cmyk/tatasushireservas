@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { linhasDoDia, normalizar, PESSOAS_PADRAO } from './motor';
 import { PRECOS_COMPRAS } from './precos-compras';
+import historicoPlanilhaJson from './historico-planilha.json';
 import {
   fatorEfetivo,
   registrarRazao,
@@ -356,6 +357,32 @@ export function useHistoricoPrecos() {
   useEffect(() => { recarregar(); }, [recarregar]);
   useReleituraExterna('historicoPrecos', recarregar);
   return historico;
+}
+
+/**
+ * Semente única do histórico de compras jan–mai/2026.
+ * Roda apenas uma vez por dispositivo (flag 'historicoSeedV1').
+ * Não sobrescreve entradas manuais: só adiciona pontos que ainda não existem.
+ */
+export function useSeedHistoricoPlanilha() {
+  useEffect(() => {
+    if (lerLocal('historicoSeedV1', false)) return;
+    const seed = historicoPlanilhaJson as HistoricoPrecos;
+    const atual = lerLocal<HistoricoPrecos>('historicoPrecos', {});
+    const merged: HistoricoPrecos = { ...atual };
+    for (const [item, pontos] of Object.entries(seed)) {
+      if (!merged[item]) {
+        merged[item] = pontos;
+      } else {
+        // Append only points not already in the serie (dedupe by em)
+        const emsExistentes = new Set(merged[item].map((p) => p.em));
+        const novos = pontos.filter((p) => !emsExistentes.has(p.em));
+        if (novos.length) merged[item] = [...merged[item], ...novos].sort((a, b) => a.em.localeCompare(b.em));
+      }
+    }
+    gravarLocal('historicoPrecos', merged);
+    gravarLocal('historicoSeedV1', true);
+  }, []);
 }
 
 /* ------------------- itens novos vindos da cotação -------------------- */

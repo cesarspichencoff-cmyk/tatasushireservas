@@ -5,16 +5,20 @@ import { Botao, Cartao, Pilula, estiloInput } from '@/components/ui';
 import { Icone } from '@/components/Icones';
 import { DADOS, formatarReais, normalizar } from '@/lib/cardapio/motor';
 import { resolverPreco, ROTULO_TIPO_PRECO } from '@/lib/cardapio/precos';
-import { useHistoricoPrecos, registrarAuditoria } from '@/lib/cardapio/estado';
+import { useHistoricoPrecos, registrarAuditoria, useSeedHistoricoPlanilha } from '@/lib/cardapio/estado';
 import { PRECOS_COMPRAS } from '@/lib/cardapio/precos-compras';
 import { useEstimativas } from '@/lib/cardapio/estimativas';
 import { DialogoContexto } from './ContextoDecisao';
 import type { ContextoDecisao } from '@/lib/cardapio/tipos';
+import comparativoJson from '@/lib/cardapio/comparativo-fornecedores.json';
+
+type EntradaForn = { f: string; p: number; u: string };
+const COMPARATIVO = comparativoJson as Record<string, EntradaForn[]>;
 
 /**
  * Preços por item — com tipo (real / estimado / sem preço) e histórico em
- * accordion: preço atual, menor, maior, último, variação e fornecedor.
- * O preço real vem da cotação/nota; a estimativa é a média de mercado.
+ * accordion: preço atual, menor, maior, último, variação, comparativo de
+ * fornecedores e alerta de preço acima do mercado.
  */
 export function AbaPrecos({
   precos,
@@ -33,6 +37,9 @@ export function AbaPrecos({
   const precoBefore = useRef<Record<string, number | undefined>>({});
   const historico = useHistoricoPrecos();
   const { estimativas, definirEstimativa, gerarEstimativas } = useEstimativas();
+
+  // Seed histórico jan–mai/2026 na primeira visita
+  useSeedHistoricoPlanilha();
 
   const salvarContexto = (contexto: ContextoDecisao) => {
     if (!contextoItem) return;
@@ -78,8 +85,8 @@ export function AbaPrecos({
           </Botao>
         </div>
         <p className="text-sm text-carvao-500 dark:text-carvao-300">
-          O número em cinza no campo é a referência de base ou histórico — não está confirmado.
-          Digite para confirmar o preço real. Preço <strong>real</strong> vem da cotação/nota aplicada.
+          O número em cinza é referência de base ou histórico — não confirmado.
+          Digite para confirmar o preço real. <strong>Alerta laranja</strong> = preço acima do melhor fornecedor conhecido.
         </p>
         <input
           className={estiloInput}
@@ -101,6 +108,12 @@ export function AbaPrecos({
             const variacao = anterior && anterior > 0 ? (atual - anterior) / anterior : undefined;
             const estaAberto = aberto === k;
 
+            // Feature 3: alerta preço caro
+            const comp = COMPARATIVO[k];
+            const melhorPreco = comp ? comp[0].p : undefined;
+            const precoDigitado = precos[k] > 0 ? precos[k] : undefined;
+            const acimaMercado = precoDigitado && melhorPreco && precoDigitado > melhorPreco * 1.15;
+
             return (
               <li key={i.n}>
                 <div className="flex items-center justify-between gap-2 px-4 py-2.5">
@@ -120,6 +133,9 @@ export function AbaPrecos({
                         <Pilula tom={pr.tipo === 'real' ? 'verde' : pr.tipo === 'historico' ? 'verde' : pr.tipo === 'estimado' ? 'ouro' : 'vermelho'}>
                           {ROTULO_TIPO_PRECO[pr.tipo]}
                         </Pilula>
+                        {comp && (
+                          <Pilula tom="ouro">{comp.length} fornec.</Pilula>
+                        )}
                       </span>
                       <span className="block text-caption text-texto-suave">
                         {i.u}
@@ -128,6 +144,11 @@ export function AbaPrecos({
                     </span>
                   </button>
                   <div className="flex shrink-0 items-center gap-1.5 text-sm">
+                    {acimaMercado && (
+                      <span title={`Melhor preço conhecido: R$${melhorPreco!.toFixed(2)} (${comp![0].f})`}>
+                        <Icone nome="alerta" tam={14} className="text-ouro-500" />
+                      </span>
+                    )}
                     <span className="text-texto-suave">R$</span>
                     <input
                       type="number"
@@ -146,7 +167,9 @@ export function AbaPrecos({
                         }
                       }}
                       className={`w-20 rounded-xl border bg-white px-2 py-1.5 text-right font-bold tabular-nums dark:bg-carvao-900 ${
-                        precos[k] > 0
+                        acimaMercado
+                          ? 'border-ouro-500 dark:border-ouro-600'
+                          : precos[k] > 0
                           ? 'border-carvao-200 dark:border-carvao-600'
                           : pr.tipo !== 'sem'
                           ? 'border-ouro-300 dark:border-ouro-800/60'
@@ -184,6 +207,44 @@ export function AbaPrecos({
                       </p>
                     )}
 
+                    {/* Feature 1: Comparativo de fornecedores */}
+                    {comp && comp.length >= 2 && (
+                      <div>
+                        <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-texto-suave">
+                          Comparativo de fornecedores
+                        </p>
+                        <div className="overflow-hidden rounded-xl ring-1 ring-carvao-100 dark:ring-carvao-700/60">
+                          {comp.map((e, idx) => {
+                            const isBarato = idx === 0;
+                            const isCaro = idx === comp.length - 1 && comp.length > 1;
+                            const pct = idx > 0 ? Math.round(((e.p - comp[0].p) / comp[0].p) * 100) : 0;
+                            return (
+                              <div
+                                key={e.f}
+                                className={`flex items-center justify-between px-3 py-1.5 text-xs ${
+                                  idx < comp.length - 1 ? 'border-b border-carvao-100 dark:border-carvao-700/40' : ''
+                                } ${isBarato ? 'bg-brand-50/60 dark:bg-brand-900/20' : ''}`}
+                              >
+                                <span className="font-semibold">
+                                  {isBarato && <span className="mr-1 text-brand-600">★</span>}
+                                  {e.f}
+                                </span>
+                                <span className={`tabular-nums ${isCaro && pct > 20 ? 'text-perigo font-bold' : ''}`}>
+                                  {formatarReais(e.p)}/{e.u.toLowerCase()}
+                                  {pct > 0 && <span className="ml-1 text-[10px] text-texto-suave">+{pct}%</span>}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {acimaMercado && melhorPreco && (
+                          <p className="mt-1.5 text-xs font-bold text-ouro-600">
+                            ⚠ Seu preço está {Math.round(((precoDigitado! - melhorPreco) / melhorPreco) * 100)}% acima do mais barato ({comp[0].f}).
+                          </p>
+                        )}
+                      </div>
+                    )}
+
                     {pr.tipo !== 'real' && (
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-xs font-semibold text-ouro-600">Confirmar preço (R$):</span>
@@ -199,9 +260,9 @@ export function AbaPrecos({
                         />
                         <span className="text-caption text-texto-suave">
                           {pr.tipo === 'historico'
-                            ? 'preço histórico (Mai/Jun 2026) — confirme se mudou.'
+                            ? 'preço histórico — confirme se mudou.'
                             : pr.tipo === 'estimado'
-                            ? 'estimativa em uso — confirme com o preço real da cotação.'
+                            ? 'estimativa em uso — confirme com o preço real.'
                             : 'sem preço — lance o real acima ou uma estimativa.'}
                         </span>
                       </div>

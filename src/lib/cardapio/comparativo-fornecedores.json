@@ -1,0 +1,834 @@
+{
+  "acem em cubo": [
+    {
+      "f": "Frigosul",
+      "p": 30.9,
+      "u": "KG"
+    },
+    {
+      "f": "JAMPAC",
+      "p": 34.5,
+      "u": "KG"
+    },
+    {
+      "f": "Apetito",
+      "p": 34.99,
+      "u": "KG"
+    },
+    {
+      "f": "WG",
+      "p": 46.98,
+      "u": "KG"
+    }
+  ],
+  "acem moido": [
+    {
+      "f": "Apetito",
+      "p": 18.49,
+      "u": "KG"
+    },
+    {
+      "f": "JAMPAC",
+      "p": 18.99,
+      "u": "KG"
+    },
+    {
+      "f": "WG",
+      "p": 32.0,
+      "u": "KG"
+    },
+    {
+      "f": "Itaim Carnes",
+      "p": 49.9,
+      "u": "KG"
+    }
+  ],
+  "acucar": [
+    {
+      "f": "Roldão",
+      "p": 3.09,
+      "u": "FD"
+    },
+    {
+      "f": "Sendas",
+      "p": 3.17,
+      "u": "FD"
+    },
+    {
+      "f": "BIG/WMS",
+      "p": 3.2,
+      "u": "FD"
+    }
+  ],
+  "alho descascado": [
+    {
+      "f": "FLD",
+      "p": 26.82,
+      "u": "KG"
+    },
+    {
+      "f": "Jonaldo",
+      "p": 27.0,
+      "u": "KG"
+    }
+  ],
+  "ana maria (tempero)": [
+    {
+      "f": "Jonaldo",
+      "p": 25.0,
+      "u": "KG"
+    },
+    {
+      "f": "FLD",
+      "p": 63.0,
+      "u": "KG"
+    }
+  ],
+  "alcatra": [
+    {
+      "f": "Frigosul",
+      "p": 31.5,
+      "u": "KG"
+    },
+    {
+      "f": "Apetito",
+      "p": 32.99,
+      "u": "KG"
+    }
+  ],
+  "arroz": [
+    {
+      "f": "Roldão",
+      "p": 15.9,
+      "u": "KG"
+    },
+    {
+      "f": "Sendas",
+      "p": 16.05,
+      "u": "KG"
+    },
+    {
+      "f": "Atacadão",
+      "p": 16.19,
+      "u": "KG"
+    },
+    {
+      "f": "BIG/WMS",
+      "p": 18.25,
+      "u": "KG"
+    },
+    {
+      "f": "Irmãos Avelino",
+      "p": 121.79,
+      "u": "KG"
+    }
+  ],
+  "azeite": [
+    {
+      "f": "BIG/WMS",
+      "p": 25.09,
+      "u": "UN"
+    },
+    {
+      "f": "Sendas",
+      "p": 25.1,
+      "u": "UN"
+    },
+    {
+      "f": "Roldão",
+      "p": 25.89,
+      "u": "UN"
+    },
+    {
+      "f": "Atacadão",
+      "p": 27.51,
+      "u": "UN"
+    },
+    {
+      "f": "Irmãos Avelino",
+      "p": 59.9,
+      "u": "UN"
+    }
+  ],
+  "bacon": [
+    {
+      "f": "BIG/WMS",
+      "p": 20.86,
+      "u": "KG"
+    },
+    {
+      "f": "Irmãos Avelino",
+      "p": 27.5,
+      "u": "KG"
+    }
+  ],
+  "bisteca suina": [
+    {
+      "f": "Apetito",
+      "p": 14.88,
+      "u": "KG"
+    },
+    {
+      "f": "JAMPAC",
+      "p": 15.5,
+      "u": "KG"
+    },
+    {
+      "f": "WG",
+      "p": 16.0,
+      "u": "KG"
+    },
+    {
+      "f": "Itaim Carnes",
+      "p": 29.9,
+      "u": "KG"
+    }
+  ],
+  "cafe em po": [
+    {
+      "f": "Roldão",
+      "p": 24.09,
+      "u": "KG"
+    },
+    {
+      "f": "BIG/WMS",
+      "p": 25.09,
+      "u": "KG"
+    },
+    {
+      "f": "Malte",
+      "p": 26.59,
+      "u": "KG"
+    },
+    {
+      "f": "Osara",
+      "p": 210.0,
+      "u": "KG"
+    },
+    {
+      "f": "Irmãos Avelino",
+      "p": 243.5,
+      "u": "KG"
+    },
+    {
+      "f": "TRES CORACOES ALIMENTOS S",
+      "p": 283.25,
+      "u": "KG"
+    }
+  ],
+  "caldo de carne": [
+    {
+      "f": "Jonaldo",
+      "p": 25.0,
+      "u": "KG"
+    },
+    {
+      "f": "FLD",
+      "p": 54.0,
+      "u": "KG"
+    }
+  ],
+  "caldo de galinha": [
+    {
+      "f": "Jonaldo",
+      "p": 25.0,
+      "u": "KG"
+    },
+    {
+      "f": "FLD",
+      "p": 54.0,
+      "u": "KG"
+    }
+  ],
+  "catchup - l": [
+    {
+      "f": "BIG/WMS",
+      "p": 22.89,
+      "u": "L"
+    },
+    {
+      "f": "Roldão",
+      "p": 24.7,
+      "u": "L"
+    },
+    {
+      "f": "Irmãos Avelino",
+      "p": 25.15,
+      "u": "L"
+    }
+  ],
+  "cebola branca": [
+    {
+      "f": "Massaru",
+      "p": 4.2,
+      "u": "KG"
+    },
+    {
+      "f": "FLD",
+      "p": 6.23,
+      "u": "KG"
+    }
+  ],
+  "chimichurri": [
+    {
+      "f": "Jonaldo",
+      "p": 25.0,
+      "u": "KG"
+    },
+    {
+      "f": "FLD",
+      "p": 90.0,
+      "u": "KG"
+    }
+  ],
+  "colorau": [
+    {
+      "f": "Jonaldo",
+      "p": 25.0,
+      "u": "KG"
+    },
+    {
+      "f": "FLD",
+      "p": 36.0,
+      "u": "KG"
+    }
+  ],
+  "costela": [
+    {
+      "f": "WG",
+      "p": 10.98,
+      "u": "KG"
+    },
+    {
+      "f": "Apetito",
+      "p": 17.99,
+      "u": "KG"
+    }
+  ],
+  "coxa e sobre coxa": [
+    {
+      "f": "Frango da Nonna",
+      "p": 6.0,
+      "u": "KG"
+    },
+    {
+      "f": "Apetito",
+      "p": 7.99,
+      "u": "KG"
+    },
+    {
+      "f": "WG",
+      "p": 15.0,
+      "u": "KG"
+    }
+  ],
+  "creme de leite/culinario - l": [
+    {
+      "f": "Roldão",
+      "p": 9.59,
+      "u": "L"
+    },
+    {
+      "f": "Irmãos Avelino",
+      "p": 10.35,
+      "u": "L"
+    }
+  ],
+  "ervas finas": [
+    {
+      "f": "Jonaldo",
+      "p": 25.0,
+      "u": "KG"
+    },
+    {
+      "f": "FLD",
+      "p": 72.0,
+      "u": "KG"
+    }
+  ],
+  "farinha de trigo": [
+    {
+      "f": "Roldão",
+      "p": 4.69,
+      "u": "FD"
+    },
+    {
+      "f": "BIG/WMS",
+      "p": 4.71,
+      "u": "FD"
+    }
+  ],
+  "feijao fradinho": [
+    {
+      "f": "Sendas",
+      "p": 7.65,
+      "u": "KG"
+    },
+    {
+      "f": "Roldão",
+      "p": 8.59,
+      "u": "KG"
+    },
+    {
+      "f": "BIG/WMS",
+      "p": 9.22,
+      "u": "KG"
+    }
+  ],
+  "feijao": [
+    {
+      "f": "Sendas",
+      "p": 5.24,
+      "u": "KG"
+    },
+    {
+      "f": "Roldão",
+      "p": 7.09,
+      "u": "KG"
+    },
+    {
+      "f": "Atacadão",
+      "p": 7.54,
+      "u": "KG"
+    },
+    {
+      "f": "BIG/WMS",
+      "p": 9.25,
+      "u": "KG"
+    },
+    {
+      "f": "Malte",
+      "p": 10.49,
+      "u": "KG"
+    }
+  ],
+  "feijao preto": [
+    {
+      "f": "Roldão",
+      "p": 5.19,
+      "u": "KG"
+    },
+    {
+      "f": "BIG/WMS",
+      "p": 6.03,
+      "u": "KG"
+    },
+    {
+      "f": "Malte",
+      "p": 6.29,
+      "u": "KG"
+    },
+    {
+      "f": "Atacadão",
+      "p": 6.62,
+      "u": "KG"
+    }
+  ],
+  "file de frango": [
+    {
+      "f": "Apetito",
+      "p": 11.99,
+      "u": "KG"
+    },
+    {
+      "f": "Korisko",
+      "p": 12.7,
+      "u": "KG"
+    },
+    {
+      "f": "Frango da Nonna",
+      "p": 12.7,
+      "u": "KG"
+    },
+    {
+      "f": "WG",
+      "p": 13.8,
+      "u": "KG"
+    }
+  ],
+  "fuba - un": [
+    {
+      "f": "Roldão",
+      "p": 7.15,
+      "u": "UN"
+    },
+    {
+      "f": "Irmãos Avelino",
+      "p": 8.36,
+      "u": "UN"
+    }
+  ],
+  "leite condensado": [
+    {
+      "f": "Roldão",
+      "p": 37.49,
+      "u": "L"
+    },
+    {
+      "f": "Irmãos Avelino",
+      "p": 66.9,
+      "u": "L"
+    }
+  ],
+  "leite - un": [
+    {
+      "f": "Sendas",
+      "p": 3.77,
+      "u": "UN"
+    },
+    {
+      "f": "Roldão",
+      "p": 5.49,
+      "u": "UN"
+    },
+    {
+      "f": "BIG/WMS",
+      "p": 5.51,
+      "u": "UN"
+    }
+  ],
+  "lemon pepper": [
+    {
+      "f": "Jonaldo",
+      "p": 25.0,
+      "u": "KG"
+    },
+    {
+      "f": "FLD",
+      "p": 90.0,
+      "u": "KG"
+    }
+  ],
+  "linguica toscana": [
+    {
+      "f": "Apetito",
+      "p": 13.89,
+      "u": "KG"
+    },
+    {
+      "f": "JAMPAC",
+      "p": 15.99,
+      "u": "KG"
+    },
+    {
+      "f": "WG",
+      "p": 18.9,
+      "u": "KG"
+    }
+  ],
+  "lombo suino": [
+    {
+      "f": "Apetito",
+      "p": 18.49,
+      "u": "KG"
+    },
+    {
+      "f": "WG",
+      "p": 23.98,
+      "u": "KG"
+    }
+  ],
+  "louro": [
+    {
+      "f": "Jonaldo",
+      "p": 25.0,
+      "u": "KG"
+    },
+    {
+      "f": "FLD",
+      "p": 45.9,
+      "u": "KG"
+    }
+  ],
+  "macarrao espaguete - un": [
+    {
+      "f": "BIG/WMS",
+      "p": 2.61,
+      "u": "UN"
+    },
+    {
+      "f": "Roldão",
+      "p": 2.79,
+      "u": "UN"
+    },
+    {
+      "f": "Sendas",
+      "p": 2.93,
+      "u": "UN"
+    },
+    {
+      "f": "Malte",
+      "p": 3.09,
+      "u": "UN"
+    }
+  ],
+  "massa para lasanha - un": [
+    {
+      "f": "Sendas",
+      "p": 6.25,
+      "u": "UN"
+    },
+    {
+      "f": "Roldão",
+      "p": 7.39,
+      "u": "UN"
+    },
+    {
+      "f": "BIG/WMS",
+      "p": 7.75,
+      "u": "UN"
+    }
+  ],
+  "milho de canjica - un": [
+    {
+      "f": "Irmãos Avelino",
+      "p": 6.06,
+      "u": "UN"
+    },
+    {
+      "f": "Sendas",
+      "p": 8.98,
+      "u": "UN"
+    }
+  ],
+  "molho de pimenta": [
+    {
+      "f": "Irmãos Avelino",
+      "p": 12.51,
+      "u": "L"
+    },
+    {
+      "f": "BIG/WMS",
+      "p": 12.58,
+      "u": "L"
+    }
+  ],
+  "molho ingles - un": [
+    {
+      "f": "BIG/WMS",
+      "p": 7.33,
+      "u": "UN"
+    },
+    {
+      "f": "Roldão",
+      "p": 7.59,
+      "u": "UN"
+    },
+    {
+      "f": "Irmãos Avelino",
+      "p": 8.51,
+      "u": "UN"
+    }
+  ],
+  "molho shoyu - l": [
+    {
+      "f": "Irmãos Avelino",
+      "p": 9.31,
+      "u": "L"
+    },
+    {
+      "f": "BIG/WMS",
+      "p": 11.44,
+      "u": "L"
+    },
+    {
+      "f": "Roldão",
+      "p": 12.5,
+      "u": "L"
+    }
+  ],
+  "mostarda - l": [
+    {
+      "f": "BIG/WMS",
+      "p": 20.89,
+      "u": "L"
+    },
+    {
+      "f": "Irmãos Avelino",
+      "p": 21.21,
+      "u": "L"
+    },
+    {
+      "f": "Roldão",
+      "p": 25.79,
+      "u": "L"
+    }
+  ],
+  "mussarela": [
+    {
+      "f": "Irmãos Avelino",
+      "p": 32.9,
+      "u": "KG"
+    },
+    {
+      "f": "Apetito",
+      "p": 35.96,
+      "u": "KG"
+    }
+  ],
+  "nhoque": [
+    {
+      "f": "Sendas",
+      "p": 14.18,
+      "u": "UN"
+    },
+    {
+      "f": "BIG/WMS",
+      "p": 15.22,
+      "u": "UN"
+    },
+    {
+      "f": "Roldão",
+      "p": 15.5,
+      "u": "UN"
+    }
+  ],
+  "oleo de soja": [
+    {
+      "f": "Roldão",
+      "p": 6.39,
+      "u": "UN"
+    },
+    {
+      "f": "BIG/WMS",
+      "p": 6.6,
+      "u": "UN"
+    },
+    {
+      "f": "Sendas",
+      "p": 6.77,
+      "u": "UN"
+    },
+    {
+      "f": "Atacadão",
+      "p": 7.54,
+      "u": "UN"
+    },
+    {
+      "f": "HF Food",
+      "p": 8.56,
+      "u": "UN"
+    },
+    {
+      "f": "Malte",
+      "p": 46.79,
+      "u": "UN"
+    }
+  ],
+  "paprica": [
+    {
+      "f": "Jonaldo",
+      "p": 25.0,
+      "u": "KG"
+    },
+    {
+      "f": "FLD",
+      "p": 45.0,
+      "u": "KG"
+    }
+  ],
+  "pernil suino": [
+    {
+      "f": "WG",
+      "p": 15.98,
+      "u": "KG"
+    },
+    {
+      "f": "JAMPAC",
+      "p": 17.5,
+      "u": "KG"
+    }
+  ],
+  "queijo parmesao": [
+    {
+      "f": "Roldão",
+      "p": 3.09,
+      "u": "KG"
+    },
+    {
+      "f": "Sendas",
+      "p": 3.77,
+      "u": "KG"
+    },
+    {
+      "f": "Apetito",
+      "p": 34.39,
+      "u": "KG"
+    }
+  ],
+  "sal": [
+    {
+      "f": "Atacadão",
+      "p": 2.17,
+      "u": "KG"
+    },
+    {
+      "f": "Sendas",
+      "p": 2.75,
+      "u": "KG"
+    },
+    {
+      "f": "Roldão",
+      "p": 2.99,
+      "u": "KG"
+    },
+    {
+      "f": "Irmãos Avelino",
+      "p": 21.24,
+      "u": "UN"
+    }
+  ],
+  "salsa desidratada": [
+    {
+      "f": "Jonaldo",
+      "p": 25.0,
+      "u": "KG"
+    },
+    {
+      "f": "FLD",
+      "p": 72.0,
+      "u": "KG"
+    }
+  ],
+  "tiras de carnes": [
+    {
+      "f": "Apetito",
+      "p": 29.49,
+      "u": "KG"
+    },
+    {
+      "f": "WG",
+      "p": 39.9,
+      "u": "KG"
+    }
+  ],
+  "tempero baiano": [
+    {
+      "f": "Jonaldo",
+      "p": 25.0,
+      "u": "KG"
+    },
+    {
+      "f": "FLD",
+      "p": 75.0,
+      "u": "KG"
+    }
+  ],
+  "vinagre - un": [
+    {
+      "f": "BIG/WMS",
+      "p": 1.35,
+      "u": "UN"
+    },
+    {
+      "f": "Roldão",
+      "p": 1.89,
+      "u": "UN"
+    },
+    {
+      "f": "Irmãos Avelino",
+      "p": 13.93,
+      "u": "UN"
+    }
+  ]
+}
