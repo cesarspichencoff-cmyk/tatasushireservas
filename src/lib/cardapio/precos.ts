@@ -301,16 +301,38 @@ function buscarHistorico(norm: string): number | null {
 }
 
 /**
+ * Modos de preparo/derivação que NÃO mudam o ingrediente comprado: um item
+ * "mandioca frita", "batata assada", "frango grelhado" ou "arroz cozido" é
+ * comprado como o ingrediente cru ("mandioca", "batata", "frango", "arroz").
+ * A entrada já vem normalizada (minúscula, sem acento), então os padrões
+ * dispensam variações de acento. Ordem não importa — remove todos de uma vez.
+ */
+const PREPARO_RE =
+  /\b(frit[oa]s?|assad[oa]s?|cozid[oa]s?|grelhad[oa]s?|refogad[oa]s?|empanad[oa]s?|gratinad[oa]s?|saltead[oa]s?|mexid[oa]s?|dourad[oa]s?|milanesa|a dore|na chapa|na brasa|ao? forno|de forno|ao molho|marinad[oa]s?|temperad[oa]s?|desfiad[oa]s?|ralad[oa]s?|picad[oa]s?|cremos[oa]s?|de panela|caseir[oa]s?|a moda|rechead[oa]s?|no vapor|cozid[oa] no vapor)\b/g;
+
+/**
+ * Reduz um item preparado ao ingrediente base para fins de preço e fornecedor.
+ * Ex.: "mandioca frita" → "mandioca". Se nada for removido (ou sobrar vazio),
+ * devolve o próprio nome. Idempotente: aplicar de novo não muda mais nada.
+ */
+export function ingredienteBase(norm: string): string {
+  const base = norm.replace(PREPARO_RE, '').replace(/\s+/g, ' ').trim();
+  return base && base !== norm ? base : norm;
+}
+
+/**
  * Resolve o preço de um item em quatro camadas de prioridade:
  * 1. real      — preço digitado pelo usuário para esta cotação
  * 2. historico — dados reais de Mai/Jun 2026 (exato ou por aproximação)
  * 3. estimado  — estimativa de mercado gerada pelo usuário
  * 4. sem       — sem nenhuma referência (evitado ao máximo)
+ * Antes de desistir, tenta o ingrediente base (preparo → cru).
  */
 export function resolverPreco(
   norm: string,
   precos: Record<string, number>,
   estimativas: Record<string, number> = {},
+  semFallbackPreparo = false,
 ): PrecoResolvido {
   const real = precos[norm];
   if (real > 0) return { valor: real, tipo: 'real' };
@@ -318,6 +340,14 @@ export function resolverPreco(
   if (hist !== null && hist > 0) return { valor: hist, tipo: 'historico' };
   const est = estimativas[norm];
   if (est > 0) return { valor: est, tipo: 'estimado' };
+  // Preparo → ingrediente base (mandioca frita → mandioca), uma única vez.
+  if (!semFallbackPreparo) {
+    const base = ingredienteBase(norm);
+    if (base !== norm) {
+      const r = resolverPreco(base, precos, estimativas, true);
+      if (r.tipo !== 'sem') return r;
+    }
+  }
   return { valor: 0, tipo: 'sem' };
 }
 

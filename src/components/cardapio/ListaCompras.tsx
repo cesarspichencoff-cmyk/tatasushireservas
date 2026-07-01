@@ -15,7 +15,7 @@ import { useMemo, useState } from 'react';
 import { Botao, Cartao, Modal, Pilula, estiloInput } from '@/components/ui';
 import { Icone } from '@/components/Icones';
 import { DADOS, DIAS_SEMANA, formatarQtd, formatarReais, linhasDoDia, normalizar } from '@/lib/cardapio/motor';
-import { resolverPreco } from '@/lib/cardapio/precos';
+import { resolverPreco, ingredienteBase } from '@/lib/cardapio/precos';
 import { ehRemetenteInterno } from '@/lib/cardapio/cotacao';
 import comparativoJson from '@/lib/cardapio/comparativo-fornecedores.json';
 import { confiancaPreco, COR_CONFIANCA } from '@/lib/cardapio/confianca';
@@ -351,10 +351,15 @@ export function ListaCompras({
                             // Fornecedor: o atribuído → oferta mais barata → comparativo
                             // da planilha. Assim o item mostra fornecedor mesmo quando a
                             // cotação não gravou um explicitamente.
-                            const fornAtribuido = fornecedores[l.chave];
+                            // Preparo (mandioca frita) usa o fornecedor do
+                            // ingrediente base (mandioca) quando não tem o seu.
+                            const base = ingredienteBase(l.chave);
+                            const ofertaForn = (ch: string) =>
+                              ofertas[ch]?.filter((o) => !ehRemetenteInterno(o.fornecedor)).sort((a, b) => a.preco - b.preco)[0]?.fornecedor;
+                            const fornAtribuido = fornecedores[l.chave] || fornecedores[base];
                             const forn = fornAtribuido
-                              || ofertas[l.chave]?.filter((o) => !ehRemetenteInterno(o.fornecedor)).sort((a, b) => a.preco - b.preco)[0]?.fornecedor
-                              || COMPARATIVO[l.chave]?.[0]?.f;
+                              || ofertaForn(l.chave) || ofertaForn(base)
+                              || COMPARATIVO[l.chave]?.[0]?.f || COMPARATIVO[base]?.[0]?.f;
                             const fornDaPlanilha = !fornAtribuido && !!forn;
                             if (!forn && pr.valor <= 0) return null;
                             return (
