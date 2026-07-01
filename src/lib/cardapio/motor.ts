@@ -273,6 +273,7 @@ const PROTEINA_PADRAO: Partial<Record<Proteina, { item: string; unid: string }>>
   bovina: { item: 'Acém', unid: 'kg' },
   frango: { item: 'File de frango sem osso', unid: 'kg' },
   suina: { item: 'Lombo suíno', unid: 'kg' },
+  peixe: { item: 'Filé de peixe', unid: 'kg' },
   ovo: { item: 'Ovos', unid: 'bd' },
 };
 
@@ -291,17 +292,35 @@ export interface OpcoesLista {
   mostrarBasicos?: boolean;
 }
 
-/* Acompanhamentos de amido que, quando citados no PRATO PRINCIPAL
-   ("Carne com mandioca", "Frango com batata"), NÃO devem virar item de compra
-   pelo principal — a guarnição do dia já cobre. Evita duplicar mandioca/batata
-   na lista e inflar o custo. Só se aplica ao campo principal. */
+/* Acompanhamentos que, quando aparecem como COMPLEMENTO no nome do prato
+   principal ("Carne com mandioca", "Picadinho com chuchu", "Frango com batata"),
+   NÃO devem virar item de compra pelo principal — a guarnição do dia já cobre.
+   Evita duplicar guarnição na lista e inflar o custo.
+   IMPORTANTE: só remove o COMPLEMENTO (o que vem depois de "com"/"e"); o prato
+   principal em si é sempre mantido. Pratos onde o "acompanhamento" é a própria
+   base (Bobó, Escondidinho, Macarronada, Yakisoba) não têm "com <side>" no nome
+   e por isso não são afetados. */
 const ACOMPANHAMENTOS_PRINCIPAL = [
   'mandioca', 'aipim', 'macaxeira', 'batata', 'batata doce', 'batata palha',
-  'farofa', 'pure', 'macarrao', 'polenta', 'mandioquinha', 'cuscuz', 'angu', 'baiao',
+  'farofa', 'pure', 'pure de batata', 'macarrao', 'polenta', 'mandioquinha',
+  'cuscuz', 'angu', 'baiao', 'arroz', 'feijao', 'chuchu', 'abobora', 'abobrinha',
+  'quiabo', 'couve', 'couve flor', 'couve manteiga', 'repolho', 'cenoura',
+  'beterraba', 'vagem', 'brocolis', 'jilo', 'legumes', 'milho', 'milho verde',
 ];
 function ehAcompanhamentoDoPrincipal(nome: string): boolean {
-  const k = normalizar(nome);
-  return ACOMPANHAMENTOS_PRINCIPAL.some((a) => k === a || k.startsWith(a + ' '));
+  const n = normalizar(nome);
+  // s? cobre plural ("batatas", "legumes"); \s+ cobre "batata doce" etc.
+  return ACOMPANHAMENTOS_PRINCIPAL.some((a) => new RegExp(`\\b${a.replace(/ /g, '\\s+')}s?\\b`).test(n));
+}
+
+/* Extrai os complementos de guarnição do NOME do prato principal — os segmentos
+   após "com"/"e"/"," que são puro acompanhamento. "Carne com mandioca" → ['mandioca'];
+   "Strogonoff com Arroz e Batata Palha" → ['arroz','batata palha']. O primeiro
+   segmento (o prato em si) nunca é complemento. Devolve chaves normalizadas. */
+function complementosDoPrincipal(nome: string | null | undefined): string[] {
+  if (!nome) return [];
+  const segs = nome.split(/\s+com\s+|\s+e\s+|,/i).map((s) => s.trim()).filter(Boolean);
+  return segs.slice(1).filter((s) => ehAcompanhamentoDoPrincipal(s)).map((s) => normalizar(s));
 }
 
 /* Modos de preparo/derivação que NÃO mudam o ingrediente comprado: "mandioca
@@ -320,6 +339,19 @@ export function ingredienteBase(nome: string): string {
 }
 
 export function listaDoDia(dia: DiaCardapio, fatores?: Record<string, number>, opts?: OpcoesLista): ItemSugerido[] {
+  // Complementos de guarnição citados no NOME do principal ("Carne com mandioca",
+  // "Picadinho com chuchu") são removidos SÓ da contribuição do principal — a
+  // guarnição do dia já cobre. Nunca esvazia o dia (a proteína/base permanece).
+  const complementos = complementosDoPrincipal(dia.principal);
+  const ehComplemento = (nomeItem: string): boolean => {
+    if (!complementos.length) return false;
+    const a = normalizar(nomeItem).replace(/s$/, '');
+    return complementos.some((c) => {
+      const b = c.replace(/s$/, '');
+      return a === b || b.startsWith(a + ' ') || a.startsWith(b + ' ');
+    });
+  };
+
   const fator = dia.pessoas > 0 ? dia.pessoas / DADOS.baseline : 1;
   const acc = new Map<string, { item: string; unid: string; qtd: number; fonte: FonteItem }>();
 
@@ -370,6 +402,8 @@ export function listaDoDia(dia: DiaCardapio, fatores?: Record<string, number>, o
       if (receita) {
         receita.ingredientes.forEach((ing) => {
           const k = normalizar(ing.item);
+          // complemento de guarnição citado no nome do principal não entra por aqui
+          if (campo === 'principal' && ehComplemento(ing.item)) return;
           // só adiciona se ainda não está coberto pelo histórico operacional
           if (acc.has(k)) return;
           // Quantidade ínfima por pessoa = tempero/condimento = pantry item
@@ -404,8 +438,8 @@ export function listaDoDia(dia: DiaCardapio, fatores?: Record<string, number>, o
       const it = itemDoTexto(parte);
       if (!it) continue;
       const k = normalizar(it.n);
-      // Prato principal não puxa acompanhamento de amido (guarnição já cobre).
-      if (categoria === 'principal' && ehAcompanhamentoDoPrincipal(it.n)) continue;
+      // complemento de guarnição no nome do principal ("com batata") não entra
+      if (categoria === 'principal' && ehComplemento(it.n)) continue;
       if (acc.has(k) || (!opts?.mostrarBasicos && excluidos.has(k))) continue;
       // Forma preparada ("Mandioca Frita") não entra se o ingrediente base
       // ("Mandioca") já está na lista — compra-se o cru, não o preparo.
