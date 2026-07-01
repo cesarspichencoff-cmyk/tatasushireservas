@@ -194,6 +194,18 @@ export function casarItem(nome: string): string | null {
 
 /* --------------------------- parser de texto -------------------------- */
 
+/**
+ * Muitas cotações de hortifrúti vêm em 2–3 colunas coladas numa linha só:
+ * "GENGIBRE KG 19,48 INHAME KG 11,59 JILO KG 20,30". Sem separar, só o primeiro
+ * (ou pior, o preço trocado) é lido. Quebra em uma linha por item toda vez que
+ * um par "UNIDADE PREÇO" é seguido de mais conteúdo (o próximo item).
+ */
+const RE_UNID_SPLIT = 'kg|un|und|unid|cx|bd|bdj|dz|pct|lt|l|mc|mç|pc|sc|mo';
+function separarMultiItens(linha: string): string[] {
+  const re = new RegExp(`\\b(${RE_UNID_SPLIT})\\s+(\\d{1,3}(?:\\.\\d{3})?,\\d{2})\\s+(?=\\S)`, 'gi');
+  return linha.replace(re, '$1 $2\n').split('\n');
+}
+
 function limparLinha(bruta: string): string {
   return bruta
     .replace(/^\[[^\]]*\]\s*[^:]*:\s*/, '')    // prefixo WhatsApp "[data] C.:"
@@ -305,8 +317,12 @@ export function parsearCotacao(texto: string, fornecedoresCustom: string[] = [])
       const fk = fornecedorConhecido(mWA[1].trim());
       if (fk) fornecedorSecao = fk;
     }
-    const linha = limparLinha(bruta);
-    if (!linha || linha.length < 2) continue;
+    const linhaLimpa = limparLinha(bruta);
+    if (!linhaLimpa || linhaLimpa.length < 2) continue;
+
+    // Quebra linhas multi-item ("A KG 1,00 B KG 2,00") em uma por item.
+    for (const linha of separarMultiItens(linhaLimpa)) {
+    if (linha.trim().length < 2) continue;
 
     const precos = linha.match(RE_PRECO);
 
@@ -373,6 +389,7 @@ export function parsearCotacao(texto: string, fornecedoresCustom: string[] = [])
 
     const novaLinha: LinhaCotacao = { nome, preco, marca, unid, item: casarItem(nome) };
     linhas.push(validarLinha(novaLinha));
+    } // fim do loop de sub-itens da linha
   }
   return linhas;
 }
