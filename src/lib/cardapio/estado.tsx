@@ -851,6 +851,15 @@ export function useAceitacao() {
   return { aceitacao, avaliar };
 }
 
+/** Zera as avaliações de prato (aceitação) para começar a operar do zero.
+    O estado vazio é gravado localmente e espelhado na nuvem — os outros
+    aparelhos recebem o reset ao sincronizar. Não mexe no histórico/DNA da casa
+    (que vem dos dados de operação), só nos votos bom/ok/ruim registrados aqui. */
+export function zerarAvaliacoesPratos() {
+  gravarLocal('aceitacao', {});
+  notificarChaveExterna('aceitacao');
+}
+
 /* =====================================================================
    Preferência: mostrar/ocultar insumos básicos na lista de compras.
    ===================================================================== */

@@ -4,10 +4,18 @@ import { useState } from 'react';
 import { toast } from '@/components/Toast';
 import { Botao } from '@/components/ui';
 import { PERFIS, useLogin } from '@/lib/cardapio/login';
+import { zerarAvaliacoesPratos } from '@/lib/cardapio/estado';
 
 export function Configuracoes() {
   const { definirPin } = useLogin();
   const [pins, setPins] = useState<Record<string, string>>({});
+  const [confirmarZerar, setConfirmarZerar] = useState(false);
+
+  const zerar = () => {
+    zerarAvaliacoesPratos();
+    setConfirmarZerar(false);
+    toast('Avaliações de prato zeradas — pronto para começar do zero');
+  };
 
   const salvar = async (id: string, rotulo: string) => {
     const v = (pins[id] ?? '').trim();
@@ -83,6 +91,31 @@ export function Configuracoes() {
         );
       })}
 
+      {/* Começar do zero — limpa as avaliações de teste */}
+      <div className="rounded-2xl border border-perigo/25 bg-perigo/5 p-4">
+        <p className="text-sm font-extrabold text-perigo">Começar do zero</p>
+        <p className="mt-0.5 text-caption text-carvao-500 dark:text-areia-400">
+          Zera as avaliações de prato (bom/ok/ruim) usadas nos testes. O histórico
+          e o DNA da casa não são afetados. Sincroniza para todos os aparelhos.
+        </p>
+        <div className="mt-3">
+          {!confirmarZerar ? (
+            <Botao variante="secundario" className="!min-h-[42px] !px-4 !py-2 text-sm" onClick={() => setConfirmarZerar(true)}>
+              Zerar avaliações
+            </Botao>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="text-caption font-semibold text-carvao-600 dark:text-areia-300">Tem certeza?</span>
+              <button onClick={zerar} className="rounded-xl bg-perigo px-4 py-2 text-sm font-bold text-white">
+                Sim, zerar
+              </button>
+              <button onClick={() => setConfirmarZerar(false)} className="rounded-xl bg-carvao-100 px-3 py-2 text-sm dark:bg-carvao-700">
+                Cancelar
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
