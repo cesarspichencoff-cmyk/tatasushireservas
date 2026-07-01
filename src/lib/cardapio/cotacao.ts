@@ -56,13 +56,27 @@ const RUIDO = new Set([
   'tipo', 'extra', 'especial', 'novilho', 'solteira', 'temp',
 ]);
 
-/** Fornecedores sempre reconhecidos — nunca desabilitados, mesmo quando o usuário cadastra os seus. */
+/** Fornecedores sempre reconhecidos — nunca desabilitados, mesmo quando o usuário cadastra os seus.
+    Cobre os fornecedores reais da casa (planilha jan–mai/2026) para que um
+    cabeçalho "FLD", "Mar Fish", "Malte"… já marque a seção sem precisar cadastrar. */
 const FORNECEDORES_BASE: [RegExp, string][] = [
   [/vita[\s-]*frango/i, 'Vita Frango'],
-  [/\bjampac\b/i,       'Jampac'],
+  [/\bjampac\b/i,       'JAMPAC Alimentos'],
   [/apetito/i,          'Apetito Foods'],
   [/\bwg\b/i,           'WG'],
   [/frito[\s-]*sul/i,   'Frito Sul'],
+  [/\bfld\b/i,          'FLD'],
+  [/mar[\s-]*fish/i,    'Mar Fish'],
+  [/\bmalte\b/i,        'Malte'],
+  [/\bbiofood\b/i,      'Biofood'],
+  [/frango[\s-]*da[\s-]*nonna/i, 'Frango da Nonna'],
+  [/princesa[\s-]*do[\s-]*oeste/i, 'Princesa do Oeste'],
+  [/\bkenai\b/i,        'Kenai'],
+  [/\bjonaldo\b/i,      'Jonaldo'],
+  [/\bfrigosul\b/i,     'Frigosul'],
+  [/\brold[aã]o\b/i,    'Roldão'],
+  [/atacad[aã]o/i,      'Atacadão'],
+  [/irm[aã]os[\s-]*avelino/i, 'Irmãos Avelino'],
 ];
 
 /**

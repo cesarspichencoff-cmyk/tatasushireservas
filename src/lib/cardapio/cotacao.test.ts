@@ -38,3 +38,50 @@ describe('cotação — remetente interno (Erika) não é fornecedor', () => {
     expect(ehRemetenteInterno('Joana')).toBe(true);
   });
 });
+
+describe('cotação — lê as muitas formas de colagem (celular e desktop)', () => {
+  const preco = (txt: string) => {
+    const l = parsearCotacao(txt);
+    return l.length ? l[0].preco : 0;
+  };
+
+  it('preço em qualquer posição / com R$ / com barra / com unidade', () => {
+    const formas = [
+      'Acém 29,80', 'ACEM KG 29,80', '29,80 ACEM KG', 'Acém 29,80 KG',
+      'Acém R$ 29,80', 'Acém - 29,80', 'Acém: 29,80', 'Acém R$29,80/kg',
+      'Acém 29,80/kg', '- Acém 29,80', '• Acém 29,80', 'Acém (kg) 29,80',
+      'Acém RF 29,80', 'Acém   29,80', '🍖 Acém 29,80', 'Acém kg R$ 29,80',
+    ];
+    for (const f of formas) expect(preco(f), f).toBeCloseTo(29.80, 2);
+  });
+
+  it('milhar com ponto e centavos com vírgula', () => {
+    expect(preco('Costela 1.234,56')).toBeCloseTo(1234.56, 2);
+  });
+
+  it('linha multi-item (colunas coladas) vira vários itens com o preço certo', () => {
+    const linhas = parsearCotacao('GENGIBRE KG 19,48 INHAME KG 11,59 JILO KG 20,30');
+    expect(linhas.length).toBe(3);
+    expect(linhas[0].preco).toBeCloseTo(19.48, 2);
+    expect(linhas[1].preco).toBeCloseTo(11.59, 2);
+    expect(linhas[2].preco).toBeCloseTo(20.30, 2);
+  });
+
+  it('cabeçalho de fornecedor real aplica a todos os itens abaixo', () => {
+    const linhas = parsearCotacao('FLD\nTOMATE KG 6,99\nCENOURA KG 5,50');
+    expect(linhas.length).toBe(2);
+    expect(linhas.every((l) => l.marca === 'FLD')).toBe(true);
+  });
+
+  it('"Fornecedor: X" explícito, mesmo não cadastrado, marca a seção', () => {
+    const linhas = parsearCotacao('Fornecedor Hortifruti\nCenoura 11,10\nChuchu 6,58');
+    expect(linhas.length).toBe(2);
+    expect(linhas.every((l) => l.marca === 'Hortifruti')).toBe(true);
+  });
+
+  it('WhatsApp encaminhado: usa o fornecedor real, ignora quem encaminhou', () => {
+    const linhas = parsearCotacao('[08:15] Erika: segue\nMar Fish\nTilápia 18,90\nMerluza 22,00');
+    expect(linhas.length).toBe(2);
+    expect(linhas.every((l) => l.marca === 'Mar Fish')).toBe(true);
+  });
+});
