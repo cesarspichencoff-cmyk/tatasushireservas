@@ -132,10 +132,14 @@ export function AbaCotacao({
 
   const selecionados = casados.filter((c) => !ignorados.has(c.item));
 
+  // Fornecedor digitado no campo: remove um "Fornecedor:" que o usuário
+  // tenha escrito junto e vale para todo item que não trouxe marca própria.
+  const fornDigitado = fornecedorNome.trim().replace(/^fornecedor\s*[:\-–]?\s*/i, '').trim();
+
   const aplicar = () => {
     selecionados.forEach((c) => {
       const norm = normalizar(c.item);
-      const forn = fornecedorNome || c.marca;
+      const forn = fornDigitado || c.marca;
       definirPreco(norm, c.preco, c.item);
       definirFornecedor?.(norm, forn);
       if (forn) registrarOferta?.(norm, forn, c.preco);
@@ -148,7 +152,7 @@ export function AbaCotacao({
     const unid = unidades[idx] ?? s.unid ?? 'kg';
     cadastrarItem?.(norm, s.nome, unid);
     definirPreco(norm, s.preco, s.nome);
-    const forn = fornecedorNome || s.marca;
+    const forn = fornDigitado || s.marca;
     definirFornecedor?.(norm, forn);
     if (forn) registrarOferta?.(norm, forn, s.preco);
     setCadastrados((c) => new Set(c).add(idx));

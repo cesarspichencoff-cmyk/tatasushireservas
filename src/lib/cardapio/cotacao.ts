@@ -327,7 +327,16 @@ export function parsearCotacao(texto: string, fornecedoresCustom: string[] = [])
     const precos = linha.match(RE_PRECO);
 
     if (!precos) {
-      // Só reconhece fornecedor se está na lista cadastrada ou na base — nunca inventa.
+      // Cabeçalho explícito "Fornecedor: X" / "Fornecedor X" — vale para os
+      // itens abaixo, mesmo que X ainda não esteja cadastrado (o usuário
+      // escreveu de propósito). Remetente interno (Érika) continua barrado.
+      const mForn = linha.match(/^fornecedor\s*[:\-–]?\s*(.{2,40})$/i);
+      if (mForn) {
+        const nome = mForn[1].trim();
+        if (!ehRemetenteInterno(nome)) fornecedorSecao = fornecedorConhecido(nome) ?? nome;
+        continue;
+      }
+      // Senão, só reconhece fornecedor cadastrado/base — nunca inventa.
       const fk = fornecedorConhecido(linha);
       if (fk) fornecedorSecao = fk;
       continue;
